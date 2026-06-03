@@ -15,7 +15,20 @@ import {
   Instagram,
   Youtube,
   Linkedin,
-  ArrowUpDown
+  ArrowUpDown,
+  X,
+  CheckCircle2,
+  XCircle,
+  MessageSquare,
+  CornerUpRight,
+  Send,
+  AlertCircle,
+  Edit2,
+  Clock,
+  ArrowRight,
+  UserCheck,
+  Check,
+  Briefcase
 } from "lucide-react";
 import { 
   BarChart, Bar, XAxis, ResponsiveContainer
@@ -32,19 +45,216 @@ const attendanceOverviewData = [
 ];
 
 const attendanceList = [
-  { name: "Olivia Mason", id: "EMP-0234", role: "Marketing", subRole: "Executive Marketing", date: "19 Jun 2035", model: "Hybrid", in: "08:55 AM", out: "05:05 PM", duration: "8h 10m", overtime: "10m", status: "On-Time", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80" },
-  { name: "Ethan Ray", id: "EMP-0178", role: "UI Designer", subRole: "Product Design", date: "19 Jun 2035", model: "Remote", in: "09:14 AM", out: "05:20 PM", duration: "8h 6m", overtime: "6m", status: "Late", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80" },
-  { name: "Lina Armand", id: "EMP-0312", role: "Lab Analyst", subRole: "R&D", date: "19 Jun 2035", model: "On-Site", in: "— — —", out: "", duration: "—", overtime: "—", status: "On Leave", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80" },
-  { name: "Jacob Yuen", id: "EMP-0115", role: "Site Supervisor", subRole: "Operations", date: "19 Jun 2035", model: "On-Site", in: "— — —", out: "", duration: "—", overtime: "—", status: "Absent", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80" },
-  { name: "Mia Torres", id: "EMP-0289", role: "HR Officer", subRole: "Human Resources", date: "19 Jun 2035", model: "Hybrid", in: "08:59 AM", out: "05:10 PM", duration: "8h 11m", overtime: "11m", status: "On-Time", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80" },
-  { name: "Sara Kim", id: "EMP-0356", role: "Customer Support", subRole: "Customer Service", date: "19 Jun 2035", model: "On-Site", in: "09:02 AM", out: "05:00 PM", duration: "7h 58m", overtime: "—", status: "Late", avatar: "https://images.unsplash.com/photo-1554151228-14d9def656e4?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80" },
-  { name: "Daniel Cheung", id: "EMP-0291", role: "Compliance Specialist", subRole: "Operations", date: "19 Jun 2035", model: "Remote", in: "08:48 AM", out: "05:00 PM", duration: "8h 12m", overtime: "12m", status: "On-Time", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80" },
-  { name: "Anya Rodriguez", id: "EMP-0275", role: "Graphic Designer", subRole: "Marketing", date: "19 Jun 2035", model: "Remote", in: "09:10 AM", out: "05:15 PM", duration: "8h 5m", overtime: "5m", status: "Late", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80" },
-  { name: "Kelvin Yu", id: "EMP-0159", role: "Training Coordinator", subRole: "HR", date: "19 Jun 2035", model: "On-Site", in: "08:45 AM", out: "04:50 PM", duration: "8h 5m", overtime: "5m", status: "On-Time", avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80" },
-  { name: "Farah Nabila", id: "EMP-0320", role: "Customer Experience Lead", subRole: "Customer Service", date: "19 Jun 2035", model: "Hybrid", in: "09:00 AM", out: "05:05 PM", duration: "8h 5m", overtime: "5m", status: "On-Time", avatar: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80" },
+  { name: "Olivia Mason", id: "EMP-0234", role: "Marketing", subRole: "Executive Marketing", date: "19 Jun 2035", model: "Hybrid", in: "08:55 AM", out: "05:05 PM", duration: "8h 10m", overtime: "10m", status: "On-Time", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80", correctionRequestsThisMonth: 3, comment: "", forwardedTo: "", forwardedStatus: "None", hrApprovalStatus: "Approved" },
+  { name: "Ethan Ray", id: "EMP-0178", role: "UI Designer", subRole: "Product Design", date: "19 Jun 2035", model: "Remote", in: "09:14 AM", out: "05:20 PM", duration: "8h 6m", overtime: "6m", status: "Late", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80", correctionRequestsThisMonth: 5, comment: "Late check-in adjustment request: Traffic incident on highway.", forwardedTo: "Zara Patel", forwardedStatus: "Pending", hrApprovalStatus: "Pending" },
+  { name: "Lina Armand", id: "EMP-0312", role: "Lab Analyst", subRole: "R&D", date: "19 Jun 2035", model: "On-Site", in: "— — —", out: "", duration: "—", overtime: "—", status: "On Leave", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80", correctionRequestsThisMonth: 1, comment: "Annual leave request pre-approved by Dr. Evans.", forwardedTo: "", forwardedStatus: "None", hrApprovalStatus: "Approved" },
+  { name: "Jacob Yuen", id: "EMP-0115", role: "Site Supervisor", subRole: "Operations", date: "19 Jun 2035", model: "On-Site", in: "— — —", out: "", duration: "—", overtime: "—", status: "Absent", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80", correctionRequestsThisMonth: 6, comment: "Requested check-in/out backfill after being off-grid for regional safety dispatch.", forwardedTo: "", forwardedStatus: "None", hrApprovalStatus: "Pending" },
+  { name: "Mia Torres", id: "EMP-0289", role: "HR Officer", subRole: "Human Resources", date: "19 Jun 2035", model: "Hybrid", in: "08:59 AM", out: "05:10 PM", duration: "8h 11m", overtime: "11m", status: "On-Time", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80", correctionRequestsThisMonth: 2, comment: "", forwardedTo: "", forwardedStatus: "None", hrApprovalStatus: "Approved" },
+  { name: "Sara Kim", id: "EMP-0356", role: "Customer Support", subRole: "Customer Service", date: "19 Jun 2035", model: "On-Site", in: "09:02 AM", out: "05:00 PM", duration: "7h 58m", overtime: "—", status: "Late", avatar: "https://images.unsplash.com/photo-1554151228-14d9def656e4?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80", correctionRequestsThisMonth: 4, comment: "Subway system delay during morning rush.", forwardedTo: "David Vance", forwardedStatus: "Approved", hrApprovalStatus: "Pending" },
+  { name: "Daniel Cheung", id: "EMP-0291", role: "Compliance Specialist", subRole: "Operations", date: "19 Jun 2035", model: "Remote", in: "08:48 AM", out: "05:00 PM", duration: "8h 12m", overtime: "12m", status: "On-Time", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80", correctionRequestsThisMonth: 1, comment: "", forwardedTo: "", forwardedStatus: "None", hrApprovalStatus: "Approved" },
+  { name: "Anya Rodriguez", id: "EMP-0275", role: "Graphic Designer", subRole: "Marketing", date: "19 Jun 2035", model: "Remote", in: "09:10 AM", out: "05:15 PM", duration: "8h 5m", overtime: "5m", status: "Late", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80", correctionRequestsThisMonth: 4, comment: "System synchronization failure. Manual timesheet adjustment requested.", forwardedTo: "", forwardedStatus: "None", hrApprovalStatus: "Pending" },
+  { name: "Kelvin Yu", id: "EMP-0159", role: "Training Coordinator", subRole: "HR", date: "19 Jun 2035", model: "On-Site", in: "08:45 AM", out: "04:50 PM", duration: "8h 5m", overtime: "5m", status: "On-Time", avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80", correctionRequestsThisMonth: 2, comment: "", forwardedTo: "", forwardedStatus: "None", hrApprovalStatus: "Approved" },
+  { name: "Farah Nabila", id: "EMP-0320", role: "Customer Experience Lead", subRole: "Customer Service", date: "19 Jun 2035", model: "Hybrid", in: "09:00 AM", out: "05:05 PM", duration: "8h 5m", overtime: "5m", status: "On-Time", avatar: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80", correctionRequestsThisMonth: 3, comment: "", forwardedTo: "", forwardedStatus: "None", hrApprovalStatus: "Approved" },
+];
+
+const managersList = [
+  { name: "Marcus Brody", role: "Marketing & Sales Manager" },
+  { name: "Sophia Chen", role: "Lead UI/UX Architect" },
+  { name: "Zara Patel", role: "Operations Director" },
+  { name: "Leila Vance", role: "HR Senior Supervisor" },
+  { name: "David Vance", role: "Customer Support Head" }
 ];
 
 export default function AttendancePage() {
+  const [userRole, setUserRole] = React.useState<"HR" | "Employee">(() => {
+    return (localStorage.getItem("viewing-role") as "HR" | "Employee") || "HR";
+  });
+
+  React.useEffect(() => {
+    const handleStorageChange = () => {
+      const current = (localStorage.getItem("viewing-role") as "HR" | "Employee") || "HR";
+      setUserRole(current);
+    };
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("roleChanged", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("roleChanged", handleStorageChange);
+    };
+  }, []);
+
+  const changeUserRole = (role: "HR" | "Employee") => {
+    localStorage.setItem("viewing-role", role);
+    setUserRole(role);
+    window.dispatchEvent(new Event("roleChanged"));
+  };
+
+  const [records, setRecords] = React.useState(attendanceList);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [filterStatus, setFilterStatus] = React.useState("All");
+  const [sortBy, setSortBy] = React.useState("Name");
+
+  // Modal State
+  const [selectedRequest, setSelectedRequest] = React.useState<any | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
+
+  // Modal Editing Draft States
+  const [commentText, setCommentText] = React.useState("");
+  const [forwardTo, setForwardTo] = React.useState("");
+  const [editIn, setEditIn] = React.useState("");
+  const [editOut, setEditOut] = React.useState("");
+  const [isForwardDropdownOpen, setIsForwardDropdownOpen] = React.useState(false);
+
+  const handleOpenDetailsModal = (record: any) => {
+    setSelectedRequest(record);
+    setCommentText(record.comment || "");
+    setForwardTo(record.forwardedTo || "");
+    setEditIn(record.in || "— — —");
+    setEditOut(record.out || "");
+    setIsForwardDropdownOpen(false);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedRequest(null);
+  };
+
+  const handleUpdateStatus = (newStatus: "Approved" | "Rejected") => {
+    if (!selectedRequest) return;
+    setRecords(prev => prev.map(rec => rec.id === selectedRequest.id ? { ...rec, hrApprovalStatus: newStatus } : rec));
+    setSelectedRequest(prev => prev ? { ...prev, hrApprovalStatus: newStatus } : null);
+  };
+
+  const handleSaveDrafts = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRequest) return;
+    
+    // Calculate new status and durations based on edited times
+    let newStatus = selectedRequest.status;
+    let duration = selectedRequest.duration;
+    let overtime = selectedRequest.overtime;
+
+    if (editIn && editIn !== "— — —" && editIn !== "—") {
+      // Check if late (e.g. after 09:00 AM)
+      const matchIn = editIn.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+      if (matchIn) {
+        const hour = parseInt(matchIn[1]);
+        const isPm = matchIn[3].toUpperCase() === "PM";
+        const totalInMin = (hour === 12 ? (isPm ? 12 : 0) : hour + (isPm ? 12 : 0)) * 60 + parseInt(matchIn[2]);
+        
+        if (totalInMin > 9 * 60) {
+          newStatus = "Late";
+        } else {
+          newStatus = "On-Time";
+        }
+
+        // Calculate simple mock duration if Check-Out is set
+        if (editOut && editOut !== "" && editOut !== "—") {
+          const matchOut = editOut.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+          if (matchOut) {
+            const outHour = parseInt(matchOut[1]);
+            const isOutPm = matchOut[3].toUpperCase() === "PM";
+            const totalOutMin = (outHour === 12 ? (isOutPm ? 12 : 0) : outHour + (isOutPm ? 12 : 0)) * 60 + parseInt(matchOut[2]);
+            
+            const diffMin = totalOutMin - totalInMin;
+            if (diffMin > 0) {
+              const h = Math.floor(diffMin / 60);
+              const m = diffMin % 60;
+              duration = `${h}h ${m}m`;
+              
+              // Standard 8 hour workday
+              if (diffMin > 480) {
+                const overMin = diffMin - 480;
+                overtime = `${overMin}m`;
+              } else {
+                overtime = "—";
+              }
+            }
+          }
+        }
+      }
+    } else {
+      newStatus = selectedRequest.status === "On-Time" || selectedRequest.status === "Late" ? "Absent" : selectedRequest.status;
+      duration = "—";
+      overtime = "—";
+    }
+
+    setRecords(prev => prev.map(rec => {
+      if (rec.id === selectedRequest.id) {
+        return {
+          ...rec,
+          in: editIn,
+          out: editOut,
+          comment: commentText,
+          forwardedTo: forwardTo,
+          forwardedStatus: forwardTo && forwardTo !== rec.forwardedTo ? "Pending" : rec.forwardedStatus,
+          status: newStatus,
+          duration,
+          overtime
+        };
+      }
+      return rec;
+    }));
+
+    // Update active modal display
+    setSelectedRequest(prev => prev ? {
+      ...prev,
+      in: editIn,
+      out: editOut,
+      comment: commentText,
+      forwardedTo: forwardTo,
+      forwardedStatus: forwardTo && forwardTo !== prev.forwardedTo ? "Pending" : prev.forwardedStatus,
+      status: newStatus,
+      duration,
+      overtime
+    } : null);
+  };
+
+  const handleForwardRequest = (managerName: string) => {
+    if (!selectedRequest) return;
+    setRecords(prev => prev.map(rec => rec.id === selectedRequest.id ? { ...rec, forwardedTo: managerName, forwardedStatus: "Pending" } : rec));
+    setSelectedRequest(prev => prev ? { ...prev, forwardedTo: managerName, forwardedStatus: "Pending" } : null);
+    setForwardTo(managerName);
+    setIsForwardDropdownOpen(false);
+  };
+
+  const handleSimulateManagerApproval = () => {
+    if (!selectedRequest) return;
+    setRecords(prev => prev.map(rec => rec.id === selectedRequest.id ? { ...rec, forwardedStatus: "Approved" } : rec));
+    setSelectedRequest(prev => prev ? { ...prev, forwardedStatus: "Approved" } : null);
+  };
+
+  // Filter & Sort Logic
+  const filteredRecords = records.filter(rec => {
+    const matchesSearch = rec.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          rec.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          rec.role.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = filterStatus === "All" || rec.status === filterStatus;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  // Sort logic sorting records
+  const sortedRecords = [...filteredRecords].sort((a, b) => {
+    if (sortBy === "Name") {
+      return a.name.localeCompare(b.name);
+    } else if (sortBy === "Status") {
+      return a.status.localeCompare(b.status);
+    } else if (sortBy === "Date") {
+      return a.date.localeCompare(b.date);
+    }
+    return 0;
+  });
+
+  // Dynamic statistics calculations
+  const onTimeCount = 76 + records.filter(r => r.status === "On-Time").length;
+  const lateCount = 9 + records.filter(r => r.status === "Late").length;
+  const presentCount = onTimeCount + lateCount;
+  const leaveCount = 5 + records.filter(r => r.status === "On Leave").length;
+  const absentCount = 2 + records.filter(r => r.status === "Absent").length;
+
   return (
     <AppLayout 
       title="Attendance"
@@ -61,7 +271,7 @@ export default function AttendancePage() {
               <div className="flex-1 p-4 flex flex-col justify-end">
                  <div className="flex items-end justify-between">
                     <div>
-                        <p className="text-[40px] font-bold text-[#0E4D41] leading-none">93</p>
+                        <p className="text-[40px] font-bold text-[#0E4D41] leading-none">{presentCount}</p>
                         <p className="text-[10px] text-[#63716E] mt-2">Employees</p>
                     </div>
                     <div className="flex flex-col items-end gap-2">
@@ -73,11 +283,11 @@ export default function AttendancePage() {
                  </div>
                  <div className="mt-4 flex gap-4 bg-[#F7F7F7] rounded-[8px] p-2">
                     <div className="flex items-center gap-1.5">
-                       <span className="text-[16px] font-bold text-[#0E4D41]">82</span>
+                       <span className="text-[16px] font-bold text-[#0E4D41]">{onTimeCount}</span>
                        <span className="text-[10px] text-[#63716E]">On-Time</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                       <span className="text-[16px] font-bold text-[#0E4D41]">11</span>
+                       <span className="text-[16px] font-bold text-[#0E4D41]">{lateCount}</span>
                        <span className="text-[10px] text-[#63716E]">Late</span>
                     </div>
                  </div>
@@ -92,7 +302,7 @@ export default function AttendancePage() {
               <div className="flex-1 p-4 flex flex-col justify-end">
                  <div className="flex items-end justify-between">
                     <div>
-                        <p className="text-[40px] font-bold text-[#0E4D41] leading-none">6</p>
+                        <p className="text-[40px] font-bold text-[#0E4D41] leading-none">{leaveCount}</p>
                         <p className="text-[10px] text-[#63716E] mt-2">Employees</p>
                     </div>
                     <div className="flex flex-col items-end gap-2">
@@ -104,7 +314,7 @@ export default function AttendancePage() {
                  </div>
                  <div className="mt-4 flex justify-between bg-[#F7F7F7] rounded-[8px] p-2">
                     <div className="flex items-center gap-1.5 shrink-0 px-1 border-r border-[#E5E6E6]">
-                       <span className="text-[16px] font-bold text-[#0E4D41]">3</span>
+                       <span className="text-[16px] font-bold text-[#0E4D41]">{leaveCount - 3 > 0 ? leaveCount - 3 : 2}</span>
                        <span className="text-[10px] text-[#63716E]">Annual Leave</span>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0 px-1 border-r border-[#E5E6E6]">
@@ -126,7 +336,7 @@ export default function AttendancePage() {
               </div>
               <div className="flex-1 p-4 flex flex-col justify-between">
                  <div className="flex flex-col items-center pt-2">
-                    <p className="text-[40px] font-bold text-[#0E4D41] leading-none">3</p>
+                    <p className="text-[40px] font-bold text-[#0E4D41] leading-none">{absentCount}</p>
                     <p className="text-[10px] text-[#63716E] mt-2">Employees</p>
                  </div>
                  <div className="flex items-center justify-center gap-2">
@@ -185,25 +395,49 @@ export default function AttendancePage() {
 
         {/* Employee Attendance Table */}
         <Card className="border-none rounded-[16px] bg-white shadow-sm overflow-hidden p-0 flex flex-col min-h-[700px]">
-           <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-2">
-              <h2 className="text-[16px] font-bold text-[#203430]">Employee Attendance</h2>
+           <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-50">
+              <div>
+                 <h2 className="text-[16px] font-bold text-[#203430]">Employee Attendance</h2>
+                 <p className="text-[11px] text-[#63716E] mt-1">Click on any row to open the details modal (Approve, Reject, Comment, Forward, or Edit Check-In/Out times)</p>
+              </div>
               <div className="flex flex-wrap items-center gap-3">
                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#203430]" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#63716E]" />
                     <input 
                       type="text" 
-                      placeholder="Search employee" 
-                      className="pl-10 pr-4 py-2 w-[223px] h-[34px] bg-[#F7F7F7] rounded-[8px] border-none text-[12px] text-[#63716E] outline-none"
+                      placeholder="Search employee, ID, role..." 
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className="pl-9 pr-3 py-1.5 w-[210px] h-[34px] bg-[#F7F7F7] hover:bg-[#E5E6E6]/40 text-[#203430] placeholder:text-[#63716E]/70 rounded-[8px] text-[12px] font-medium outline-none transition-colors border border-transparent focus:border-[#0E4D41]/30"
                     />
                  </div>
-                 <button className="flex items-center gap-2 bg-[#E4F2D3] h-[34px] px-3 rounded-[8px] text-[12px] font-medium text-[#203430]">
-                    <Filter className="h-4 w-4" /> Filter <ChevronDown className="h-3 w-3" />
-                 </button>
-                 <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-[#63716E]">Sort by:</span>
-                    <button className="flex items-center gap-2 bg-[#E4F2D3] h-[34px] px-3 rounded-[8px] text-[12px] font-medium text-[#203430]">
-                       Name <ChevronDown className="h-3 w-3" />
-                    </button>
+                 
+                 <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-bold text-[#63716E]">Status:</span>
+                    <select
+                      value={filterStatus}
+                      onChange={e => setFilterStatus(e.target.value)}
+                      className="bg-[#E4F2D3] text-[#203430] h-[34px] px-2.5 rounded-[8px] text-[12px] font-bold outline-none border-none cursor-pointer hover:bg-[#d4eab6] transition-colors"
+                    >
+                      <option value="All">All Statuses</option>
+                      <option value="On-Time">On-Time</option>
+                      <option value="Late">Late</option>
+                      <option value="On Leave">On Leave</option>
+                      <option value="Absent">Absent</option>
+                    </select>
+                 </div>
+
+                 <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-bold text-[#63716E]">Sort:</span>
+                    <select
+                      value={sortBy}
+                      onChange={e => setSortBy(e.target.value)}
+                      className="bg-[#E4F2D3] text-[#203430] h-[34px] px-2.5 rounded-[8px] text-[12px] font-bold outline-none border-none cursor-pointer hover:bg-[#d4eab6] transition-colors"
+                    >
+                      <option value="Name">Name</option>
+                      <option value="Status">Status</option>
+                      <option value="Date">Date</option>
+                    </select>
                  </div>
               </div>
            </div>
@@ -255,13 +489,23 @@ export default function AttendancePage() {
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-[#E5E6E6]">
-                    {attendanceList.map((e, i) => (
-                      <tr key={i} className="hover:bg-[#F7F7F7]/50 transition-colors group">
+                    {sortedRecords.map((e, i) => (
+                      <tr key={e.id || i} onClick={() => handleOpenDetailsModal(e)} className="hover:bg-[#F7F7F7]/70 cursor-pointer transition-colors group">
                         <td className="px-6 py-4 whitespace-nowrap">
                            <div className="flex items-center gap-3">
                               <img src={e.avatar} className="h-8 w-8 rounded-full object-cover shadow-sm bg-brand" />
                               <div className="flex flex-col">
-                                 <span className="text-[11px] font-bold text-[#203430] leading-none">{e.name}</span>
+                                 <div className="flex items-center gap-1.5 flex-wrap">
+                                   <span className="text-[11px] font-bold text-[#203430] leading-none group-hover:text-brand transition-colors">{e.name}</span>
+                                   {e.hrApprovalStatus !== 'Pending' && (
+                                     <span className={cn(
+                                       "text-[8px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider scale-95",
+                                       e.hrApprovalStatus === 'Approved' ? 'bg-[#E4F2D3] text-[#0E4D41]' : 'bg-rose-100 text-rose-700'
+                                     )}>
+                                       {e.hrApprovalStatus}
+                                     </span>
+                                   )}
+                                 </div>
                                  <span className="text-[10px] text-[#63716E] mt-1 uppercase font-bold">{e.id}</span>
                               </div>
                            </div>
@@ -289,7 +533,15 @@ export default function AttendancePage() {
                              e.status === 'Late' ? "bg-[#E4F2D3] text-[#203430]" : 
                              e.status === 'On Leave' ? "bg-[#E5E6E6] text-[#203430]" : "bg-[#0E4D41] text-white"
                            )}>
-                              {e.status}
+                              <div className="flex items-center gap-1.5 justify-center">
+                                <span>{e.status}</span>
+                                {e.forwardedStatus === 'Pending' && (
+                                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" title={`Pending manager approval: ${e.forwardedTo}`} />
+                                )}
+                                {e.forwardedStatus === 'Approved' && (
+                                  <span className="h-1.5 w-1.5 rounded bg-emerald-400 shrink-0" title={`Approved by manager: ${e.forwardedTo}`} />
+                                )}
+                              </div>
                            </div>
                         </td>
                       </tr>
@@ -334,6 +586,191 @@ export default function AttendancePage() {
             ))}
          </div>
       </footer>
+
+      {/* Attendance correction & detail approval modal */}
+      {isDetailModalOpen && selectedRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm" id="attendanceDetailModal">
+          <div className="bg-white w-full max-w-[500px] rounded-2xl shadow-xl border border-slate-100 flex flex-col max-h-[90vh] overflow-hidden">
+            
+            {/* Modal Header */}
+            <div className="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">Attendance Timesheet Correction</h3>
+                <p className="text-xs text-slate-500 font-medium">Verify employee logs and approve timesheet correction request</p>
+              </div>
+              <button 
+                onClick={handleCloseModal}
+                className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                title="Close modal"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+              
+              {/* Employee Quick Info Badge */}
+              <div className="flex items-center gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-200/60">
+                <img 
+                  src={selectedRequest.avatar} 
+                  alt={selectedRequest.name} 
+                  className="h-12 w-12 rounded-lg object-cover border border-slate-200/80 shrink-0"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-slate-900 truncate">{selectedRequest.name}</h4>
+                    <span className="text-[10px] font-mono tracking-wider text-slate-500 bg-slate-200/60 px-1.5 py-0.5 rounded font-bold uppercase">{selectedRequest.id}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">{selectedRequest.role} — {selectedRequest.subRole}</p>
+                </div>
+              </div>
+
+              {/* Attendance Info Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-50/20 p-3 rounded-xl border border-slate-100">
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider mb-1">Target Work Date</span>
+                  <span className="text-xs font-semibold text-slate-800">{selectedRequest.date || "Today"}</span>
+                </div>
+                <div className="bg-slate-50/20 p-3 rounded-xl border border-slate-100">
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider mb-1">Working Model</span>
+                  <span className="text-xs font-semibold text-slate-800 capitalize">{selectedRequest.model || "Hybrid"}</span>
+                </div>
+              </div>
+
+              {/* Editable Times Section */}
+              <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-800 uppercase tracking-wider">Adjustment Parameters</span>
+                  <span className="text-[10px] text-slate-400 font-medium font-mono">Input corrected times</span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-slate-500 block">Check-In</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-white border border-slate-250 focus:border-slate-350 focus:ring-1 focus:ring-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none transition-all"
+                      placeholder="e.g. 08:30"
+                      value={editIn}
+                      onChange={e => setEditIn(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-slate-500 block">Check-Out</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-white border border-slate-250 focus:border-slate-350 focus:ring-1 focus:ring-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none transition-all"
+                      placeholder="e.g. 17:30"
+                      value={editOut}
+                      onChange={e => setEditOut(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Delegate / Forward Manager Select Option */}
+              <div className="space-y-3 bg-slate-50/50 p-4 rounded-xl border border-slate-200/40">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Forward for Preliminary Review</span>
+                  {selectedRequest.forwardedTo && (
+                    <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100/50">
+                      Currently: {selectedRequest.forwardedStatus === 'Approved' ? 'Approved' : 'Pending'}
+                    </span>
+                  )}
+                </div>
+                
+                <div className="flex gap-2.5">
+                  <select 
+                    className="flex-1 bg-white border border-slate-200 focus:border-slate-350 rounded-xl py-1.5 px-3 text-xs font-semibold text-slate-800 outline-none cursor-pointer"
+                    value={forwardTo}
+                    onChange={e => setForwardTo(e.target.value)}
+                  >
+                    <option value="">Choose manager or supervisor...</option>
+                    {managersList.map(m => (
+                      <option key={m.name} value={m.name}>{m.name} ({m.role})</option>
+                    ))}
+                  </select>
+                  <button 
+                    onClick={() => handleForwardRequest(forwardTo)}
+                    disabled={!forwardTo}
+                    className="bg-brand text-white text-xs font-semibold px-4 py-1.5 rounded-xl hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap transition-all"
+                  >
+                    Forward
+                  </button>
+                </div>
+                
+                {selectedRequest.forwardedTo ? (
+                  <div className="text-xs text-slate-600 flex items-center justify-between bg-white border border-slate-150 p-2.5 rounded-xl">
+                    <span>
+                      Forwarded to <strong>{selectedRequest.forwardedTo}</strong> ({selectedRequest.forwardedStatus || 'Pending'})
+                    </span>
+                    {selectedRequest.forwardedStatus === 'Pending' && (
+                      <button 
+                        onClick={handleSimulateManagerApproval}
+                        className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-1 rounded border border-emerald-100 font-extrabold hover:bg-emerald-100 transition-all cursor-pointer"
+                        title="Simulate manager approval action"
+                      >
+                        Simulate Approval
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-slate-400">Optionally delegate this request to the respective head of department for review before final human resources action.</p>
+                )}
+              </div>
+
+              {/* Comment field block */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Decision Remarks / Notes</span>
+                <textarea 
+                  className="w-full bg-white border border-slate-200 focus:border-slate-350 focus:ring-1 focus:ring-slate-300 rounded-xl p-3 text-xs font-medium outline-none min-h-[60px] resize-none transition-all"
+                  placeholder="e.g. Approved check-in correction as confirmed by department logs..."
+                  value={commentText}
+                  onChange={e => setCommentText(e.target.value)}
+                />
+                {selectedRequest.comment && (
+                  <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-lg flex items-start gap-2">
+                    <MessageSquare className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
+                    <p className="text-xs text-slate-650 leading-relaxed">
+                      <strong className="font-semibold">Original Note:</strong> "{selectedRequest.comment}"
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Actions Footer */}
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0">
+              <button 
+                onClick={handleSaveDrafts}
+                className="bg-white border border-slate-200 hover:bg-slate-150 text-slate-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer transition-colors"
+                title="Saves adjusted check in - out draft times"
+              >
+                Save Draft
+              </button>
+              
+              <div className="flex gap-2.5">
+                <button 
+                  onClick={() => handleUpdateStatus('Rejected')}
+                  className="bg-white border border-rose-250 text-rose-600 text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-rose-50 cursor-pointer transition-colors"
+                  title="Reject this attendance log request"
+                >
+                  Reject Correction
+                </button>
+                <button 
+                  onClick={() => handleUpdateStatus('Approved')}
+                  className="bg-brand text-white text-xs font-semibold px-4 py-2.5 rounded-xl hover:opacity-95 flex items-center gap-1 shadow-sm cursor-pointer transition-all"
+                  title="Approve times and apply changes to log"
+                >
+                  Approve Correction
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }

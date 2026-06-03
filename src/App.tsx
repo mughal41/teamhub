@@ -13,6 +13,12 @@ import CalendarPage from "./views/CalendarPage";
 import AddEmployeePage from "./views/AddEmployeePage";
 import LoginPage from "./views/LoginPage";
 import SignupPage from "./views/SignupPage";
+import PersonalInformationPage from "./views/PersonalInformationPage";
+import SecurityPrivacyPage from "./views/SecurityPrivacyPage";
+import NotificationsPage from "./views/NotificationsPage";
+import RolesPermissionsPage from "./views/RolesPermissionsPage";
+import OrganizationProfilePage from "./views/OrganizationProfilePage";
+import BillingPage from "./views/BillingPage";
 
 export default function App() {
   return (
@@ -32,6 +38,12 @@ export default function App() {
         <Route path="/payroll" element={<PayrollPage />} />
         <Route path="/leave" element={<LeaveManagementPage />} />
         <Route path="/recruitment" element={<RecruitmentPage />} />
+        <Route path="/settings/personal-info" element={<PersonalInformationPage />} />
+        <Route path="/settings/security" element={<SecurityPrivacyPage />} />
+        <Route path="/settings/notifications" element={<NotificationsPage />} />
+        <Route path="/settings/roles" element={<RolesPermissionsPage />} />
+        <Route path="/settings/organization" element={<OrganizationProfilePage />} />
+        <Route path="/settings/billing" element={<BillingPage />} />
         
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

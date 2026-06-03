@@ -80,6 +80,25 @@ const satisfactionSub = [
 ];
 
 export default function DashboardPage() {
+  const [pendingPayrolls, setPendingPayrolls] = React.useState([
+    { id: 'PAY-104', name: 'Lina Armand', role: 'Lab Analyst', dept: 'R&D', amount: '$3,450', reason: 'Basic Salary + $250 Allowance', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80' },
+    { id: 'PAY-105', name: 'Ethan Ray', role: 'UI Designer', dept: 'Product Design', amount: '$4,120', reason: 'Basic Salary + $180 Overtime', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80' },
+    { id: 'PAY-106', name: 'Jacob Yuen', role: 'Site Supervisor', dept: 'Operations', amount: '$3,890', reason: 'Basic Salary', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80' },
+  ]);
+  const [approvedCount, setApprovedCount] = React.useState(14);
+  const [toastText, setToastText] = React.useState<string | null>(null);
+  const [perfMenuOpen, setPerfMenuOpen] = React.useState(false);
+  const [payrollMenuOpen, setPayrollMenuOpen] = React.useState(false);
+
+  const handleApprovePayroll = (id: string, name: string) => {
+    setPendingPayrolls(prev => prev.filter(p => p.id !== id));
+    setApprovedCount(prev => prev + 1);
+    setToastText(`Successfully approved payroll case for ${name}!`);
+    setTimeout(() => {
+      setToastText(null);
+    }, 3000);
+  };
+
   return (
     <AppLayout 
       title="Dashboard" 
@@ -196,6 +215,103 @@ export default function DashboardPage() {
                           {idx !== schedules.length - 1 && <div className="h-px bg-[#E5E6E6] mt-4" />}
                        </div>
                     ))}
+                 </div>
+              </Card>
+
+              {/* Performance Reviews Pending & Approved Tracker */}
+              <Card className="p-4 border-none rounded-[16px] bg-white shadow-sm flex flex-col">
+                 <div className="flex items-center justify-between mb-4 relative">
+                    <div>
+                       <h3 className="text-[16px] font-bold text-[#203430]">Performance Reviews</h3>
+                       <span className="text-[10px] uppercase font-black tracking-wider text-brand">Assigned to Me</span>
+                    </div>
+                    <div className="relative">
+                       <button 
+                          onClick={() => setPerfMenuOpen(!perfMenuOpen)}
+                          className="p-1 px-1.5 rounded-lg hover:bg-slate-100 transition-colors flex items-center justify-center cursor-pointer"
+                          aria-label="Options"
+                       >
+                          <MoreHorizontal className="h-4 w-4 text-[#A4ACAB]" />
+                       </button>
+                       {perfMenuOpen && (
+                          <>
+                             <div className="fixed inset-0 z-[199]" onClick={() => setPerfMenuOpen(false)} />
+                             <div className="absolute right-0 top-7 z-[200] w-48 bg-white rounded-xl shadow-lg border border-[#E5E6E6] py-1.5 animate-in fade-in duration-100">
+                                <button 
+                                   onClick={() => {
+                                      setPerfMenuOpen(false);
+                                      setToastText("Opening all Performance Reviews...");
+                                      setTimeout(() => setToastText(null), 3000);
+                                   }}
+                                   className="w-full text-left px-4 py-2 text-[12px] text-[#203430] hover:bg-slate-50 font-medium transition-colors cursor-pointer"
+                                >
+                                   View All Reviews
+                                </button>
+                                <button 
+                                   onClick={() => {
+                                      setPerfMenuOpen(false);
+                                      setToastText("Initiated performance audit CSV export!");
+                                      setTimeout(() => setToastText(null), 3000);
+                                   }}
+                                   className="w-full text-left px-4 py-2 text-[12px] text-[#203430] hover:bg-slate-50 font-medium transition-colors cursor-pointer"
+                                >
+                                   Export Records
+                                </button>
+                                <button 
+                                   onClick={() => {
+                                      setPerfMenuOpen(false);
+                                      setToastText("Metrics successfully synced with HR engine.");
+                                      setTimeout(() => setToastText(null), 3000);
+                                   }}
+                                   className="w-full text-[12px] text-left px-4 py-2 text-[#203430] hover:bg-slate-50 font-medium transition-colors cursor-pointer"
+                                >
+                                   Sync Metrics
+                                </button>
+                             </div>
+                          </>
+                       )}
+                    </div>
+                 </div>
+                 
+                 <div className="grid grid-cols-3 gap-2 mb-4 bg-[#F7F7F7] p-2.5 rounded-[12px]">
+                    <div className="text-center">
+                       <p className="text-[10px] text-[#63716E] font-medium leading-none">Assigned</p>
+                       <p className="text-[16px] font-bold text-[#203430] mt-1.5">6</p>
+                    </div>
+                    <div className="text-center border-x border-[#E5E6E6]">
+                       <p className="text-[10px] text-amber-600 font-medium leading-none">Pending</p>
+                       <p className="text-[16px] font-bold text-amber-600 mt-1.5">2</p>
+                    </div>
+                    <div className="text-center">
+                       <p className="text-[10px] text-[#35BFA3] font-medium leading-none">Approved</p>
+                       <p className="text-[16px] font-bold text-[#35BFA3] mt-1.5">4</p>
+                    </div>
+                 </div>
+
+                 <div className="space-y-3">
+                    <p className="text-[11px] font-black uppercase text-[#63716E] tracking-wider mb-1">Pending Feedback Action</p>
+                    
+                    <div className="flex items-center justify-between p-2 rounded-[8px] bg-amber-500/5 border border-amber-500/10 hover:bg-amber-500/10 transition-colors">
+                       <div className="flex items-center gap-2">
+                          <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80" className="h-[28px] w-[28px] rounded-full object-cover shrink-0" alt="Olivia" />
+                          <div>
+                             <p className="text-[12px] font-bold text-[#203430] leading-none">Olivia Mason</p>
+                             <p className="text-[10px] text-[#63716E] mt-0.5 font-medium leading-none">Quarterly Audit</p>
+                          </div>
+                       </div>
+                       <span className="text-[10px] bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full font-bold">Today</span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-2 rounded-[8px] bg-[#E4F2D3]/25 border border-[#E4F2D3] hover:bg-[#E4F2D3]/40 transition-colors">
+                       <div className="flex items-center gap-2">
+                          <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80" className="h-[28px] w-[28px] rounded-full object-cover shrink-0" alt="Ethan" />
+                          <div>
+                             <p className="text-[12px] font-bold text-[#203430] leading-none">Ethan Ray</p>
+                             <p className="text-[10px] text-[#63716E] mt-0.5 font-medium leading-none">Monthly touchpoint</p>
+                          </div>
+                       </div>
+                       <span className="text-[10px] bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full font-bold">2 days</span>
+                    </div>
                  </div>
               </Card>
            </div>
@@ -358,11 +474,135 @@ export default function DashboardPage() {
                           ))}
                        </tbody>
                     </table>
-                 </div>
-              </Card>
-           </div>
+                  </div>
+               </Card>
 
-           {/* Column 3: Performance, Resources & Activities (3/12) */}
+               {/* Employee Payroll Approvals Pending Cases */}
+               <Card className="p-0 border-none rounded-[16px] bg-white shadow-sm overflow-hidden flex flex-col mb-5">
+                  <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E5E6E6]">
+                     <div>
+                        <h3 className="text-[16px] font-bold text-[#203430]">Payroll Approvals Queue</h3>
+                        <p className="text-[11px] text-[#63716E] mt-0.5 font-medium">Authorizations assigned to you for monthly payroll release</p>
+                     </div>
+                     <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+                        <Badge className="bg-[#FFEFEF] text-[#E63D4B] font-bold border-none text-[11px] w-fit">
+                           {pendingPayrolls.length} Pending Approval
+                        </Badge>
+                        <div className="relative">
+                           <button 
+                              type="button"
+                              onClick={() => setPayrollMenuOpen(!payrollMenuOpen)}
+                              className="p-1 px-1.5 rounded-lg hover:bg-slate-100 transition-colors flex items-center justify-center cursor-pointer"
+                              aria-label="Payroll options"
+                           >
+                              <MoreHorizontal className="h-4 w-4 text-[#A4ACAB]" />
+                           </button>
+                           {payrollMenuOpen && (
+                              <>
+                                 <div className="fixed inset-0 z-[199]" onClick={() => setPayrollMenuOpen(false)} />
+                                 <div className="absolute right-0 top-7 z-[200] w-48 bg-white rounded-xl shadow-lg border border-[#E5E6E6] py-1.5 text-left animate-in fade-in duration-100">
+                                    <button 
+                                       type="button"
+                                       onClick={() => {
+                                          setPayrollMenuOpen(false);
+                                          setToastText("Opening all payroll statements...");
+                                          setTimeout(() => setToastText(null), 3000);
+                                       }}
+                                       className="w-full text-left px-4 py-2 text-[12px] text-[#203430] hover:bg-slate-50 font-medium transition-colors cursor-pointer"
+                                    >
+                                       View All Payrolls
+                                    </button>
+                                    <button 
+                                       type="button"
+                                       onClick={() => {
+                                          setPayrollMenuOpen(false);
+                                          setToastText("Initiated export of payroll register CSV!");
+                                          setTimeout(() => setToastText(null), 3000);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-[12px] text-[#203430] hover:bg-slate-50 font-medium transition-colors cursor-pointer"
+                                    >
+                                       Export Ledger
+                                    </button>
+                                    <button 
+                                       type="button"
+                                       onClick={() => {
+                                          setPayrollMenuOpen(false);
+                                          setToastText("Payroll authorization queue reloaded.");
+                                          setTimeout(() => setToastText(null), 3000);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-[12px] text-[#203430] hover:bg-slate-50 font-medium transition-colors cursor-pointer"
+                                    >
+                                       Refresh Queue
+                                    </button>
+                                 </div>
+                              </>
+                           )}
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="p-4 bg-[#F7F7F7]/50 flex flex-wrap gap-4 items-center justify-between border-b border-[#E5E6E6]">
+                     <div className="flex gap-6">
+                        <div className="flex items-baseline gap-1">
+                           <span className="text-[20px] font-bold text-[#203430]">{pendingPayrolls.length}</span>
+                           <span className="text-[10px] text-[#63716E] font-semibold">Cases Required</span>
+                        </div>
+                        <div className="flex items-baseline gap-1 border-l border-[#E5E6E6] pl-6">
+                           <span className="text-[20px] font-bold text-[#35BFA3]">{approvedCount}</span>
+                           <span className="text-[10px] text-[#63716E] font-semibold">Approved (Month)</span>
+                        </div>
+                     </div>
+                     <div className="text-[11px] font-black uppercase tracking-wider bg-[#E4F2D3]/40 text-[#0E4D41] px-2.5 py-1 rounded-[6px]">
+                        Target Date: 5th June
+                     </div>
+                  </div>
+
+                  <div className="divide-y divide-[#E5E6E6]">
+                     {pendingPayrolls.length === 0 && (
+                        <div className="p-8 text-center text-[#63716E] space-y-2">
+                           <CheckCircle2 className="h-8 w-8 text-[#35BFA3] mx-auto" />
+                           <h4 className="font-bold text-[14px] text-[#203430]">All Payroll Instances Signed Off</h4>
+                           <p className="text-[11px] max-w-sm mx-auto font-medium">You have completed all pending payroll approvals for this development cycle.</p>
+                        </div>
+                     )}
+                     {pendingPayrolls.length > 0 && pendingPayrolls.map((payroll) => (
+                        <div key={payroll.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#F7F7F7]/20 transition-colors">
+                           <div className="flex items-center gap-3">
+                              <img src={payroll.avatar} className="h-10 w-10 rounded-full object-cover shrink-0" alt={payroll.name} />
+                              <div>
+                                 <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-[12px] font-bold text-[#203430]">{payroll.name}</span>
+                                    <span className="text-[10px] bg-slate-150 text-slate-600 px-1.5 py-0.5 rounded font-black tracking-wider uppercase text-[8px]">
+                                       {payroll.id}
+                                    </span>
+                                 </div>
+                                 <p className="text-[10px] text-[#63716E] mt-0.5 font-semibold">
+                                    {payroll.role} • {payroll.dept}
+                                 </p>
+                                 <p className="text-[10px] text-[#A4ACAB] mt-1 font-medium">{payroll.reason}</p>
+                              </div>
+                           </div>
+
+                           <div className="flex items-center gap-4 justify-between sm:justify-start">
+                              <div className="text-left sm:text-right">
+                                 <p className="text-[10px] text-[#63716E] font-medium leading-none">Net Amount</p>
+                                 <p className="text-[14px] font-black text-[#203430] mt-1">{payroll.amount}</p>
+                              </div>
+                              <button 
+                                 type="button"
+                                 onClick={() => handleApprovePayroll(payroll.id, payroll.name)}
+                                 className="bg-[#006b5f] hover:bg-[#005047] text-white font-black text-[11px] px-3.5 py-2 rounded-[8px] transition-all shadow-sm active:scale-95 cursor-pointer h-9 flex items-center justify-center whitespace-nowrap"
+                              >
+                                 Approve Instance
+                              </button>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               </Card>
+            </div>
+
+            {/* Column 3: Performance, Resources & Activities (3/12) */}
            <div className="lg:col-span-3 space-y-5">
               <Card className="p-4 border-none rounded-[16px] bg-white shadow-sm flex flex-col">
                  <div className="flex items-center justify-between mb-4">
@@ -500,6 +740,19 @@ export default function DashboardPage() {
             ))}
          </div>
       </footer>
+
+      {/* Dynamic Approval Toast */}
+      {toastText && (
+         <div className="fixed bottom-6 right-6 z-[2000] bg-[#203430] text-white px-5 py-3.5 rounded-[12px] shadow-2xl flex items-center gap-3 border border-white/10 animate-[slideUp_0.3s_ease-out]">
+            <div className="h-6 w-6 bg-[#35BFA3] rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0">
+               ✓
+            </div>
+            <div className="space-y-0.5">
+               <p className="text-[12px] font-bold leading-tight">{toastText}</p>
+               <p className="text-[10px] text-[#A4ACAB]">The payroll authorization queue has updated dynamically.</p>
+            </div>
+         </div>
+      )}
     </AppLayout>
   );
 }
