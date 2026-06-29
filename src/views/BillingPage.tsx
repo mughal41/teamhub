@@ -1,6 +1,7 @@
 import * as React from "react"
 import { useState } from "react"
 import { AppLayout } from "../components/layout/AppLayout"
+import { getCollection, saveCollection } from "../lib/db"
 import { 
   CreditCard, 
   Sparkles, 
@@ -30,14 +31,60 @@ import {
   Shield
 } from "lucide-react"
 
+/*
+Billing & Invoices JSON Data Format Requirement:
+-----------------------------------------------+
+The Billing and Subscription page expects information feeds organized in the following JSON format.
+You can read/write these collections to/from local storage or client state using "db_payment_methods" and "db_invoices".
+
+1. Payment Methods List (db_payment_methods):
+[
+  {
+    "id": "pay_1",
+    "cardholder": "Anya Rodriguez",
+    "brand": "Visa",
+    "last4": "4242",
+    "expMonth": "12",
+    "expYear": "2027",
+    "isDefault": true
+  }
+]
+
+2. Invoices List (db_invoices):
+[
+  {
+    "id": "INV-2026-001",
+    "amount": "299.00",
+    "currency": "USD",
+    "date": "2026-06-01",
+    "status": "PAID",
+    "plan": "pro"
+  }
+]
+
+3. Subscription Plan (db_current_plan):
+"basic" | "pro" | "enterprise"
+*/
+
 // Define our visual themes & metrics
 type SubscriptionPlan = "basic" | "pro" | "enterprise"
 type ViewState = "billing" | "usage" | "subscription"
 
 export default function BillingPage() {
   const [activeView, setActiveView] = useState<ViewState>("billing")
-  const [currentPlan, setCurrentPlan] = useState<SubscriptionPlan>("pro")
   
+  const [currentPlan, setCurrentPlanState] = useState<SubscriptionPlan>(() => {
+    return (localStorage.getItem("db_current_plan") as SubscriptionPlan) || "pro";
+  });
+
+  const setCurrentPlan = (plan: SubscriptionPlan) => {
+    setCurrentPlanState(plan);
+    localStorage.setItem("db_current_plan", plan);
+    // Broadcast
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event("db_updated"));
+  };
+
   // Modal toggle for adding card
   const [showAddCardModal, setShowAddCardModal] = useState(false)
   const [showManagePlanModal, setShowManagePlanModal] = useState(false)
@@ -52,24 +99,62 @@ export default function BillingPage() {
   // Active status of notification alerts (Usage Report Side Widget)
   const [alertApi, setAlertApi] = useState(true)
   const [alertStorage, setAlertStorage] = useState(true)
-  const [customAlerts, setCustomAlerts] = useState<string[]>([])
+  
+  const [customAlerts, setCustomAlertsState] = useState<string[]>(() => {
+    return getCollection<string[]>("db_custom_alerts", ["Memory Capacity Warning", "Biometric Desync Trigger"]);
+  });
+
+  const setCustomAlerts = (update: string[] | ((prev: string[]) => string[])) => {
+    if (typeof update === "function") {
+      setCustomAlertsState((prev) => {
+        const next = update(prev);
+        saveCollection("db_custom_alerts", next);
+        return next;
+      });
+    } else {
+      setCustomAlertsState(update);
+      saveCollection("db_custom_alerts", update);
+    }
+  };
 
   // Optimization tip status
   const [automationConfigured, setAutomationConfigured] = useState(false)
 
   // Payment methods list
-  const [paymentMethods, setPaymentMethods] = useState([
-    { id: 1, type: "visa", last4: "4242", expiry: "12/27", holder: "Sarah Jenkins", isDefault: true },
-    { id: 2, type: "mastercard", last4: "8890", expiry: "09/26", holder: "Sarah Jenkins", isDefault: false }
-  ])
+  const [paymentMethods, setPaymentMethodsState] = useState<any[]>(() => {
+    return getCollection<any[]>("db_payment_methods", []);
+  });
+
+  const setPaymentMethods = (update: any[] | ((prev: any[]) => any[])) => {
+    if (typeof update === "function") {
+      setPaymentMethodsState((prev) => {
+        const next = update(prev);
+        saveCollection("db_payment_methods", next);
+        return next;
+      });
+    } else {
+      setPaymentMethodsState(update);
+      saveCollection("db_payment_methods", update);
+    }
+  };
 
   // Invoices list
-  const [invoices, setInvoices] = useState([
-    { id: "INV-2025-1042", date: "May 24, 2025", amount: "$99.00", status: "Paid" },
-    { id: "INV-2025-0988", date: "Apr 24, 2025", amount: "$99.00", status: "Paid" },
-    { id: "INV-2025-0811", date: "Mar 24, 2025", amount: "$99.00", status: "Paid" },
-    { id: "INV-2025-0720", date: "Feb 24, 2025", amount: "$124.00", status: "Paid" }
-  ])
+  const [invoices, setInvoicesState] = useState<any[]>(() => {
+    return getCollection<any[]>("db_invoices", []);
+  });
+
+  const setInvoices = (update: any[] | ((prev: any[]) => any[])) => {
+    if (typeof update === "function") {
+      setInvoicesState((prev) => {
+        const next = update(prev);
+        saveCollection("db_invoices", next);
+        return next;
+      });
+    } else {
+      setInvoicesState(update);
+      saveCollection("db_invoices", update);
+    }
+  };
 
   // Add Card form state
   const [cardName, setCardName] = useState("")
@@ -79,13 +164,29 @@ export default function BillingPage() {
   const [cardZip, setCardZip] = useState("")
   const [isDefaultCheckbox, setIsDefaultCheckbox] = useState(true)
 
+  // Reactive DB Updates Sync
+  React.useEffect(() => {
+    const handleDbUpdate = () => {
+      setCurrentPlanState((localStorage.getItem("db_current_plan") as SubscriptionPlan) || "pro");
+      setCustomAlertsState(getCollection<string[]>("db_custom_alerts", []));
+      setPaymentMethodsState(getCollection<any[]>("db_payment_methods", []));
+      setInvoicesState(getCollection<any[]>("db_invoices", []));
+    };
+    window.addEventListener("db_updated", handleDbUpdate);
+    window.addEventListener("storage", handleDbUpdate);
+    return () => {
+      window.removeEventListener("db_updated", handleDbUpdate);
+      window.removeEventListener("storage", handleDbUpdate);
+    };
+  }, []);
+
   // Dynamically computed metrics based on SubscriptionPlan and Period filter
   const isBasic = currentPlan === "basic"
   const isPro = currentPlan === "pro"
   const isEnterprise = currentPlan === "enterprise"
 
   const allowedSeats = isBasic ? 50 : isPro ? 250 : 1000
-  const activeSeats = 42
+  const activeSeats = getCollection<any[]>("db_employees", []).length || 42
 
   // Metrics based on period filter (Detailed usage)
   const metricMultiplier = usagePeriod === "7" ? 0.25 : usagePeriod === "90" ? 2.8 : 1.0
@@ -155,6 +256,45 @@ export default function BillingPage() {
     })))
     triggerToast("Updated primary default billing credential successfully!")
   }
+
+  const restoreDemoBilling = () => {
+    const defaultCards = [
+      {
+        id: 1,
+        type: "visa",
+        last4: "4242",
+        expiry: "12/28",
+        holder: "Anya Rodriguez",
+        isDefault: true
+      },
+      {
+        id: 2,
+        type: "mastercard",
+        last4: "9876",
+        expiry: "09/27",
+        holder: "Admin Operations",
+        isDefault: false
+      }
+    ];
+    const defaultInvoices = [
+      {
+        id: "INV-2026-001",
+        date: "2026-06-01",
+        amount: "$99.00",
+        status: "Paid"
+      },
+      {
+        id: "INV-2026-002",
+        date: "2026-05-01",
+        amount: "$99.00",
+        status: "Paid"
+      }
+    ];
+
+    setPaymentMethods(defaultCards);
+    setInvoices(defaultInvoices);
+    triggerToast("Sample corporate payment credentials and invoice indicators created.");
+  };
 
   const exportReport = () => {
     setIsExporting(true)
@@ -226,10 +366,19 @@ export default function BillingPage() {
         {/* ----------------- PRIMARY BILLING INDEX VIEW ----------------- */}
         {activeView === "billing" && (
           <div className="space-y-8">
-            <div className="flex flex-col gap-1">
-              <p className="text-sm text-slate-500 font-medium">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <p className="text-sm text-slate-500 font-medium font-sans">
                 Manage your TeamHub subscription level, billing credits, download invoice statements, and configure secure payment methods.
               </p>
+              {paymentMethods.length === 0 && (
+                <button
+                  type="button"
+                  onClick={restoreDemoBilling}
+                  className="text-xs font-bold bg-slate-50 hover:bg-slate-100 text-[#006b5f] hover:text-[#005047] border border-slate-200 rounded-xl px-4 py-2 cursor-pointer transition-colors shrink-0"
+                >
+                  Restore Prototype Billing Logs
+                </button>
+              )}
             </div>
 
             {/* Main Grid split */}
@@ -320,46 +469,54 @@ export default function BillingPage() {
                   </div>
 
                   <div className="p-6 divide-y divide-slate-100/80">
-                    {paymentMethods.map((method) => (
-                      <div key={method.id} className="py-4.5 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-8 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-[10px] text-slate-400 select-none shadow-3xs uppercase tracking-widest font-mono">
-                            {method.type === "visa" ? (
-                              <span className="text-indigo-800 italic">Visa</span>
-                            ) : (
-                              <span className="text-amber-700">Mc</span>
-                            )}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-bold text-slate-800">•••• •••• •••• {method.last4}</p>
-                              {method.isDefault && (
-                                <span className="px-2 py-0.5 rounded bg-emerald-550 bg-emerald-50 border border-emerald-100 text-emerald-700 text-[9px] font-extrabold tracking-wide">PRIMARY DEFAULT</span>
+                    {paymentMethods.length === 0 ? (
+                      <div className="py-8 text-center text-slate-400 font-medium text-xs flex flex-col items-center justify-center gap-2">
+                        <CreditCard className="h-8 w-8 text-slate-300 mb-1" />
+                        <p>No configured credit cards or payment plans found.</p>
+                        <p className="text-[10px] text-slate-450 text-slate-400 max-w-xs font-normal">Add a credit card below to initialize automated trial subscription accounts billing cycles.</p>
+                      </div>
+                    ) : (
+                      paymentMethods.map((method) => (
+                        <div key={method.id} className="py-4.5 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-8 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-[10px] text-slate-400 select-none shadow-3xs uppercase tracking-widest font-mono">
+                              {method.type === "visa" ? (
+                                <span className="text-indigo-800 italic">Visa</span>
+                              ) : (
+                                <span className="text-amber-700">Mc</span>
                               )}
                             </div>
-                            <p className="text-[11px] text-slate-400 font-medium mt-0.5">Expires {method.expiry} • Holder: {method.holder}</p>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-bold text-slate-800">•••• •••• •••• {method.last4}</p>
+                                {method.isDefault && (
+                                  <span className="px-2 py-0.5 rounded bg-emerald-550 bg-emerald-50 border border-emerald-100 text-emerald-700 text-[9px] font-extrabold tracking-wide">PRIMARY DEFAULT</span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-400 font-medium mt-0.5">Expires {method.expiry} • Holder: {method.holder}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {!method.isDefault && (
+                              <button 
+                                onClick={() => handleSetDefault(method.id)}
+                                className="text-xs font-bold text-slate-600 hover:text-[#006b5f] hover:bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 hover:border-teal-500/30 transition-all cursor-pointer"
+                              >
+                                Set default
+                              </button>
+                            )}
+                            <button 
+                              onClick={() => deleteCard(method.id, method.last4)}
+                              className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
+                              title="Remove Credentials"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-2">
-                          {!method.isDefault && (
-                            <button 
-                              onClick={() => handleSetDefault(method.id)}
-                              className="text-xs font-bold text-slate-600 hover:text-[#006b5f] hover:bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 hover:border-teal-500/30 transition-all cursor-pointer"
-                            >
-                              Set default
-                            </button>
-                          )}
-                          <button 
-                            onClick={() => deleteCard(method.id, method.last4)}
-                            className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
-                            title="Remove Credentials"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
 
@@ -382,7 +539,14 @@ export default function BillingPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100/60 text-slate-700 text-sm">
-                        {invoices.map((inv) => (
+                        {invoices.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="px-6 py-12 text-center text-slate-400 font-medium">
+                              No configured billing or transaction invoices found.
+                            </td>
+                          </tr>
+                        ) : (
+                          invoices.map((inv) => (
                           <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors">
                             <td className="px-6 py-4 font-bold text-slate-800">{inv.id}</td>
                             <td className="px-6 py-4 text-slate-500 font-semibold text-xs">{inv.date}</td>
@@ -403,7 +567,8 @@ export default function BillingPage() {
                               </button>
                             </td>
                           </tr>
-                        ))}
+                        ))
+                        )}
                       </tbody>
                     </table>
                   </div>

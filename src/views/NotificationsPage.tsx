@@ -25,8 +25,29 @@ import {
 } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 
+/*
+NotificationItem JSON Data Format Requirement:
+----------------------------------------------
+The Notification Center expects an array of alert feeds in the following JSON format.
+You can read/write this array to and from the local storage under "db_notifications".
+
+[
+  {
+    "id": "1",                                         // Unique identifier string
+    "title": "October Payslips are now available",     // Header title string of the alert
+    "description": "All employee payslips processed.",  // Context details string
+    "category": "payroll",                             // Folder category: "payroll" | "requests" | "system" | "billing"
+    "time": "2h ago",                                  // Relative human-readable timestamp
+    "unread": true,                                    // Boolean state of whether the alert is unread
+    "actionText": "View Payslip",                      // Optional text string for call-to-action button
+    "iconType": "payroll",                             // Graphic selection enum: "payroll" | "system" | "billing" | "document"
+    "avatar": "https://example.com/photo.jpg"          // Optional external profile avatar photo card
+  }
+]
+*/
+
 // Types of notifications used in our HR portal
-interface NotificationItem {
+export interface NotificationItem {
   id: string
   title: string
   description: string
@@ -38,69 +59,104 @@ interface NotificationItem {
   iconType?: "payroll" | "system" | "billing" | "document"
 }
 
+export const DEMO_NOTIFICATIONS: NotificationItem[] = [
+  {
+    id: "1",
+    title: "October Payslips are now available",
+    description: "All employee payslips for the month of October have been successfully processed and are ready for distribution.",
+    category: "payroll",
+    time: "2h ago",
+    unread: true,
+    actionText: "View Payslip",
+    iconType: "payroll"
+  },
+  {
+    id: "2",
+    title: "Leave Request: Sarah Jenkins",
+    description: "Sarah Jenkins has submitted a request for 3 days of annual leave starting November 15th.",
+    category: "requests",
+    time: "5h ago",
+    unread: true,
+    actionText: "Review Request",
+    avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBjQ7rJMF4E2sH0pjYqjjK7gkYlczMjC7pV-7EBlLdEzkPozxtstmQMn2NaKrfRoSCHutk38sA5F_OsAWzOHC0aQrHzc3k4Wpj0FdBPUzJcFONLNlp8eFGv6PsAtww-L7LzczZ_6hakrxuA1QvS-Lg9lOP4qO4qVk0Lv-BbifUGQgs4922Smcnc_0kqoabzM9MtwoqVrltQ0iAkRiYXVbNIoHC6t_aJUD4bv-zu9f9p1YLp6nrnivjQb2H4MWhUPknViNzl5NRlurA"
+  },
+  {
+    id: "3",
+    title: "System Maintenance Complete",
+    description: "Scheduled database optimization has been completed successfully. No downtime was experienced.",
+    category: "system",
+    time: "Yesterday",
+    unread: false,
+    actionText: "View Logs",
+    iconType: "system"
+  },
+  {
+    id: "4",
+    title: "Contract Renewal: David Miller",
+    description: "The employment contract for David Miller has been successfully renewed and signed by all parties.",
+    category: "requests",
+    time: "Oct 24, 2:15 PM",
+    unread: true,
+    actionText: "View Document",
+    iconType: "document"
+  },
+  {
+    id: "5",
+    title: "API Timeout Alert",
+    description: "Intermittent API timeout warning detected in the main external CRM integrations module.",
+    category: "system",
+    time: "Oct 23, 10:44 AM",
+    unread: true,
+    actionText: "Check Logs",
+    iconType: "system"
+  },
+  {
+    id: "6",
+    title: "Organization billing renewed",
+    description: "Your modern enterprise subscription was commercialized automatically for the upcoming quarter.",
+    category: "billing",
+    time: "Oct 22, 9:00 AM",
+    unread: false,
+    iconType: "billing"
+  }
+];
+
 export default function NotificationsPage() {
-  // Notification feeds state aligned perfectly with modern visual dashboard
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: "1",
-      title: "October Payslips are now available",
-      description: "All employee payslips for the month of October have been successfully processed and are ready for distribution.",
-      category: "payroll",
-      time: "2h ago",
-      unread: true,
-      actionText: "View Payslip",
-      iconType: "payroll"
-    },
-    {
-      id: "2",
-      title: "Leave Request: Sarah Jenkins",
-      description: "Sarah Jenkins has submitted a request for 3 days of annual leave starting November 15th.",
-      category: "requests",
-      time: "5h ago",
-      unread: true,
-      actionText: "Review Request",
-      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBjQ7rJMF4E2sH0pjYqjjK7gkYlczMjC7pV-7EBlLdEzkPozxtstmQMn2NaKrfRoSCHutk38sA5F_OsAWzOHC0aQrHzc3k4Wpj0FdBPUzJcFONLNlp8eFGv6PsAtww-L7LzczZ_6hakrxuA1QvS-Lg9lOP4qO4qVk0Lv-BbifUGQgs4922Smcnc_0kqoabzM9MtwoqVrltQ0iAkRiYXVbNIoHC6t_aJUD4bv-zu9f9p1YLp6nrnivjQb2H4MWhUPknViNzl5NRlurA"
-    },
-    {
-      id: "3",
-      title: "System Maintenance Complete",
-      description: "Scheduled database optimization has been completed successfully. No downtime was experienced.",
-      category: "system",
-      time: "Yesterday",
-      unread: false,
-      actionText: "View Logs",
-      iconType: "system"
-    },
-    {
-      id: "4",
-      title: "Contract Renewal: David Miller",
-      description: "The employment contract for David Miller has been successfully renewed and signed by all parties.",
-      category: "requests",
-      time: "Oct 24, 2:15 PM",
-      unread: true,
-      actionText: "View Document",
-      iconType: "document"
-    },
-    {
-      id: "5",
-      title: "API Timeout Alert",
-      description: "Intermittent API timeout warning detected in the main external CRM integrations module.",
-      category: "system",
-      time: "Oct 23, 10:44 AM",
-      unread: true,
-      actionText: "Check Logs",
-      iconType: "system"
-    },
-    {
-      id: "6",
-      title: "Organization billing successfully renewed",
-      description: "Your modern enterprise subscription was commercialized automatically for the upcoming quarter.",
-      category: "billing",
-      time: "Oct 22, 9:00 AM",
-      unread: false,
-      iconType: "billing"
+  // Empty states applied by default. Initialized to empty array.
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
+    const saved = localStorage.getItem("db_notifications");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (err) {
+        // Fallback
+      }
     }
-  ])
+    return []; // Satisfy empty state by default
+  });
+
+  // Automatically save state updates and broadcast reload events
+  React.useEffect(() => {
+    localStorage.setItem("db_notifications", JSON.stringify(notifications));
+  }, [notifications]);
+
+  // Synchronize state values from other tabs or actions
+  React.useEffect(() => {
+    const handleStorageUpdate = () => {
+      const saved = localStorage.getItem("db_notifications");
+      if (saved) {
+        try {
+          setNotifications(JSON.parse(saved));
+        } catch (e) {}
+      }
+    };
+    window.addEventListener("storage", handleStorageUpdate);
+    window.addEventListener("db_updated", handleStorageUpdate);
+    return () => {
+      window.removeEventListener("storage", handleStorageUpdate);
+      window.removeEventListener("db_updated", handleStorageUpdate);
+    };
+  }, []);
 
   // Selected notifications for bulk actions
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -358,14 +414,30 @@ export default function NotificationsPage() {
             {/* Notifications Feed list structure */}
             <div className="space-y-4">
               {filteredNotifications.length === 0 ? (
-                <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-300">
+                <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
+                  <div className="w-14 h-14 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-[#006b5f] shadow-3xs">
                     <Bell className="h-6 w-6" />
                   </div>
-                  <div>
-                    <h4 className="font-bold text-slate-700 text-sm">No notifications found</h4>
-                    <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search keywords criteria</p>
+                  <div className="space-y-1 max-w-sm">
+                    <h4 className="font-bold text-slate-800 text-base">No notifications found</h4>
+                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                      {notifications.length === 0 
+                        ? "Your Alert Feed is pristine. No pending security reports, payroll workflows, or leave requests require attention."
+                        : "No notifications match your current category selection or search parameters."}
+                    </p>
                   </div>
+                  {notifications.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveCategory("all");
+                        setSearchQuery("");
+                      }}
+                      className="px-4 py-1.5 border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                    >
+                      Clear Active Filters
+                    </button>
+                  )}
                 </div>
               ) : (
                 filteredNotifications.map((item) => (
@@ -491,25 +563,25 @@ export default function NotificationsPage() {
             {/* Critical Alerts Console (Important Alerts Section) */}
             <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-3xs space-y-4">
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <ShieldAlert className="h-5 w-5 text-red-500 shrink-0" />
+                <ShieldAlert className="h-5 w-5 text-[#006b5f] shrink-0" />
                 <span>Important Alerts</span>
               </h3>
 
               <div className="space-y-4">
                 
                 {/* Bug Warning Alert */}
-                <div className="p-4 bg-red-50/60 text-red-900 rounded-xl border-l-[4px] border-red-500 shadow-3xs space-y-2.5">
+                <div className="p-4 bg-[#d4e7d8]/30 border border-[#b8cbbd] border-l-[4px] border-l-[#006b5f] text-slate-850 rounded-xl shadow-3xs space-y-2.5">
                   <div className="flex items-center gap-2">
-                    <Info className="h-4.5 w-4.5 text-red-600 shrink-0" />
-                    <span className="font-bold text-xs tracking-tight">Critical Bug Detected</span>
+                    <Info className="h-4.5 w-4.5 text-[#006b5f] shrink-0" />
+                    <span className="font-bold text-xs tracking-tight text-[#0f1f16]">Critical Bug Detected</span>
                   </div>
-                  <p className="text-[11px] text-red-700 font-medium leading-relaxed">
+                  <p className="text-[11px] text-[#57685d] font-bold leading-relaxed">
                     API integration latency bottleneck identified on secure outgoing cycles. Corrective updates are targeted currently.
                   </p>
                   <button 
                     type="button"
                     onClick={() => showToast("Dedicated enterprise support ticket generated automatically!")}
-                    className="w-full py-2 bg-red-650 hover:bg-red-700 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-[11px] tracking-wide uppercase transition-all shadow-sm shadow-red-600/10 cursor-pointer text-center"
+                    className="w-full py-2 bg-[#006b5f] hover:bg-[#005047] text-white rounded-lg font-bold text-[11px] tracking-wide uppercase transition-all shadow-sm shadow-[#006b5f]/10 cursor-pointer text-center"
                   >
                     Contact Tech Support
                   </button>

@@ -19,36 +19,97 @@ import {
   Loader2
 } from "lucide-react"
 
+/*
+Organization Profile JSON Data Format Requirement:
+-------------------------------------------------+
+The Organization Profile settings page expects database information in the following JSON format.
+You can read/write this model through localStorage under "db_organization_profile".
+
+{
+  "companyName": "TeamHub Technologies, Inc.",
+  "legalName": "TeamHub Tech Private Limited",
+  "regNo": "REG-2025-9988112",
+  "industry": "Technology & Softwares",
+  "currencyPref": "USD",
+  "primaryColor": "#006B5F",
+  "secondaryColor": "#D4E7D8",
+  "tagline": "Empowering teams through transparent management and automated HR workflows.",
+  "address": "500 Howard Street, Suite 300",
+  "city": "San Francisco",
+  "state": "CA",
+  "zip": "94105",
+  "country": "United States of America",
+  "phone": "+1 (415) 555-0199",
+  "email": "contact@teamhubtech.io",
+  "linkedin": "https://linkedin.com/company/teamhub-tech",
+  "twitter": "https://twitter.com/teamhub_tech",
+  "website": "https://teamhubtech.io",
+  "logoPreview": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=120"
+}
+*/
+
 export default function OrganizationProfilePage() {
+  // Read saved data or fall back to completely empty placeholders and states
+  const [profileData, setProfileData] = useState(() => {
+    const saved = localStorage.getItem("db_organization_profile")
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch (err) {}
+    }
+    return {
+      companyName: "",
+      legalName: "",
+      regNo: "",
+      industry: "",
+      currencyPref: "USD",
+      primaryColor: "",
+      secondaryColor: "",
+      tagline: "",
+      address: "",
+      city: "",
+      state: "",
+      zip: "",
+      country: "",
+      phone: "",
+      email: "",
+      linkedin: "",
+      twitter: "",
+      website: "",
+      logoPreview: ""
+    }
+  })
+
   // Company details info
-  const [companyName, setCompanyName] = useState("TeamHub Technologies, Inc.")
-  const [legalName, setLegalName] = useState("TeamHub Tech Private Limited")
-  const [regNo, setRegNo] = useState("REG-2025-9988112")
-  const [industry, setIndustry] = useState("Technology & Softwares")
+  const [companyName, setCompanyName] = useState(profileData.companyName || "")
+  const [legalName, setLegalName] = useState(profileData.legalName || "")
+  const [regNo, setRegNo] = useState(profileData.regNo || "")
+  const [industry, setIndustry] = useState(profileData.industry || "")
+  const [currencyPref, setCurrencyPref] = useState(profileData.currencyPref || "USD")
 
   // Brand details
-  const [primaryColor, setPrimaryColor] = useState("#006B5F")
-  const [secondaryColor, setSecondaryColor] = useState("#D4E7D8")
-  const [tagline, setTagline] = useState("Empowering teams through transparent management and automated HR workflows.")
+  const [primaryColor, setPrimaryColor] = useState(profileData.primaryColor || "#006B5F")
+  const [secondaryColor, setSecondaryColor] = useState(profileData.secondaryColor || "#D4E7D8")
+  const [tagline, setTagline] = useState(profileData.tagline || "")
 
   // Headquarters
-  const [address, setAddress] = useState("500 Howard Street, Suite 300")
-  const [city, setCity] = useState("San Francisco")
-  const [state, setState] = useState("CA")
-  const [zip, setZip] = useState("94105")
-  const [country, setCountry] = useState("United States of America")
-  const [phone, setPhone] = useState("+1 (415) 555-0199")
-  const [email, setEmail] = useState("contact@teamhubtech.io")
+  const [address, setAddress] = useState(profileData.address || "")
+  const [city, setCity] = useState(profileData.city || "")
+  const [state, setState] = useState(profileData.state || "")
+  const [zip, setZip] = useState(profileData.zip || "")
+  const [country, setCountry] = useState(profileData.country || "")
+  const [phone, setPhone] = useState(profileData.phone || "")
+  const [email, setEmail] = useState(profileData.email || "")
 
   // Socials
-  const [linkedin, setLinkedin] = useState("https://linkedin.com/company/teamhub-tech")
-  const [twitter, setTwitter] = useState("https://twitter.com/teamhub_tech")
-  const [website, setWebsite] = useState("https://teamhubtech.io")
+  const [linkedin, setLinkedin] = useState(profileData.linkedin || "")
+  const [twitter, setTwitter] = useState(profileData.twitter || "")
+  const [website, setWebsite] = useState(profileData.website || "")
 
   // Status indicators & Custom Upload Logo Modal states
   const [isSaving, setIsSaving] = useState(false)
   const [successToast, setSuccessToast] = useState(false)
-  const [logoPreview, setLogoPreview] = useState("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=120")
+  const [logoPreview, setLogoPreview] = useState(profileData.logoPreview || "")
   const [showUploadLogoModal, setShowUploadLogoModal] = useState(false)
   const [uploadedLogoFile, setUploadedLogoFile] = useState<File | null>(null)
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
@@ -57,6 +118,32 @@ export default function OrganizationProfilePage() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    const payload = {
+      companyName,
+      legalName,
+      regNo,
+      industry,
+      currencyPref,
+      primaryColor,
+      secondaryColor,
+      tagline,
+      address,
+      city,
+      state,
+      zip,
+      country,
+      phone,
+      email,
+      linkedin,
+      twitter,
+      website,
+      logoPreview
+    }
+    
+    localStorage.setItem("db_organization_profile", JSON.stringify(payload))
+    localStorage.setItem("currency_preference", currencyPref)
+    window.dispatchEvent(new Event("currency_change"))
     setIsSaving(true)
     setTimeout(() => {
       setIsSaving(false)
@@ -68,10 +155,36 @@ export default function OrganizationProfilePage() {
   }
 
   const handleDiscard = () => {
+    // Clear out profile inputs to default blank entries/empty states
+    setCompanyName("")
+    setLegalName("")
+    setRegNo("")
+    setIndustry("")
+    setCurrencyPref("USD")
+    setPrimaryColor("#006B5F")
+    setSecondaryColor("#D4E7D8")
+    setTagline("")
+    setAddress("")
+    setCity("")
+    setState("")
+    setZip("")
+    setCountry("")
+    setPhone("")
+    setEmail("")
+    setLinkedin("")
+    setTwitter("")
+    setWebsite("")
+    setLogoPreview("")
+    localStorage.removeItem("db_organization_profile")
+  }
+
+  // Restore sample data for review/testing on click
+  const restoreDemoProfile = () => {
     setCompanyName("TeamHub Technologies, Inc.")
     setLegalName("TeamHub Tech Private Limited")
     setRegNo("REG-2025-9988112")
     setIndustry("Technology & Softwares")
+    setCurrencyPref("USD")
     setPrimaryColor("#006B5F")
     setSecondaryColor("#D4E7D8")
     setTagline("Empowering teams through transparent management and automated HR workflows.")
@@ -85,6 +198,7 @@ export default function OrganizationProfilePage() {
     setLinkedin("https://linkedin.com/company/teamhub-tech")
     setTwitter("https://twitter.com/teamhub_tech")
     setWebsite("https://teamhubtech.io")
+    setLogoPreview("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=120")
   }
 
   // File logo upload simulated
@@ -120,10 +234,19 @@ export default function OrganizationProfilePage() {
           </div>
         )}
 
-        <div className="flex flex-col gap-1 mb-6">
-          <p className="text-sm text-slate-500 font-medium">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <p className="text-sm text-slate-500 font-medium font-sans">
             Customize corporate identity information, color schemes, address markers, and contact handles.
           </p>
+          {!companyName && (
+            <button
+              type="button"
+              onClick={restoreDemoProfile}
+              className="text-xs font-bold bg-slate-50 hover:bg-slate-100 text-[#006b5f] hover:text-[#005047] border border-slate-200 rounded-xl px-4 py-2 cursor-pointer transition-colors shrink-0"
+            >
+              Restore Placeholder Corporate Info
+            </button>
+          )}
         </div>
 
         {/* Main profile form columns wrapper */}
@@ -152,11 +275,18 @@ export default function OrganizationProfilePage() {
                     onClick={() => { setShowUploadLogoModal(true); setUploadedLogoFile(null); setLogoPreviewUrl(null); }}
                     className="relative w-24 h-24 rounded-2xl border border-slate-100 bg-white shadow-2xs overflow-hidden flex items-center justify-center group cursor-pointer"
                   >
-                    <img 
-                      src={logoPreview} 
-                      alt="Brand abstract mark" 
-                      className="w-full h-full object-cover"
-                    />
+                    {logoPreview ? (
+                      <img 
+                        src={logoPreview} 
+                        alt="Brand abstract mark" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-slate-100 flex flex-col items-center justify-center text-slate-400 font-extrabold text-xs p-2">
+                        <Building className="h-7 w-7 text-slate-350 mb-1" />
+                        <span>No Logo</span>
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <span className="text-[10px] font-bold text-white uppercase">Replace</span>
                     </div>
@@ -221,6 +351,19 @@ export default function OrganizationProfilePage() {
                       <option value="Finance & Venture Capital">Finance & Venture Capital</option>
                       <option value="Healthcare & BioTech">Healthcare & BioTech</option>
                       <option value="E-Commerce & Retail">E-Commerce & Retail</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-500">Currency Preference</label>
+                    <select 
+                      value={currencyPref}
+                      onChange={(e) => setCurrencyPref(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 hover:border-slate-300 focus:border-brand class-select rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all"
+                    >
+                      <option value="USD">US Dollar ($)</option>
+                      <option value="EUR">Euro (€)</option>
+                      <option value="PKR">Pakistani Rupee (PKR / Rs.)</option>
                     </select>
                   </div>
                 </div>

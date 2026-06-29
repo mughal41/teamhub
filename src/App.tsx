@@ -16,12 +16,21 @@ import SignupPage from "./views/SignupPage";
 import PersonalInformationPage from "./views/PersonalInformationPage";
 import SecurityPrivacyPage from "./views/SecurityPrivacyPage";
 import NotificationsPage from "./views/NotificationsPage";
+import NotificationSettingPage from "./views/NotificationSettingPage";
+import PersonalDocumentsPage from "./views/PersonalDocumentsPage";
 import RolesPermissionsPage from "./views/RolesPermissionsPage";
 import OrganizationProfilePage from "./views/OrganizationProfilePage";
 import BillingPage from "./views/BillingPage";
+import { initDB } from "./lib/db";
 
 export default function App() {
+  React.useEffect(() => {
+    // Standard simulation database tables initialization
+    initDB();
+  }, []);
+
   return (
+
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
@@ -39,8 +48,10 @@ export default function App() {
         <Route path="/leave" element={<LeaveManagementPage />} />
         <Route path="/recruitment" element={<RecruitmentPage />} />
         <Route path="/settings/personal-info" element={<PersonalInformationPage />} />
+        <Route path="/settings/personal-documents" element={<PersonalDocumentsPage />} />
         <Route path="/settings/security" element={<SecurityPrivacyPage />} />
-        <Route path="/settings/notifications" element={<NotificationsPage />} />
+        <Route path="/settings/notifications" element={<NotificationSettingPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/settings/roles" element={<RolesPermissionsPage />} />
         <Route path="/settings/organization" element={<OrganizationProfilePage />} />
         <Route path="/settings/billing" element={<BillingPage />} />

@@ -25,40 +25,20 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
   const [isOpenNotifications, setIsOpenNotifications] = useState(false);
   const [flyoutCategory, setFlyoutCategory] = useState<"all" | "payroll" | "system">("all");
 
-  const [flyoutNotifications, setFlyoutNotifications] = useState([
-    {
-      id: "fly-1",
-      title: "October Payslips are now available for review.",
-      category: "payroll",
-      time: "1h ago",
-      unread: true,
-      avatar: ""
-    },
-    {
-      id: "fly-2",
-      title: "Scheduled maintenance: Oct 28, 02:00 AM UTC.",
-      category: "system",
-      time: "3h ago",
-      unread: false,
-      avatar: ""
-    },
-    {
-      id: "fly-3",
-      title: "Anya Rodriguez submitted a new Leave Request.",
-      category: "system",
-      time: "5h ago",
-      unread: false,
-      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBjQ7rJMF4E2sH0pjYqjjK7gkYlczMjC7pV-7EBlLdEzkPozxtstmQMn2NaKrfRoSCHutk38sA5F_OsAWzOHC0aQrHzc3k4Wpj0FdBPUzJcFONLNlp8eFGv6PsAtww-L7LzczZ_6hakrxuA1QvS-Lg9lOP4qO4qVk0Lv-BbifUGQgs4922Smcnc_0kqoabzM9MtwoqVrltQ0iAkRiYXVbNIoHC6t_aJUD4bv-zu9f9p1YLp6nrnivjQb2H4MWhUPknViNzl5NRlurA"
-    },
-    {
-      id: "fly-4",
-      title: "Subscription successfully renewed.",
-      category: "system",
-      time: "Yesterday",
-      unread: false,
-      avatar: ""
+  // Notifications expect an array of feeds stored in localStorage under 'db_notifications'
+  // with schema: { id: string, title: string, category: string, time: string, unread: boolean, avatar: string }
+  const [flyoutNotifications, setFlyoutNotifications] = useState(() => {
+    const saved = localStorage.getItem("db_notifications");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (err) {
+        // Fallback
+      }
     }
-  ]);
+    return []; // Clear all hardcoded dummy data by default
+  });
 
   const navigate = useNavigate();
 
@@ -360,7 +340,7 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                   {/* Popover Footer link layout */}
                   <div className="p-3 text-center bg-slate-50/50 border-t border-slate-100">
                     <Link 
-                      to="/settings/notifications"
+                      to="/notifications"
                       onClick={() => setIsOpenNotifications(false)}
                       className="text-[#006b5f] hover:text-[#005047] font-bold text-xs tracking-wider uppercase hover:underline block py-1.5"
                     >
@@ -462,7 +442,7 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                   <button 
                     onClick={() => {
                       setIsOpenProfile(false);
-                      navigate("/settings/personal-info");
+                      navigate("/settings/personal-documents");
                     }}
                     className="flex items-center gap-3.5 w-full px-4.5 py-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors font-medium text-sm text-slate-600 hover:text-slate-900"
                   >

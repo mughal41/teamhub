@@ -376,20 +376,9 @@ export default function RolesPermissionsPage() {
         </div>
 
         {/* Bento Stats Grid Layout precisely matching visual mockup */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 max-w-xs">
           
-          {/* Stats Card 1: Total Users (Accent Green styled container) */}
-          <div className="bg-[#d4e7d8] p-5 rounded-2xl flex items-center gap-4.5 border border-[#bbc9c5] shadow-xs">
-            <div className="w-12 h-12 bg-[#006b5f] rounded-xl flex items-center justify-center shrink-0 shadow-sm text-white">
-              <Users className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-[#57685d] text-xs font-semibold uppercase tracking-wider">Total Users</p>
-              <h4 className="text-3xl font-black text-[#191c1d] tracking-tight mt-0.5">1,284</h4>
-            </div>
-          </div>
-
-          {/* Stats Card 2: Active Roles */}
+          {/* Stats Card: Active Roles */}
           <div className="bg-white p-5 rounded-2xl flex items-center gap-4.5 border border-slate-100 shadow-xs">
             <div className="w-12 h-12 bg-[#f3f4f5] border border-slate-100 rounded-xl flex items-center justify-center shrink-0 shadow-3xs text-slate-500">
               <ShieldAlert className="h-5.5 w-5.5" />
@@ -397,28 +386,6 @@ export default function RolesPermissionsPage() {
             <div>
               <p className="text-slate-450 text-slate-400 text-xs font-semibold uppercase tracking-wider">Active Roles</p>
               <h4 className="text-3xl font-black text-slate-800 mt-0.5">{roles.filter(r => r.status === "Active").length}</h4>
-            </div>
-          </div>
-
-          {/* Stats Card 3: Audit Score */}
-          <div className="bg-white p-5 rounded-2xl flex items-center gap-4.5 border border-slate-100 shadow-xs">
-            <div className="w-12 h-12 bg-[#f3f4f5] border border-slate-100 rounded-xl flex items-center justify-center shrink-0 shadow-3xs text-slate-500">
-              <ShieldCheck className="h-5.5 w-5.5" />
-            </div>
-            <div>
-              <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Audit Score</p>
-              <h4 className="text-3xl font-black text-slate-800 mt-0.5">98%</h4>
-            </div>
-          </div>
-
-          {/* Stats Card 4: Last Audit */}
-          <div className="bg-white p-5 rounded-2xl flex items-center gap-4.5 border border-slate-100 shadow-xs">
-            <div className="w-12 h-12 bg-[#f3f4f5] border border-slate-100 rounded-xl flex items-center justify-center shrink-0 shadow-3xs text-slate-500">
-              <Calendar className="h-5.5 w-5.5" />
-            </div>
-            <div>
-              <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Last Audit</p>
-              <h4 className="text-2xl font-black text-slate-850 mt-1 font-sans">24 Oct</h4>
             </div>
           </div>
 
