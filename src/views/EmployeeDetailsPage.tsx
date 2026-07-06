@@ -146,52 +146,52 @@ export default function EmployeeDetailsPage() {
     if (isSeeded) {
       if (employee.id === "EMP-0289") {
         return [
-          { label: "All Leaves", val: "14", total: "20", color: "#0E4D41" },
-          { label: "Annual Leaves", val: "10", total: "15", color: "#35BFA3" },
-          { label: "Casual Leaves", val: "8", total: "24", color: "#35BFA3" },
-          { label: "Sick Leaves", val: "3", total: "4", color: "#0E4D41" },
+          { label: "All Leaves", val: "14", total: "20", color: "#0E4D41", unit: "Days" },
+          { label: "Annual Leaves", val: "10", total: "15", color: "#35BFA3", unit: "Days" },
+          { label: "Casual Leaves", val: "8", total: "24", color: "#35BFA3", unit: "Hours" },
+          { label: "Sick Leaves", val: "3", total: "6", color: "#35BFA3", unit: "Days" },
         ];
       }
       return [
-        { label: "All Leaves", val: "12", total: "20", color: "#0E4D41" },
-        { label: "Annual Leaves", val: "8", total: "15", color: "#35BFA3" },
-        { label: "Casual Leaves", val: "4", total: "24", color: "#35BFA3" },
-        { label: "Sick Leaves", val: "1", total: "4", color: "#0E4D41" },
+        { label: "All Leaves", val: "12", total: "20", color: "#0E4D41", unit: "Days" },
+        { label: "Annual Leaves", val: "8", total: "15", color: "#35BFA3", unit: "Days" },
+        { label: "Casual Leaves", val: "4", total: "24", color: "#35BFA3", unit: "Hours" },
+        { label: "Sick Leaves", val: "1", total: "4", color: "#35BFA3", unit: "Days" },
       ];
     }
     return [
-      { label: "All Leaves", val: "0", total: "20", color: "#0E4D41" },
-      { label: "Annual Leaves", val: "0", total: "15", color: "#35BFA3" },
-      { label: "Casual Leaves", val: "0", total: "24", color: "#35BFA3" },
-      { label: "Sick Leaves", val: "0", total: "4", color: "#0E4D41" },
+      { label: "All Leaves", val: "0", total: "20", color: "#0E4D41", unit: "Days" },
+      { label: "Annual Leaves", val: "0", total: "15", color: "#35BFA3", unit: "Days" },
+      { label: "Casual Leaves", val: "0", total: "24", color: "#35BFA3", unit: "Hours" },
+      { label: "Sick Leaves", val: "0", total: "4", color: "#35BFA3", unit: "Days" },
     ];
   }, [employee, isSeeded]);
 
   // Custom documents uploaded vs defaults
   const docList = React.useMemo(() => {
+    if (employee.id === "EMP-0289") {
+      return [
+        { name: "Performance Evaluation.pdf", size: "1.54 MB" },
+        { name: "Contract Agreement.pdf", size: "895 KB" },
+        { name: "Curriculum Vitae.pdf", size: "1.27 MB" },
+        { name: "Portfolio.pdf", size: "3.68 MB" },
+      ];
+    }
     const docs = [];
     if (employee.uploadedDocs?.id) {
       docs.push({ name: employee.uploadedDocs.id, size: "1.45 MB" });
-    } else if (employee.id === "EMP-0289") {
+    } else {
       docs.push({ name: "ID_Document.pdf", size: "1.45 MB" });
     }
     if (employee.uploadedDocs?.contract) {
       docs.push({ name: employee.uploadedDocs.contract, size: "895 KB" });
-    } else if (employee.id === "EMP-0289") {
+    } else {
       docs.push({ name: "Contract Agreement.pdf", size: "895 KB" });
     }
     if (employee.uploadedDocs?.cv) {
       docs.push({ name: employee.uploadedDocs.cv, size: "1.27 MB" });
-    } else if (employee.id === "EMP-0289") {
+    } else {
       docs.push({ name: "Curriculum Vitae.pdf", size: "1.27 MB" });
-    }
-    if (employee.uploadedDocs?.offer) {
-      docs.push({ name: employee.uploadedDocs.offer, size: "1.15 MB" });
-    }
-
-    if (docs.length === 0) {
-      docs.push({ name: "Onboarding_Guidelines.pdf", size: "1.12 MB" });
-      docs.push({ name: "Contract Agreement.pdf", size: "895 KB" });
     }
     return docs;
   }, [employee]);
@@ -251,7 +251,7 @@ export default function EmployeeDetailsPage() {
   // Payroll math calculations
   const totalMonthlyValue = React.useMemo(() => {
     const baseSalaryNum =
-      parseFloat(String(employee.salary || "3200").replace(/[^0-9.]/g, "")) ||
+      parseFloat(String(employee.salary || "5200").replace(/[^0-9.]/g, "")) ||
       0;
     const transNum =
       parseFloat(
@@ -360,16 +360,17 @@ export default function EmployeeDetailsPage() {
         <div className="w-full space-y-6 xl:w-[272px] shrink-0">
           {/* Profile Card */}
           <Card className="p-4 flex flex-col items-center text-center bg-white border-none shadow-sm rounded-[16px]">
-            <div className="mt-8 mb-6 relative">
+            <div className="mt-8 mb-6 relative h-[140px] w-[140px] rounded-[24px] bg-[#28C2A9] flex items-center justify-center p-0.5 shadow-sm border border-slate-100/50">
               <img
                 src={
                   employee.avatar ||
                   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80"
                 }
-                className="h-[140px] w-[140px] rounded-[16px] object-cover ring-8 ring-[#F8FCF3]"
+                className="h-full w-full rounded-[22px] object-cover border-2 border-white"
+                referrerPolicy="no-referrer"
               />
             </div>
-            <h2 className="text-xl font-bold text-[#203430]">
+            <h2 className="text-xl font-bold text-[#203430] leading-none mb-1.5">
               {employee.name}
             </h2>
             <p className="text-[12px] font-medium text-[#63716E] mb-6">
@@ -377,26 +378,22 @@ export default function EmployeeDetailsPage() {
             </p>
 
             <div className="flex items-center justify-center gap-2 mb-8">
-              <Badge
-                variant="default"
-                className="bg-[#E5E6E6] text-[#203430] text-[12px] font-medium rounded-full px-3 py-1 ring-0 border-none"
-              >
+              <span className="bg-[#E5E6E6]/60 text-[#203430] text-[10px] font-bold rounded-[8px] px-3 py-1 uppercase tracking-wider">
                 {employee.id}
-              </Badge>
-              <Badge
-                variant={employee.status === "Active" ? "success" : "default"}
-                className={cn(
-                  "text-[12px] font-medium rounded-full px-3 py-1 ring-0 border-none",
-                  employee.status === "Active"
-                    ? "bg-brand text-white"
-                    : "bg-amber-500 text-white",
-                )}
-              >
+              </span>
+              <span className={cn(
+                "text-[10px] font-bold rounded-[12px] px-3 py-1 uppercase tracking-wider text-white",
+                employee.status === "Active"
+                  ? "bg-[#28C2A9]"
+                  : employee.status === "On Leave"
+                    ? "bg-[#63716E]"
+                    : "bg-[#0E4D41]"
+              )}>
                 {employee.status || "Active"}
-              </Badge>
+              </span>
             </div>
 
-            <div className="w-full space-y-0 rounded-xl overflow-hidden border border-slate-100">
+            <div className="w-full space-y-0 rounded-[16px] overflow-hidden border border-slate-100/80 bg-[#F7F7F7]">
               {[
                 { label: "Employment Type", val: employee.type || "Full-Time" },
                 { label: "Work Model", val: employee.model || "Hybrid" },
@@ -405,11 +402,11 @@ export default function EmployeeDetailsPage() {
                 <div
                   key={info.label}
                   className={cn(
-                    "flex justify-between items-center px-4 py-4 text-[12px] bg-[#F7F7F7]",
-                    idx < 2 && "border-b border-[#E5E6E6]",
+                    "flex justify-between items-center px-4 py-3.5 text-[11px] bg-[#F7F7F7]",
+                    idx < 2 && "border-b border-[#E5E6E6]/60",
                   )}
                 >
-                  <span className="font-medium text-[#63716E]">
+                  <span className="font-semibold text-[#63716E]">
                     {info.label}
                   </span>
                   <span className="font-bold text-[#203430]">{info.val}</span>
@@ -418,12 +415,12 @@ export default function EmployeeDetailsPage() {
             </div>
 
             <div className="flex items-center justify-between w-full mt-8 mb-4">
-              <span className="text-[12px] text-[#63716E]">Social Media:</span>
+              <span className="text-[12px] text-[#63716E] font-medium">Social Media:</span>
               <div className="flex gap-2">
-                {[Linkedin, Twitter, Instagram].map((Icon, i) => (
+                {[Instagram, Twitter, Linkedin].map((Icon, i) => (
                   <button
                     key={i}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E4F2D3] text-[#203430] hover:bg-brand hover:text-white transition-all shadow-sm"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E4F2D3] text-[#0E4D41] hover:bg-brand hover:text-white transition-all shadow-sm"
                   >
                     <Icon className="h-4 w-4" />
                   </button>
@@ -490,13 +487,18 @@ export default function EmployeeDetailsPage() {
         </div>
 
         {/* Center Content Column */}
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 space-y-6 min-w-0">
           {/* Top Metric Cards - Circular Progress */}
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {leaveStats.map((stat) => (
               <Card
                 key={stat.label}
-                className="p-4 text-center border-none shadow-sm rounded-[16px]"
+                className={cn(
+                  "p-4 text-center border-none shadow-sm rounded-[16px] transition-all hover:shadow-md",
+                  stat.label === "All Leaves"
+                    ? "bg-[#E4F2D3]/35 border border-[#E4F2D3]/60"
+                    : "bg-white border border-slate-100/80"
+                )}
               >
                 <div className="relative inline-flex mb-4">
                   <svg className="h-[94px] w-[94px] -rotate-90">
@@ -504,7 +506,7 @@ export default function EmployeeDetailsPage() {
                       cx="47"
                       cy="47"
                       r="38"
-                      stroke="#E4F2D3"
+                      stroke={stat.label === "All Leaves" ? "#C6DFAB" : "#E4F2D3"}
                       strokeWidth="6"
                       fill="none"
                     />
@@ -530,7 +532,7 @@ export default function EmployeeDetailsPage() {
                       </span>
                     </span>
                     <span className="text-[9px] font-medium text-[#63716E] uppercase">
-                      Days
+                      {stat.unit}
                     </span>
                   </div>
                 </div>
@@ -576,7 +578,7 @@ export default function EmployeeDetailsPage() {
                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-2 w-2 rotate-45 border-r border-b border-slate-50 bg-white" />
               </div>
 
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <AreaChart data={performanceData}>
                   <defs>
                     <linearGradient
@@ -854,7 +856,7 @@ export default function EmployeeDetailsPage() {
                   Base Salary
                 </span>
                 <span className="text-[14px] font-bold text-[#203430]">
-                  {formatCurrency(employee.salary || "3200")}
+                  {formatCurrency(employee.salary || "5200")}
                 </span>
               </div>
 

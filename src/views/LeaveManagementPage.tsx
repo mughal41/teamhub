@@ -1379,10 +1379,9 @@ export default function LeaveManagementPage() {
                                 {e.name}
                               </span>
                               {e.comment && (
-                                <MessageSquare
-                                  className="h-3 w-3 text-brand animate-bounce"
-                                  title={`Remarks: "${e.comment}"`}
-                                />
+                                <span title={`Remarks: "${e.comment}"`}>
+                                  <MessageSquare className="h-3 w-3 text-brand animate-bounce" />
+                                </span>
                               )}
                             </div>
                             <span className="text-[10px] text-[#63716E] mt-1 font-bold flex items-center gap-1">

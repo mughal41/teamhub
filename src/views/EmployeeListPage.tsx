@@ -667,11 +667,11 @@ export default function EmployeeListPage() {
                   </p>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-in fade-in duration-200">
                   {filteredEmployees.map((emp) => (
                     <Card
                       key={emp.id}
-                      className="relative flex flex-col p-4 hover:border-brand transition-all group overflow-hidden cursor-pointer"
+                      className="relative flex flex-col p-5 hover:border-[#28C2A9] transition-all group overflow-hidden cursor-pointer bg-white rounded-[16px] border border-slate-100 shadow-sm"
                       onClick={() => {
                         if (emp.status === "Draft") {
                           navigate(`/employees/new?id=${emp.id}`);
@@ -680,70 +680,67 @@ export default function EmployeeListPage() {
                         }
                       }}
                     >
-                      <div className="flex flex-col items-center gap-3 mb-6">
-                        <div className="relative">
+                      {/* Avatar and name header centered */}
+                      <div className="flex flex-col items-center text-center mb-4">
+                        <div className="relative h-20 w-20 rounded-full bg-[#28C2A9] flex items-center justify-center p-0.5 shadow-sm border border-slate-100 shrink-0 mb-3">
                           <img
                             src={emp.avatar}
-                            className="h-20 w-20 rounded-full object-cover ring-4 ring-emerald-50 duration-500 group-hover:scale-105 transition-transform"
-                          />
-                          <div
-                            className={cn(
-                              "absolute -bottom-1 right-2 h-4 w-4 rounded-full border-2 border-white",
-                              emp.status === "Active"
-                                ? "bg-emerald-500"
-                                : "bg-slate-300",
-                            )}
+                            className="h-full w-full rounded-full object-cover border-2 border-white group-hover:scale-105 duration-500 transition-transform"
+                            referrerPolicy="no-referrer"
                           />
                         </div>
-                        <div className="text-center">
-                          <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">
-                            {emp.id}
-                          </p>
-                          <h4 className="text-base font-bold text-[#203430] group-hover:text-brand transition-colors">
-                            {emp.name}
-                          </h4>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">
+                          {emp.id}
+                        </p>
+                        <h4 className="text-[14px] font-black text-[#203430] group-hover:text-[#28C2A9] transition-colors leading-tight">
+                          {emp.name}
+                        </h4>
+                      </div>
+
+                      {/* Details block with gray background and line divider */}
+                      <div className="w-full bg-[#F7F7F7] rounded-[12px] p-3.5 space-y-2 mb-4 text-[10px] text-left">
+                        <div className="flex items-center pb-2 border-b border-slate-200/50">
+                          <span className="font-semibold text-slate-450 w-[80px] shrink-0 text-left">Job Title</span>
+                          <span className="font-bold text-[#203430] text-left truncate flex-1">{emp.role}</span>
+                        </div>
+                        <div className="flex items-center pt-1">
+                          <span className="font-semibold text-slate-450 w-[80px] shrink-0 text-left">Department</span>
+                          <span className="font-bold text-[#203430] text-left truncate flex-1">{emp.dept}</span>
                         </div>
                       </div>
 
-                      <div className="bg-[#F7F7F7] rounded-xl p-3 space-y-3 mb-4">
-                        <div className="flex items-center justify-between gap-4">
-                          <span className="text-[10px] font-medium text-slate-400">
-                            Job Title
-                          </span>
-                          <span className="text-[10px] font-bold text-[#203430] text-right truncate">
-                            {emp.role}
-                          </span>
-                        </div>
-                        <div className="h-[1px] bg-slate-100" />
-                        <div className="flex items-center justify-between gap-4">
-                          <span className="text-[10px] font-medium text-slate-400">
-                            Department
-                          </span>
-                          <span className="text-[10px] font-bold text-[#203430] text-right">
-                            {emp.dept}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="bg-[#E4F2D3] px-2 py-1 rounded text-[9px] font-bold text-[#0E4D41] uppercase">
+                      {/* Badges row: Type/Model on left, Status on right */}
+                      <div className="flex items-center justify-between w-full mt-auto">
+                        <div className="flex items-center gap-1.5">
+                          {/* Employment Type */}
+                          <div className={cn(
+                            "px-2.5 py-1 rounded-[8px] text-[9px] font-bold tracking-wide uppercase",
+                            emp.type === "Full-Time" 
+                              ? "bg-[#E4F2D3] text-[#0E4D41]" 
+                              : emp.type === "Part-Time"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                : "bg-slate-50 text-slate-650 border border-slate-200" // Internship / Freelance
+                          )}>
                             {emp.type}
                           </div>
-                          <div className="bg-slate-100 px-2 py-1 rounded text-[9px] font-bold text-[#0E4D41] uppercase">
+
+                          {/* Model */}
+                          <div className="px-2.5 py-1 rounded-[8px] bg-[#E5E6E6]/60 text-[9px] font-bold text-[#63716E] uppercase">
                             {emp.model}
                           </div>
                         </div>
-                        <div
-                          className={cn(
-                            "px-3 py-1 rounded-full text-[9px] font-bold text-white",
-                            emp.status === "Active"
-                              ? "bg-brand"
-                              : "bg-slate-400",
-                          )}
-                        >
+
+                        {/* Status */}
+                        <span className={cn(
+                          "px-3 py-1 rounded-[12px] text-[9px] font-bold text-white min-w-[55px] text-center uppercase shrink-0",
+                          emp.status === "Active"
+                            ? "bg-[#28C2A9]"
+                            : emp.status === "On Leave"
+                              ? "bg-[#63716E]"
+                              : "bg-[#0E4D41]" // Absent
+                        )}>
                           {emp.status}
-                        </div>
+                        </span>
                       </div>
                     </Card>
                   ))}

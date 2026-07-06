@@ -741,11 +741,13 @@ export default function InboxPage() {
                            ))}
                         </div>
                      </div>
-                     <Trash2 
+                     <button
                        onClick={() => setReplyText("")}
-                       className="h-5 w-5 text-[#63716E] cursor-pointer hover:text-red-500 shrink-0 transition-colors" 
+                       className="p-1 hover:bg-slate-100 rounded shrink-0 transition-colors"
                        title="Discard Draft"
-                     />
+                     >
+                       <Trash2 className="h-5 w-5 text-[#63716E] hover:text-red-500 shrink-0" />
+                     </button>
                   </div>
                </div>
              </>

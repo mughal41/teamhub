@@ -96,46 +96,35 @@ export const initialEmployees: Employee[] = [
   {
     id: "EMP-0234",
     name: "Olivia Mason",
-    role: "Marketing Executive",
-    dept: "Marketing",
+    role: "Marketing",
+    dept: "Executive Marketing",
     type: "Full-Time",
-    model: "On-Site",
+    model: "Hybrid",
     status: "Active",
     avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "12 Jan 2033"
+    joinDate: "12 Jan 2034"
   },
   {
     id: "EMP-0178",
     name: "Ethan Ray",
-    role: "UI/UX Designer",
+    role: "UI Designer",
     dept: "Product Design",
     type: "Full-Time",
     model: "Remote",
     status: "Active",
     avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "15 Mar 2033"
-  },
-  {
-    id: "EMP-0289",
-    name: "Mia Torres",
-    role: "HR Officer",
-    dept: "Human Resources",
-    type: "Full-Time",
-    model: "Hybrid",
-    status: "Active",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "02 Jun 2034"
+    joinDate: "03 Mar 2033"
   },
   {
     id: "EMP-0312",
     name: "Lina Armand",
     role: "Lab Analyst",
     dept: "R&D",
-    type: "Full-Time",
+    type: "Part-Time",
     model: "On-Site",
     status: "On Leave",
     avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "11 Aug 2034"
+    joinDate: "22 Jul 2034"
   },
   {
     id: "EMP-0115",
@@ -146,7 +135,62 @@ export const initialEmployees: Employee[] = [
     model: "On-Site",
     status: "Absent",
     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "05 Feb 2032"
+    joinDate: "05 Sep 2032"
+  },
+  {
+    id: "EMP-0289",
+    name: "Mia Torres",
+    role: "HR Officer",
+    dept: "Human Resources",
+    type: "Full-Time",
+    model: "Hybrid",
+    status: "Active",
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    joinDate: "14 Feb 2033"
+  },
+  {
+    id: "EMP-0356",
+    name: "Sara Kim",
+    role: "Customer Support",
+    dept: "Customer Service",
+    type: "Internship",
+    model: "On-Site",
+    status: "Active",
+    avatar: "https://images.unsplash.com/photo-1554151228-14d9def656e4?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    joinDate: "10 May 2035"
+  },
+  {
+    id: "EMP-0291",
+    name: "Daniel Cheung",
+    role: "Compliance Specialist",
+    dept: "Operations",
+    type: "Full-Time",
+    model: "Remote",
+    status: "Active",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    joinDate: "19 Nov 2033"
+  },
+  {
+    id: "EMP-0275",
+    name: "Anya Rodriguez",
+    role: "Graphic Designer",
+    dept: "Marketing",
+    type: "Freelance",
+    model: "Remote",
+    status: "Active",
+    avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    joinDate: "06 Apr 2035"
+  },
+  {
+    id: "EMP-0159",
+    name: "Kelvin Yu",
+    role: "Training Coordinator",
+    dept: "HR",
+    type: "Part-Time",
+    model: "On-Site",
+    status: "Active",
+    avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    joinDate: "27 Jun 2032"
   },
   {
     id: "EMP-0320",
@@ -157,51 +201,7 @@ export const initialEmployees: Employee[] = [
     model: "Hybrid",
     status: "Active",
     avatar: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "21 Oct 2034"
-  },
-  {
-    id: "EMP-0291",
-    name: "Daniel Cheung",
-    role: "Compliance Specialist",
-    dept: "Operations",
-    type: "Full-Time",
-    model: "Hybrid",
-    status: "Active",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "15 Dec 2034"
-  },
-  {
-    id: "EMP-0356",
-    name: "Sara Kim",
-    role: "Customer Support Staff",
-    dept: "Customer Service",
-    type: "Part-Time",
-    model: "Remote",
-    status: "Active",
-    avatar: "https://images.unsplash.com/photo-1554151228-14d9def656e4?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "18 Jan 2035"
-  },
-  {
-    id: "EMP-0275",
-    name: "Anya Rodriguez",
-    role: "Graphic Designer",
-    dept: "Marketing",
-    type: "Full-Time",
-    model: "Hybrid",
-    status: "Active",
-    avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "09 Nov 2033"
-  },
-  {
-    id: "EMP-0159",
-    name: "Kelvin Yu",
-    role: "Training Coordinator",
-    dept: "Human Resources",
-    type: "Full-Time",
-    model: "On-Site",
-    status: "Active",
-    avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "04 Apr 2033"
+    joinDate: "08 Aug 2034"
   }
 ];
 
@@ -461,7 +461,7 @@ export const initialPaymentMethods: PaymentMethod[] = [
 // Initialize all collections database into localStorage helper
 export function initDB(force = false) {
   if (force || !localStorage.getItem("db_initialized")) {
-    localStorage.setItem("db_employees", JSON.stringify([]));
+    localStorage.setItem("db_employees", JSON.stringify(initialEmployees));
     localStorage.setItem("db_attendance", JSON.stringify([]));
     localStorage.setItem("db_leaves", JSON.stringify([]));
     localStorage.setItem("db_payroll", JSON.stringify([]));
@@ -478,12 +478,12 @@ export function initDB(force = false) {
   }
 
   // Programmatic migration to clear historical cached entries from previous revisions on loaded web browsers
-  if (!localStorage.getItem("db_clear_v5")) {
-    localStorage.setItem("db_employees", JSON.stringify([]));
+  if (!localStorage.getItem("db_clear_v6")) {
+    localStorage.setItem("db_employees", JSON.stringify(initialEmployees));
     localStorage.setItem("db_payroll", JSON.stringify([]));
     localStorage.setItem("db_attendance", JSON.stringify([]));
     localStorage.setItem("db_leaves", JSON.stringify([]));
-    localStorage.setItem("db_clear_v5", "true");
+    localStorage.setItem("db_clear_v6", "true");
     // Broadcast updates immediately to any active sessions / views
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new Event("db_updated"));

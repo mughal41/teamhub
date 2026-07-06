@@ -46,17 +46,17 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
     <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-100 bg-white/80 px-8 backdrop-blur-md">
       <div className="space-y-1">
         <h1 className="text-xl font-bold text-slate-900">{title}</h1>
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
           {breadcrumbs.map((crumb, i) => (
             <div key={crumb.label} className="flex items-center gap-2">
               {crumb.href ? (
-                <Link to={crumb.href} className="hover:text-brand transition-colors">
+                <Link to={crumb.href} className="text-[#28C2A9] hover:underline font-bold transition-colors">
                   {crumb.label}
                 </Link>
               ) : (
-                <span className="text-slate-300">{crumb.label}</span>
+                <span className="text-slate-500 font-bold">{crumb.label}</span>
               )}
-              {i < breadcrumbs.length - 1 && <span className="text-slate-200">/</span>}
+              {i < breadcrumbs.length - 1 && <span className="text-slate-300">/</span>}
             </div>
           ))}
         </div>
@@ -64,11 +64,11 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
 
       <div className="flex items-center gap-6">
         <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Search anything"
-            className="h-10 w-80 rounded-xl border border-slate-100 bg-slate-50 pl-10 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-1 focus:ring-brand"
+            className="h-10 w-80 rounded-full border border-slate-200 bg-white pl-11 pr-4 text-sm outline-none transition-all focus:border-[#28C2A9] focus:ring-1 focus:ring-[#28C2A9]"
           />
         </div>
 
@@ -82,8 +82,8 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                 setIsOpenProfile(false);
               }}
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors relative z-50",
-                isOpenSettings && "bg-brand/10 text-brand-dark"
+                "flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-[#63716E] hover:bg-slate-50 hover:text-slate-800 transition-colors relative z-50",
+                isOpenSettings && "bg-[#28C2A9]/10 text-[#0e4d41]"
               )}
             >
               <Settings className="h-5 w-5" />
@@ -223,14 +223,12 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                 setIsOpenProfile(false);
               }}
               className={cn(
-                "relative flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer z-50",
-                isOpenNotifications && "bg-brand/10 text-brand-dark"
+                "relative flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-[#63716E] hover:bg-slate-50 hover:text-slate-800 transition-colors cursor-pointer z-50",
+                isOpenNotifications && "bg-[#28C2A9]/10 text-[#0e4d41]"
               )}
             >
               <Bell className="h-5 w-5" />
-              {flyoutNotifications.some(n => n.unread) && (
-                <span className="absolute right-3 top-3 h-2 w-2 rounded-full border-2 border-white bg-rose-500 animate-pulse" />
-              )}
+              <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border border-white bg-[#28C2A9]" />
             </button>
 
             {isOpenNotifications && (
@@ -368,17 +366,17 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
               isOpenProfile && "bg-slate-100"
             )}
           >
-            <div className="flex flex-col items-end hidden sm:flex">
-              <span className="text-sm font-bold text-slate-900">Davis Levin</span>
-              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">HR Manager</span>
-            </div>
             <div className="relative">
               <img
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXcgEFuMNH2WfVpKSkgHkLECe1-hlQ0L9nl5ENytbZVUEW86K5l0_mna02bcC9tmRPbl-07SmLI5j_1r3ZHvrMBH6CD4kB-_5E-T2OAl45cTJ1qmSS_yuJ3xk82VJF17FliOHCnrOl_Q2p-mxWY0neh_xUDCcG4Qk1iJw5FWsQ8G6lPDt2cLc6wkE08FjkhU0qVbP3iVxOoM2oFtk1KBpMk_hkLr1VsbXccQdVkOlnRpK30VI7QYYr3xzhv_6-w2MHnuh5pjbwFSw"
                 alt="Davis Levin portrait"
-                className="h-10 w-10 rounded-xl object-cover ring-2 ring-slate-50"
+                className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-100"
               />
               <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
+            </div>
+            <div className="flex flex-col items-start hidden sm:flex leading-tight">
+              <span className="text-sm font-bold text-slate-900">Davis Levin</span>
+              <span className="text-[10px] font-medium text-slate-400">User</span>
             </div>
           </button>
 
