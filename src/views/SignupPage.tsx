@@ -1,88 +1,136 @@
-import * as React from "react"
-import { AuthLayout } from "../components/layout/AuthLayout"
-import { Input } from "../components/ui/Input"
-import { Button } from "../components/ui/Button"
-import { Link } from "react-router-dom"
-import { ChevronDown } from "lucide-react"
+import * as React from "react";
+import { useState } from "react";
+import { AuthLayout } from "../components/layout/AuthLayout";
+import { Input } from "../components/ui/Input";
+import { Button } from "../components/ui/Button";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function SignupPage() {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [organizationName, setOrganizationName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const { register } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match. Please verify your password.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await register(email, password, firstName, lastName, organizationName);
+      navigate("/");
+    } catch (err: any) {
+      setError(err.message || "Failed to create account. Please check your details.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <AuthLayout 
-      title="Create Your Account" 
+    <AuthLayout
+      title="Create Your Account"
       subtitle="Join TeamHub to streamline your HR experience"
     >
-      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-        <Input 
-          label="Full Name" 
-          placeholder="e.g. Sarah Johnson" 
-          required
-        />
-        <Input 
-          label="Email Address" 
-          placeholder="e.g. sarah.johnson@email.com" 
-          type="email"
-          required
-        />
-        <Input 
-          label="Password" 
-          placeholder="Create a strong password" 
-          type="password"
-          required
-        />
-        <Input 
-          label="Confirm Password" 
-          placeholder="Re-enter your password" 
-          type="password"
-          required
-        />
-        
+      <form className="space-y-4" onSubmit={handleSubmit}>
+        {error && (
+          <div className="flex items-center gap-3 rounded-xl bg-rose-50 p-4 border border-rose-200 text-rose-700 text-sm font-medium animate-in fade-in">
+            <AlertCircle className="h-5 w-5 shrink-0 text-rose-500" />
+            <span>{error}</span>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
-           <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">Employment Type</label>
-              <div className="relative">
-                <select className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand outline-none cursor-pointer">
-                  <option disabled selected>Select employment type</option>
-                  <option>Full-Time</option>
-                  <option>Part-Time</option>
-                  <option>Contract</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-              </div>
-           </div>
-           
-           <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">Department</label>
-              <div className="relative">
-                <select className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand outline-none cursor-pointer">
-                  <option disabled selected>Choose your department</option>
-                  <option>Product Design</option>
-                  <option>Engineering</option>
-                  <option>Marketing</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-              </div>
-           </div>
+          <Input
+            label="First Name"
+            placeholder="e.g. Sarah"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+          />
+          <Input
+            label="Last Name"
+            placeholder="e.g. Johnson"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
         </div>
 
-        <div className="space-y-1.5 pt-2">
-            <label className="text-sm font-medium text-slate-700">Work Model</label>
-            <div className="relative">
-              <select className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand outline-none cursor-pointer">
-                <option disabled selected>Select your work model</option>
-                <option>On-Site</option>
-                <option>Remote</option>
-                <option>Hybrid</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-            </div>
-        </div>
+        <Input
+          label="Organization Name"
+          placeholder="e.g. Acme Corporation"
+          value={organizationName}
+          onChange={(e) => setOrganizationName(e.target.value)}
+          required
+        />
 
-        <Button className="w-full h-12 text-base font-bold shadow-lg shadow-brand/20 mt-4">Sign Up</Button>
+        <Input
+          label="Email Address"
+          placeholder="e.g. sarah.johnson@email.com"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+
+        <Input
+          label="Password"
+          placeholder="Create a strong password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+
+        <Input
+          label="Confirm Password"
+          placeholder="Re-enter your password"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
+
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full h-12 text-base font-bold shadow-lg shadow-brand/20 mt-4 flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>Creating account...</span>
+            </>
+          ) : (
+            "Sign Up"
+          )}
+        </Button>
 
         <p className="text-center text-sm text-slate-500">
-          Already have an account? <Link to="/login" className="font-bold text-brand hover:underline underline-offset-4">Login here</Link>
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="font-bold text-brand hover:underline underline-offset-4"
+          >
+            Login here
+          </Link>
         </p>
       </form>
     </AuthLayout>
-  )
+  );
 }

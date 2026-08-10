@@ -2,6 +2,7 @@ import * as React from "react";
 import { AppLayout } from "../components/layout/AppLayout";
 import { getCollection, saveCollection } from "../lib/db";
 import { Card, Badge } from "../components/ui/LayoutAddons";
+import { getDashboardStatsApi } from "../lib/api/employees";
 import {
   Users,
   Calendar as CalendarIcon,
@@ -228,6 +229,17 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     const loadDashboard = () => {
+      getDashboardStatsApi()
+        .then((stats) => {
+          setEmployeesCount(stats.total_employees);
+          setOverallAttendanceVal(stats.overall_attendance_pct);
+          setLeaveRequestsCount(stats.pending_leaves_count);
+          if (stats.total_applicants_count !== undefined) {
+            setApplicantsCount(stats.total_applicants_count);
+          }
+        })
+        .catch((err) => console.error("Error fetching live dashboard stats:", err));
+
       const emps = getCollection<any[]>("db_employees", []);
       const atts = getCollection<any[]>("db_attendance", []);
       const pay = getCollection<any[]>("db_payroll", []);
@@ -240,16 +252,7 @@ export default function DashboardPage() {
       const approvedReviewsCount = Number(localStorage.getItem("db_approved_reviews_count") || "0");
       const applicantsFromDb = getCollection<any[]>("db_applicants", []);
       
-      setEmployeesCount(emps.length);
       setAttendance(atts);
-      
-      const onTimeOrLate = atts.filter(a => a.status === "On-Time" || a.status === "Late").length;
-      const attVal = atts.length ? Math.round((onTimeOrLate / atts.length) * 100) : 0;
-      setOverallAttendanceVal(attVal);
-
-      const pendingLeaves = leaves.filter(l => l.status === "Pending");
-      setLeaveRequestsCount(pendingLeaves.length);
-
       setApplicantsCount(applicantsFromDb.length);
       
       const pendingPay = pay.filter(p => p.status === "Pending");

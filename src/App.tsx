@@ -1,5 +1,6 @@
 import * as React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import DashboardPage from "./views/DashboardPage";
 import RecruitmentPage from "./views/RecruitmentPage";
 import EmployeeListPage from "./views/EmployeeListPage";
@@ -23,6 +24,27 @@ import OrganizationProfilePage from "./views/OrganizationProfilePage";
 import BillingPage from "./views/BillingPage";
 import { initDB } from "./lib/db";
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#28C2A9] border-t-transparent" />
+          <p className="text-sm font-semibold text-slate-500">Authenticating session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 export default function App() {
   React.useEffect(() => {
     // Standard simulation database tables initialization
@@ -30,34 +52,170 @@ export default function App() {
   }, []);
 
   return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Auth Routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
 
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        
-        <Route path="/" element={<DashboardPage />} />
-        <Route path="/inbox" element={<InboxPage />} />
-        <Route path="/calendar" element={<CalendarPage />} />
-        <Route path="/employees" element={<EmployeeListPage />} />
-        <Route path="/employees/new" element={<AddEmployeePage />} />
-        <Route path="/employees/:id" element={<EmployeeDetailsPage />} />
-        <Route path="/attendance" element={<AttendancePage />} />
-        <Route path="/performance" element={<PerformancePage />} />
-        <Route path="/payroll" element={<PayrollPage />} />
-        <Route path="/leave" element={<LeaveManagementPage />} />
-        <Route path="/recruitment" element={<RecruitmentPage />} />
-        <Route path="/settings/personal-info" element={<PersonalInformationPage />} />
-        <Route path="/settings/personal-documents" element={<PersonalDocumentsPage />} />
-        <Route path="/settings/security" element={<SecurityPrivacyPage />} />
-        <Route path="/settings/notifications" element={<NotificationSettingPage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
-        <Route path="/settings/roles" element={<RolesPermissionsPage />} />
-        <Route path="/settings/organization" element={<OrganizationProfilePage />} />
-        <Route path="/settings/billing" element={<BillingPage />} />
-        
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+          {/* Protected Operational Routes */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/inbox"
+            element={
+              <ProtectedRoute>
+                <InboxPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <CalendarPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employees"
+            element={
+              <ProtectedRoute>
+                <EmployeeListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employees/new"
+            element={
+              <ProtectedRoute>
+                <AddEmployeePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employees/:id"
+            element={
+              <ProtectedRoute>
+                <EmployeeDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/attendance"
+            element={
+              <ProtectedRoute>
+                <AttendancePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/performance"
+            element={
+              <ProtectedRoute>
+                <PerformancePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payroll"
+            element={
+              <ProtectedRoute>
+                <PayrollPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leave"
+            element={
+              <ProtectedRoute>
+                <LeaveManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/recruitment"
+            element={
+              <ProtectedRoute>
+                <RecruitmentPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/personal-info"
+            element={
+              <ProtectedRoute>
+                <PersonalInformationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/personal-documents"
+            element={
+              <ProtectedRoute>
+                <PersonalDocumentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/security"
+            element={
+              <ProtectedRoute>
+                <SecurityPrivacyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationSettingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/roles"
+            element={
+              <ProtectedRoute>
+                <RolesPermissionsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/organization"
+            element={
+              <ProtectedRoute>
+                <OrganizationProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/billing"
+            element={
+              <ProtectedRoute>
+                <BillingPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

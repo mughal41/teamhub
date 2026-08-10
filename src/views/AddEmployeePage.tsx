@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
+import { createEmployeeApi } from "../lib/api/employees";
 
 // List of Supported Countries for Phone Number Inputs
 const COUNTRIES = [
@@ -289,7 +290,7 @@ export default function AddEmployeePage() {
     showToast(target ? "All benefits selected" : "All benefits deselected");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep(step)) {
       return;
@@ -297,107 +298,25 @@ export default function AddEmployeePage() {
     if (step < 3) {
       handleNext();
     } else {
-      // Formally append newly registered personnel or update existing draft!
-      const currentList = getCollection<any[]>("db_employees", []);
-      
-      const targetId = draftId || `EMP-${Math.floor(1000 + Math.random() * 9000)}`;
-      const isUpdating = currentList.some(e => e.id === targetId);
+      try {
+        const cleanSalary = parseFloat(empSalary.replace(/[^0-9.]/g, "")) || 75000;
+        await createEmployeeApi({
+          name: empName,
+          role_title: empRole,
+          sub_role: empDept,
+          employment_type: empType,
+          work_model: empModel,
+          status: empActive ? "Active" : "On Leave",
+          base_salary: cleanSalary,
+        });
 
-      const resolvedAvatar = isUpdating 
-        ? (currentList.find(e => e.id === targetId)?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80")
-        : (Math.random() > 0.5 
-            ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80"
-            : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80");
-
-      const newEmp = {
-        id: targetId,
-        name: empName,
-        birthDate: empBirthDate,
-        gender: empGender,
-        email: empEmail,
-        phone: empPhone,
-        address: empAddress,
-        emergencyName: empEmergencyName,
-        emergencyPhone: empEmergencyPhone,
-        phoneCountry: empPhoneCountry,
-        emergencyPhoneCountry: empEmergencyPhoneCountry,
-        
-        joinDate: empJoinDate,
-        role: empRole,
-        dept: empDept,
-        type: empType,
-        model: empModel,
-        status: empActive ? "Active" : "Suspended",
-        avatar: resolvedAvatar,
-        salary: empSalary,
-        bankName: empBankName,
-        bankAccount: empBankAccount,
-        taxId: empTaxId,
-        
-        allowanceTrans,
-        allowanceMeal,
-        allowanceInternet,
-        
-        benefitHealth,
-        benefitLife,
-        benefitDevice,
-        benefitTraining,
-        benefitTuition,
-        benefitFitness,
-        benefitMental,
-        
-        uploadedDocs,
-        empActive,
-        empSendEmail
-      };
-
-      let updatedList;
-      const index = currentList.findIndex(e => e.id === targetId);
-      if (index !== -1) {
-        updatedList = [...currentList];
-        updatedList[index] = newEmp;
-      } else {
-        updatedList = [...currentList, newEmp];
+        showToast("Employee registered successfully to backend!");
+        setTimeout(() => {
+          navigate('/employees');
+        }, 1200);
+      } catch (err: any) {
+        showToast(err.message || "Failed to register employee.");
       }
-
-      saveCollection("db_employees", updatedList);
-
-      // Automatically append starting payroll master-card as well!
-      const currentPayroll = getCollection<any[]>("db_payroll", []);
-      const newPayroll = {
-        id: targetId,
-        name: empName,
-        role: empRole,
-        subRole: empRole,
-        date: "28 Jun 35",
-        salary: empSalary,
-        allowance: `$${(allowanceTrans ? 100 : 0) + (allowanceMeal ? 50 : 0) + (allowanceInternet ? 50 : 0)}`,
-        overtime: "$0",
-        incen: "$0",
-        deduct: "$0",
-        total: empSalary,
-        status: "Pending",
-        avatar: newEmp.avatar
-      };
-
-      const payrollIndex = currentPayroll.findIndex(p => p.id === targetId);
-      let updatedPayroll;
-      if (payrollIndex !== -1) {
-        updatedPayroll = [...currentPayroll];
-        updatedPayroll[payrollIndex] = newPayroll;
-      } else {
-        updatedPayroll = [...currentPayroll, newPayroll];
-      }
-      saveCollection("db_payroll", updatedPayroll);
-
-      // Trigger global tab/view notifications or updates
-      window.dispatchEvent(new Event("storage"));
-      window.dispatchEvent(new Event("db_updated"));
-
-      showToast("Employee added successfully!");
-      setTimeout(() => {
-        navigate('/employees');
-      }, 1500);
     }
   };
 

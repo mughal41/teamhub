@@ -19,14 +19,18 @@ import {
 import { cn } from "@/src/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 
+import { useAuth } from "@/src/context/AuthContext";
+
 export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { label: string; href?: string }[] }) {
   const [isOpenSettings, setIsOpenSettings] = useState(false);
   const [isOpenProfile, setIsOpenProfile] = useState(false);
   const [isOpenNotifications, setIsOpenNotifications] = useState(false);
   const [flyoutCategory, setFlyoutCategory] = useState<"all" | "payroll" | "system">("all");
 
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
   // Notifications expect an array of feeds stored in localStorage under 'db_notifications'
-  // with schema: { id: string, title: string, category: string, time: string, unread: boolean, avatar: string }
   const [flyoutNotifications, setFlyoutNotifications] = useState(() => {
     const saved = localStorage.getItem("db_notifications");
     if (saved) {
@@ -37,10 +41,8 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
         // Fallback
       }
     }
-    return []; // Clear all hardcoded dummy data by default
+    return [];
   });
-
-  const navigate = useNavigate();
 
   return (
     <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-100 bg-white/80 px-8 backdrop-blur-md">
@@ -375,8 +377,12 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
               <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
             </div>
             <div className="flex flex-col items-start hidden sm:flex leading-tight">
-              <span className="text-sm font-bold text-slate-900">Davis Levin</span>
-              <span className="text-[10px] font-medium text-slate-400">User</span>
+              <span className="text-sm font-bold text-slate-900">
+                {user ? `${user.first_name} ${user.last_name}` : "Davis Levin"}
+              </span>
+              <span className="text-[10px] font-medium text-slate-400">
+                {user?.role_name || "User"}
+              </span>
             </div>
           </button>
 
@@ -397,17 +403,23 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                 <div className="p-5 bg-slate-50/50 flex flex-col items-center text-center border-b border-slate-100">
                   <div className="relative mb-3">
                     <img 
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXcgEFuMNH2WfVpKSkgHkLECe1-hlQ0L9nl5ENytbZVUEW86K5l0_mna02bcC9tmRPbl-07SmLI5j_1r3ZHvrMBH6CD4kB-_5E-T2OAl45cTJ1qmSS_yuJ3xk82VJF17FliOHCnrOl_Q2p-mxWY0neh_xUDCcG4Qk1iJw5FWsQ8G6lPDt2cLc6wkE08FjkhU0qVbP3iVxOoM2oFtk1KBpMk_hkLr1VsbXccQdVkOlnRpK30VI7QYYr3xzhv_6-w2MHnuh5pjbwFSw"
-                      alt="Davis Levin" 
+                      src={user?.avatar_url || "https://lh3.googleusercontent.com/aida-public/AB6AXuDXcgEFuMNH2WfVpKSkgHkLECe1-hlQ0L9nl5ENytbZVUEW86K5l0_mna02bcC9tmRPbl-07SmLI5j_1r3ZHvrMBH6CD4kB-_5E-T2OAl45cTJ1qmSS_yuJ3xk82VJF17FliOHCnrOl_Q2p-mxWY0neh_xUDCcG4Qk1iJw5FWsQ8G6lPDt2cLc6wkE08FjkhU0qVbP3iVxOoM2oFtk1KBpMk_hkLr1VsbXccQdVkOlnRpK30VI7QYYr3xzhv_6-w2MHnuh5pjbwFSw"}
+                      alt="User avatar" 
                       className="w-20 h-20 rounded-full border-2 border-brand object-cover" 
                     />
                     <div className="absolute bottom-0 right-0 w-6 h-6 bg-brand-dark border-2 border-white rounded-full flex items-center justify-center">
                       <span className="text-[10px] text-white font-bold">✓</span>
                     </div>
                   </div>
-                  <h3 className="font-bold text-slate-800 text-base">Davis Levin</h3>
-                  <p className="text-brand-dark font-semibold text-xs mt-0.5">HR Manager</p>
-                  <p className="text-[11px] text-slate-400 mt-1">davis.levin@teamhub.corp</p>
+                  <h3 className="font-bold text-slate-800 text-base">
+                    {user ? `${user.first_name} ${user.last_name}` : "Davis Levin"}
+                  </h3>
+                  <p className="text-brand-dark font-semibold text-xs mt-0.5">
+                    {user?.role_name || "HR Manager"}
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    {user?.email || "davis.levin@teamhub.corp"}
+                  </p>
                 </div>
 
                 {/* List items */}
@@ -461,8 +473,9 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                   </button>
 
                   <button 
-                    onClick={() => {
+                    onClick={async () => {
                       setIsOpenProfile(false);
+                      await logout();
                       navigate("/login");
                     }}
                     className="flex items-center gap-3.5 w-full px-4.5 py-2.5 rounded-xl hover:bg-rose-50 text-left transition-colors font-bold text-sm text-rose-600 hover:text-rose-700"
