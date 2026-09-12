@@ -7,3 +7,11 @@ coverage/
 .env*
 !.env.example
 .idea
+
+# Backend
+backend/.venv/
+backend/db.sqlite3
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/media/
+backend/staticfiles/

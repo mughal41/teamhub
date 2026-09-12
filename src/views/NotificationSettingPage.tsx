@@ -185,7 +185,7 @@ export default function NotificationSettingPage() {
           <div className="md:col-span-4 space-y-6">
             
             {/* Frequency Selector Box */}
-            <div className="bg-white border border-[#E4E4E1] p-6 rounded-2xl flex flex-col gap-6">
+            <div className="bg-white border border-line p-6 rounded-2xl flex flex-col gap-6">
               <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2 border-b border-slate-50 pb-3">
                 <Clock className="h-4 w-4 text-brand" />
                 <span>Frequency</span>
@@ -198,7 +198,7 @@ export default function NotificationSettingPage() {
                   className={`flex items-center gap-3.5 p-4 rounded-xl border transition-all cursor-pointer select-none ${
                     frequency === "immediate" 
                       ? "border-brand bg-[#d4e7d8]/10" 
-                      : "border-[#E4E4E1] hover:border-slate-200"
+                      : "border-line hover:border-slate-200"
                   }`}
                 >
                   <input 
@@ -220,7 +220,7 @@ export default function NotificationSettingPage() {
                   className={`flex items-center gap-3.5 p-4 rounded-xl border transition-all cursor-pointer select-none ${
                     frequency === "daily" 
                       ? "border-brand bg-[#d4e7d8]/10" 
-                      : "border-[#E4E4E1] hover:border-slate-200"
+                      : "border-line hover:border-slate-200"
                   }`}
                 >
                   <input 
@@ -242,7 +242,7 @@ export default function NotificationSettingPage() {
                   className={`flex items-center gap-3.5 p-4 rounded-xl border transition-all cursor-pointer select-none ${
                     frequency === "weekly" 
                       ? "border-brand bg-[#d4e7d8]/10" 
-                      : "border-[#E4E4E1] hover:border-slate-200"
+                      : "border-line hover:border-slate-200"
                   }`}
                 >
                   <input 
@@ -261,7 +261,7 @@ export default function NotificationSettingPage() {
             </div>
 
             {/* Visual focus Mode Teaser card */}
-            <div className="relative h-48 rounded-2xl overflow-hidden group border border-[#E4E4E1] bg-teal-900 select-none">
+            <div className="relative h-48 rounded-2xl overflow-hidden group border border-line bg-teal-900 select-none">
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent z-10" />
               <img 
                 src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=600" 
@@ -285,8 +285,8 @@ export default function NotificationSettingPage() {
           <div className="md:col-span-8 space-y-6">
             
             {/* Email Notifications Segment */}
-            <section className="bg-white border border-[#E4E4E1] rounded-2xl overflow-hidden flex flex-col">
-              <div className="bg-slate-50/50 px-6 py-4.5 border-b border-[#E4E4E1] flex items-center gap-3">
+            <section className="bg-white border border-line rounded-2xl overflow-hidden flex flex-col">
+              <div className="bg-slate-50/50 px-6 py-4.5 border-b border-line flex items-center gap-3">
                 <div className="w-9 h-9 bg-teal-50 text-brand rounded-xl flex items-center justify-center shrink-0">
                   <Mail className="h-4.5 w-4.5" />
                 </div>
@@ -368,8 +368,8 @@ export default function NotificationSettingPage() {
             </section>
 
             {/* Push Notifications Segment */}
-            <section className="bg-white border border-[#E4E4E1] rounded-2xl overflow-hidden flex flex-col">
-              <div className="bg-slate-50/50 px-6 py-4.5 border-b border-[#E4E4E1] flex items-center gap-3">
+            <section className="bg-white border border-line rounded-2xl overflow-hidden flex flex-col">
+              <div className="bg-slate-50/50 px-6 py-4.5 border-b border-line flex items-center gap-3">
                 <div className="w-9 h-9 bg-teal-50 text-brand rounded-xl flex items-center justify-center shrink-0">
                   <BellRing className="h-4.5 w-4.5" />
                 </div>
@@ -438,7 +438,7 @@ export default function NotificationSettingPage() {
         </div>
 
         {/* Floating Footer Action panel */}
-        <footer className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white/95 backdrop-blur-md border-t border-[#E4E4E1] p-4.5 flex justify-end gap-3.5 z-40 shadow-xl">
+        <footer className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white/95 backdrop-blur-md border-t border-line p-4.5 flex justify-end gap-3.5 z-40 shadow-xl">
           <button 
             type="button"
             onClick={handleDiscard}

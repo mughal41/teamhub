@@ -289,7 +289,7 @@ export default function AddEmployeePage() {
     showToast(target ? "All benefits selected" : "All benefits deselected");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep(step)) {
       return;
@@ -297,17 +297,16 @@ export default function AddEmployeePage() {
     if (step < 3) {
       handleNext();
     } else {
-      // Formally append newly registered personnel or update existing draft!
       const currentList = getCollection<any[]>("db_employees", []);
-      
       const targetId = draftId || `EMP-${Math.floor(1000 + Math.random() * 9000)}`;
-      const isUpdating = currentList.some(e => e.id === targetId);
+      const isUpdating = currentList.some((emp) => emp.id === targetId);
 
-      const resolvedAvatar = isUpdating 
-        ? (currentList.find(e => e.id === targetId)?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80")
-        : (Math.random() > 0.5 
-            ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80"
-            : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80");
+      const resolvedAvatar = isUpdating
+        ? currentList.find((emp) => emp.id === targetId)?.avatar ||
+          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80"
+        : Math.random() > 0.5
+          ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80"
+          : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80";
 
       const newEmp = {
         id: targetId,
@@ -321,23 +320,20 @@ export default function AddEmployeePage() {
         emergencyPhone: empEmergencyPhone,
         phoneCountry: empPhoneCountry,
         emergencyPhoneCountry: empEmergencyPhoneCountry,
-        
         joinDate: empJoinDate,
         role: empRole,
         dept: empDept,
         type: empType,
         model: empModel,
-        status: empActive ? "Active" : "Suspended",
+        status: empActive ? "Active" : "Inactive",
         avatar: resolvedAvatar,
         salary: empSalary,
         bankName: empBankName,
         bankAccount: empBankAccount,
         taxId: empTaxId,
-        
         allowanceTrans,
         allowanceMeal,
         allowanceInternet,
-        
         benefitHealth,
         benefitLife,
         benefitDevice,
@@ -345,24 +341,44 @@ export default function AddEmployeePage() {
         benefitTuition,
         benefitFitness,
         benefitMental,
-        
         uploadedDocs,
         empActive,
-        empSendEmail
+        empSendEmail,
       };
 
-      let updatedList;
-      const index = currentList.findIndex(e => e.id === targetId);
-      if (index !== -1) {
-        updatedList = [...currentList];
-        updatedList[index] = newEmp;
-      } else {
-        updatedList = [...currentList, newEmp];
+      try {
+        const { createEmployee, updateEmployee } = await import("@/src/lib/api/employees");
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        const apiPayload = {
+          id: targetId,
+          name: empName,
+          role: empRole,
+          dept: empDept,
+          type: empType || "Full-Time",
+          model: empModel || "Hybrid",
+          status: empActive ? "Active" : "Inactive",
+          avatar: resolvedAvatar,
+          joinDate: empJoinDate,
+          salary: empSalary,
+        };
+        if (isUpdating) {
+          await updateEmployee(targetId, apiPayload);
+        } else {
+          await createEmployee(apiPayload);
+        }
+        await syncCollectionsFromApi();
+      } catch {
+        let updatedList;
+        const index = currentList.findIndex((emp) => emp.id === targetId);
+        if (index !== -1) {
+          updatedList = [...currentList];
+          updatedList[index] = newEmp;
+        } else {
+          updatedList = [...currentList, newEmp];
+        }
+        saveCollection("db_employees", updatedList);
       }
 
-      saveCollection("db_employees", updatedList);
-
-      // Automatically append starting payroll master-card as well!
       const currentPayroll = getCollection<any[]>("db_payroll", []);
       const newPayroll = {
         id: targetId,
@@ -377,10 +393,10 @@ export default function AddEmployeePage() {
         deduct: "$0",
         total: empSalary,
         status: "Pending",
-        avatar: newEmp.avatar
+        avatar: newEmp.avatar,
       };
 
-      const payrollIndex = currentPayroll.findIndex(p => p.id === targetId);
+      const payrollIndex = currentPayroll.findIndex((p) => p.id === targetId);
       let updatedPayroll;
       if (payrollIndex !== -1) {
         updatedPayroll = [...currentPayroll];
@@ -390,14 +406,11 @@ export default function AddEmployeePage() {
       }
       saveCollection("db_payroll", updatedPayroll);
 
-      // Trigger global tab/view notifications or updates
-      window.dispatchEvent(new Event("storage"));
       window.dispatchEvent(new Event("db_updated"));
-
-      showToast("Employee added successfully!");
+      showToast(isUpdating ? "Employee updated successfully!" : "Employee added successfully!");
       setTimeout(() => {
-        navigate('/employees');
-      }, 1500);
+        navigate("/employees");
+      }, 1200);
     }
   };
 
@@ -407,10 +420,10 @@ export default function AddEmployeePage() {
       breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Employees", href: "/employees" }, { label: "Add New Employee" }]}
     >
       {/* Main Multi-step Form Container */}
-      <Card className="flex flex-col lg:flex-row border border-[#E6E6E4] rounded-[16px] overflow-hidden min-h-[850px] bg-white">
+      <Card className="flex flex-col lg:flex-row border border-line rounded-2xl overflow-hidden min-h-[850px] bg-white">
         
         {/* Left Progress Steps Sidebar */}
-        <div className="w-full lg:w-[272px] p-8 shrink-0 border-r border-[#E4E4E1]">
+        <div className="w-full lg:w-[272px] p-8 shrink-0 border-r border-line">
            <h2 className="text-[18px] font-bold text-[#203430]">Register New Employee</h2>
            <p className="text-[11px] text-[#63716E] mt-2 mb-10 leading-relaxed font-medium">
              Enter all required employment details to formally add a new member to your organization.
@@ -432,7 +445,7 @@ export default function AddEmployeePage() {
                     <div className={cn(
                       "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition-all z-10",
                       step === s.id ? "border-brand bg-white" : 
-                      step > s.id ? "border-brand bg-brand" : "border-[#E4E4E1] bg-white"
+                      step > s.id ? "border-brand bg-brand" : "border-line bg-white"
                     )}>
                       {step > s.id ? (
                         <Check className="h-3 w-3 text-white" strokeWidth={3} />
@@ -553,7 +566,7 @@ export default function AddEmployeePage() {
                               <span className="text-[12px] text-[#203430]">{g}</span>
                               <div className={cn(
                                 "h-4 w-4 rounded-full border flex items-center justify-center",
-                                g === empGender ? "border-brand" : "border-[#E4E4E1]"
+                                g === empGender ? "border-brand" : "border-line"
                               )}>
                                 {g === empGender && <div className="h-2 w-2 rounded-full bg-brand" />}
                               </div>
@@ -601,7 +614,7 @@ export default function AddEmployeePage() {
                           )}>
                              <div 
                                onClick={() => setShowPhoneDropdown(!showPhoneDropdown)}
-                               className="flex items-center gap-1 border-r border-[#E4E4E1] pr-2 shrink-0 cursor-pointer select-none"
+                               className="flex items-center gap-1 border-r border-line pr-2 shrink-0 cursor-pointer select-none"
                              >
                                <span className="text-[16px] leading-none" role="img" aria-label="flag">
                                  {COUNTRIES.find(c => c.code === empPhoneCountry)?.flagEmoji || "🇮🇩"}
@@ -631,7 +644,7 @@ export default function AddEmployeePage() {
                              {showPhoneDropdown && (
                                <>
                                  <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setShowPhoneDropdown(false)} />
-                                 <div className="absolute left-0 top-[40px] z-50 w-[240px] max-h-[200px] overflow-y-auto bg-white border border-[#E4E4E1] rounded-xl shadow-xl py-1.5">
+                                 <div className="absolute left-0 top-[40px] z-50 w-[240px] max-h-[200px] overflow-y-auto bg-white border border-line rounded-xl shadow-xl py-1.5">
                                    {COUNTRIES.map(c => (
                                      <button
                                        key={c.code}
@@ -724,7 +737,7 @@ export default function AddEmployeePage() {
                           )}>
                              <div 
                                onClick={() => setShowEmergencyDropdown(!showEmergencyDropdown)}
-                               className="flex items-center gap-1 border-r border-[#E4E4E1] pr-2 shrink-0 cursor-pointer select-none"
+                               className="flex items-center gap-1 border-r border-line pr-2 shrink-0 cursor-pointer select-none"
                              >
                                <span className="text-[16px] leading-none" role="img" aria-label="flag">
                                  {COUNTRIES.find(c => c.code === empEmergencyPhoneCountry)?.flagEmoji || "🇮🇩"}
@@ -753,7 +766,7 @@ export default function AddEmployeePage() {
                              {showEmergencyDropdown && (
                                <>
                                  <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setShowEmergencyDropdown(false)} />
-                                 <div className="absolute left-0 top-[40px] z-50 w-[240px] max-h-[200px] overflow-y-auto bg-white border border-[#E4E4E1] rounded-xl shadow-xl py-1.5">
+                                 <div className="absolute left-0 top-[40px] z-50 w-[240px] max-h-[200px] overflow-y-auto bg-white border border-line rounded-xl shadow-xl py-1.5">
                                    {COUNTRIES.map(c => (
                                      <button
                                        key={c.code}
@@ -898,7 +911,7 @@ export default function AddEmployeePage() {
                               <span className="text-[12px] text-[#203430]">{m}</span>
                               <div className={cn(
                                 "h-4 w-4 rounded-full border flex items-center justify-center",
-                                m === empModel ? "border-brand" : "border-[#E4E4E1]"
+                                m === empModel ? "border-brand" : "border-line"
                               )}>
                                 {m === empModel && <div className="h-2 w-2 rounded-full bg-brand" />}
                               </div>
@@ -1030,7 +1043,7 @@ export default function AddEmployeePage() {
                           { l: 'Internet (Remote & Hybrid only)', active: allowanceInternet, act: () => setAllowanceInternet(!allowanceInternet) },
                         ].map(a => (
                           <div key={a.l} onClick={a.act} className="flex items-center gap-3 cursor-pointer select-none">
-                            <div className={cn("h-4 w-4 rounded-[4px] border flex items-center justify-center transition-all", a.active ? "bg-brand border-brand" : "bg-white border-[#E4E4E1]")}>
+                            <div className={cn("h-4 w-4 rounded-[4px] border flex items-center justify-center transition-all", a.active ? "bg-brand border-brand" : "bg-white border-line")}>
                               {a.active && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                             </div>
                             <span className="text-[12px] text-[#203430] font-medium">{a.l}</span>
@@ -1045,7 +1058,7 @@ export default function AddEmployeePage() {
                       <div onClick={handleSelectAllBenefits} className="flex items-center gap-3 mb-6 cursor-pointer select-none group">
                         <div className={cn(
                           "h-4 w-4 rounded-[4px] border flex items-center justify-center transition-all",
-                          allBenefitsSelected ? "bg-brand border-brand" : "border-[#E4E4E1] bg-white group-hover:border-brand"
+                          allBenefitsSelected ? "bg-brand border-brand" : "border-line bg-white group-hover:border-brand"
                         )}>
                           {allBenefitsSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                         </div>
@@ -1064,7 +1077,7 @@ export default function AddEmployeePage() {
                                 <div key={item.l} onClick={item.act} className="flex items-center gap-3 cursor-pointer select-none">
                                   <div className={cn(
                                     "h-4 w-4 rounded-[4px] border flex items-center justify-center transition-all",
-                                    item.active ? "bg-brand border-brand" : "bg-white border-[#E4E4E1]"
+                                    item.active ? "bg-brand border-brand" : "bg-white border-line"
                                   )}>
                                     {item.active && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                                   </div>
@@ -1080,7 +1093,7 @@ export default function AddEmployeePage() {
                               <div onClick={() => setBenefitDevice(!benefitDevice)} className="flex items-center gap-3 cursor-pointer select-none">
                                 <div className={cn(
                                   "h-4 w-4 rounded-[4px] border flex items-center justify-center transition-all",
-                                  benefitDevice ? "bg-brand border-brand" : "bg-white border-[#E4E4E1]"
+                                  benefitDevice ? "bg-brand border-brand" : "bg-white border-line"
                                 )}>
                                   {benefitDevice && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                                 </div>
@@ -1099,7 +1112,7 @@ export default function AddEmployeePage() {
                                 { l: 'Mental Health Support', active: benefitMental, act: () => setBenefitMental(!benefitMental) }
                               ].map(item => (
                                 <div key={item.l} onClick={item.act} className="flex items-center gap-3 cursor-pointer select-none">
-                                  <div className={cn("h-4 w-4 rounded-[4px] border flex items-center justify-center transition-all", item.active ? "bg-brand border-brand" : "bg-white border-[#E4E4E1]")}>
+                                  <div className={cn("h-4 w-4 rounded-[4px] border flex items-center justify-center transition-all", item.active ? "bg-brand border-brand" : "bg-white border-line")}>
                                     {item.active && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                                   </div>
                                   <span className="text-[12px] text-[#203430] font-medium">{item.l}</span>
@@ -1147,7 +1160,7 @@ export default function AddEmployeePage() {
                                       ? "border-[#006b5f]/40 bg-white" 
                                       : hasDocError
                                         ? "border-red-500 bg-red-5/40 hover:bg-red-50/20"
-                                        : "border-[#E4E4E1] bg-[#F3F3F0] hover:bg-white hover:border-brand"
+                                        : "border-line bg-[#F3F3F0] hover:bg-white hover:border-brand"
                                   )}
                                 >
                                   <div className="flex items-center gap-3">
@@ -1348,7 +1361,7 @@ export default function AddEmployeePage() {
         )}
       </AnimatePresence>
 
-      <footer className="mt-20 py-8 border-t border-[#E4E4E1] flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
+      <footer className="mt-20 py-8 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
          <div className="flex flex-col sm:flex-row items-center gap-6 lg:gap-16">
             <p className="text-[12px] font-bold text-[#203430]">Copyright © 2025 Peterdraw</p>
             <div className="flex gap-6">

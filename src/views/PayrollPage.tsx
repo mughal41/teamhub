@@ -201,6 +201,15 @@ export default function PayrollPage() {
     const handleDbUpdate = () => {
       setPayrolls(getCollection<any[]>("db_payroll", []));
     };
+    void (async () => {
+      try {
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+        handleDbUpdate();
+      } catch {
+        handleDbUpdate();
+      }
+    })();
     window.addEventListener("db_updated", handleDbUpdate);
     window.addEventListener("storage", handleDbUpdate);
     return () => {
@@ -323,16 +332,36 @@ export default function PayrollPage() {
 
   const handleSaveDraft = () => {
     if (!selectedEmployee) return;
-    const currentPayroll = getCollection<any[]>("db_payroll", []);
-    const updated = currentPayroll.map((p) =>
-      p.id === selectedEmployee.id ? { ...p, status: "Draft" } : p
-    );
-    saveCollection("db_payroll", updated);
-    window.dispatchEvent(new Event("db_updated"));
-
-    setPayrolls(updated);
-    setShowModal("none");
-    showToast(`Payroll for ${selectedEmployee.name} saved as Draft.`);
+    void (async () => {
+      const payload = { status: "Draft" };
+      if (selectedEmployee.payslipId != null) {
+        try {
+          const { updatePayslip } = await import("@/src/lib/api/modules");
+          const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+          await updatePayslip(Number(selectedEmployee.payslipId), payload);
+          await syncCollectionsFromApi();
+          setPayrolls(getCollection<any[]>("db_payroll", []));
+          setShowModal("none");
+          showToast(`Payroll for ${selectedEmployee.name} saved as Draft.`);
+          return;
+        } catch {
+          // local fallback
+        }
+      }
+      const currentPayroll = getCollection<any[]>("db_payroll", []);
+      const updated = currentPayroll.map((p) =>
+        (selectedEmployee.payslipId != null
+          ? p.payslipId === selectedEmployee.payslipId
+          : p.id === selectedEmployee.id)
+          ? { ...p, status: "Draft" }
+          : p
+      );
+      saveCollection("db_payroll", updated);
+      window.dispatchEvent(new Event("db_updated"));
+      setPayrolls(updated);
+      setShowModal("none");
+      showToast(`Payroll for ${selectedEmployee.name} saved as Draft.`);
+    })();
   };
 
   const handleFinalizeAndPay = () => {
@@ -349,25 +378,42 @@ export default function PayrollPage() {
       editLoan +
       customDeductions.reduce((acc, curr) => acc + curr.value, 0);
     const finalNet = totEarn - totDed;
+    const payload = {
+      status: "Paid",
+      allowance: `$${(editHousing + editTransport).toLocaleString()}`,
+      deduct: `$${totDed.toLocaleString()}`,
+      total: `$${finalNet.toLocaleString()}`,
+    };
 
-    const currentPayroll = getCollection<any[]>("db_payroll", []);
-    const updated = currentPayroll.map((p) =>
-      p.id === selectedEmployee.id
-        ? {
-            ...p,
-            status: "Paid",
-            allowance: `$${(editHousing + editTransport).toLocaleString()}`,
-            deduct: `$${totDed.toLocaleString()}`,
-            total: `$${finalNet.toLocaleString()}`,
-          }
-        : p
-    );
-    saveCollection("db_payroll", updated);
-    window.dispatchEvent(new Event("db_updated"));
-
-    setPayrolls(updated);
-    setShowModal("none");
-    showToast(`Payroll for ${selectedEmployee.name} is now Paid!`);
+    void (async () => {
+      if (selectedEmployee.payslipId != null) {
+        try {
+          const { updatePayslip } = await import("@/src/lib/api/modules");
+          const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+          await updatePayslip(Number(selectedEmployee.payslipId), payload);
+          await syncCollectionsFromApi();
+          setPayrolls(getCollection<any[]>("db_payroll", []));
+          setShowModal("none");
+          showToast(`Payroll for ${selectedEmployee.name} is now Paid!`);
+          return;
+        } catch {
+          // local fallback
+        }
+      }
+      const currentPayroll = getCollection<any[]>("db_payroll", []);
+      const updated = currentPayroll.map((p) =>
+        (selectedEmployee.payslipId != null
+          ? p.payslipId === selectedEmployee.payslipId
+          : p.id === selectedEmployee.id)
+          ? { ...p, ...payload }
+          : p
+      );
+      saveCollection("db_payroll", updated);
+      window.dispatchEvent(new Event("db_updated"));
+      setPayrolls(updated);
+      setShowModal("none");
+      showToast(`Payroll for ${selectedEmployee.name} is now Paid!`);
+    })();
   };
 
   const addCustomEarningItem = () => {
@@ -443,7 +489,7 @@ export default function PayrollPage() {
       title="Payroll"
       breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Payroll" }]}
     >
-      <div className="space-y-5 relative">
+      <div className="space-y-6 relative">
         {/* Real-time Interactive Toast Indicator */}
         {toast && (
           <div className="fixed bottom-5 right-5 z-50 bg-[#203430] text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-brand animate-bounce">
@@ -487,7 +533,7 @@ export default function PayrollPage() {
           ].map((stat) => (
             <Card
               key={stat.label}
-              className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex items-center justify-between"
+              className="flex items-center justify-between"
             >
               <div className="space-y-2">
                 <p className="text-[12px] text-[#63716E]">{stat.label}</p>
@@ -503,7 +549,7 @@ export default function PayrollPage() {
                   <span className="text-[10px] text-[#63716E]">from May</span>
                 </div>
               </div>
-              <div className="h-[60px] w-[60px] bg-white border border-[#E6E6E4] rounded-[8px] flex items-center justify-center">
+              <div className="h-[60px] w-[60px] bg-white border border-line rounded-[8px] flex items-center justify-center">
                 <stat.icon
                   className="h-8 w-8"
                   style={{ color: stat.iconColor }}
@@ -516,14 +562,14 @@ export default function PayrollPage() {
         {/* Charts Row */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
           {/* Payroll Overview Card */}
-          <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col min-h-[277px]">
+          <Card className="flex flex-col min-h-[277px]">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[16px] font-bold text-[#203430]">
                 Payroll Overview
               </h3>
               <button
                 className={cn(
-                  "flex items-center gap-2 bg-white border border-[#E6E6E4] px-3 py-1.5 rounded-[8px] text-[12px] font-medium text-[#203430]",
+                  "flex items-center gap-2 bg-white border border-line px-3 py-1.5 rounded-[8px] text-[12px] font-medium text-[#203430]",
                   payrolls.length === 0 && "cursor-not-allowed opacity-50"
                 )}
                 disabled={payrolls.length === 0}
@@ -532,7 +578,7 @@ export default function PayrollPage() {
               </button>
             </div>
             {payrolls.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-6 border border-dashed border-[#E4E4E1] rounded-[16px] text-center gap-1 h-full min-h-[180px]">
+              <div className="flex-1 flex flex-col items-center justify-center p-6 border border-dashed border-line rounded-2xl text-center gap-1 h-full min-h-[180px]">
                 <Activity className="h-8 w-8 text-[#63716E]/40 mb-1" />
                 <p className="text-[12px] font-bold text-[#203430]">No Trend Metrics Available</p>
                 <p className="text-[10px] text-[#63716E] max-w-xs leading-relaxed">
@@ -617,17 +663,17 @@ export default function PayrollPage() {
           </Card>
 
           {/* Payroll Breakdown Card */}
-          <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col min-h-[277px]">
+          <Card className="flex flex-col min-h-[277px]">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[16px] font-bold text-[#203430]">
                 Payroll Breakdown
               </h3>
-              <button className="flex items-center gap-2 bg-white border border-[#E6E6E4] px-3 py-1.5 rounded-[8px] text-[12px] font-medium text-[#203430] cursor-not-allowed" disabled>
+              <button className="flex items-center gap-2 bg-white border border-line px-3 py-1.5 rounded-[8px] text-[12px] font-medium text-[#203430] cursor-not-allowed" disabled>
                 This Month <ChevronDown className="h-3 w-3" />
               </button>
             </div>
             {payrolls.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-6 border border-dashed border-[#E4E4E1] rounded-[16px] text-center gap-1 h-full min-h-[180px]">
+              <div className="flex-1 flex flex-col items-center justify-center p-6 border border-dashed border-line rounded-2xl text-center gap-1 h-full min-h-[180px]">
                 <Banknote className="h-8 w-8 text-[#63716E]/40 mb-1" />
                 <p className="text-[12px] font-bold text-[#203430]">No Dynamic Payouts</p>
                 <p className="text-[10px] text-[#63716E] max-w-xs leading-relaxed">
@@ -712,7 +758,7 @@ export default function PayrollPage() {
         </div>
 
         {/* Table Card */}
-        <Card className="border border-[#E6E6E4] rounded-[16px] bg-white overflow-hidden p-0 flex flex-col min-h-[708px]">
+        <Card className="overflow-hidden p-0 flex flex-col min-h-[708px]">
           <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-2">
             <h2 className="text-[16px] font-bold text-[#203430]">
               Payroll List
@@ -807,7 +853,7 @@ export default function PayrollPage() {
                   <tr>
                     <td colSpan={12} className="px-6 py-16 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
-                        <div className="h-10 w-10 bg-slate-50 border border-[#E4E4E1] rounded-full flex items-center justify-center text-slate-400 mx-auto">
+                        <div className="h-10 w-10 bg-slate-50 border border-line rounded-full flex items-center justify-center text-slate-400 mx-auto">
                           <DollarSign className="h-4 w-4" />
                         </div>
                         <p className="text-[12px] font-bold text-[#203430] mt-1">
@@ -917,10 +963,10 @@ export default function PayrollPage() {
             </table>
           </div>
 
-          <div className="p-6 border-t border-[#E4E4E1] flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="p-6 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <span className="text-[14px] text-[#63716E]">Show</span>
-              <button className="flex items-center gap-2 bg-white border border-[#E6E6E4] h-[28px] px-3 rounded-[8px] text-[12px] font-bold text-[#203430]">
+              <button className="flex items-center gap-2 bg-white border border-line h-[28px] px-3 rounded-[8px] text-[12px] font-bold text-[#203430]">
                 10 <ChevronDown className="h-3 w-3" />
               </button>
               <span className="text-[14px] text-[#63716E]">
@@ -934,17 +980,17 @@ export default function PayrollPage() {
               <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-brand text-white text-[12px] font-bold">
                 1
               </button>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430] text-[12px] font-bold">
+              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430] text-[12px] font-bold">
                 2
               </button>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430] text-[12px] font-bold">
+              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430] text-[12px] font-bold">
                 3
               </button>
               <span className="px-1 text-[12px] text-[#63716E]">...</span>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430] text-[12px] font-bold">
+              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430] text-[12px] font-bold">
                 11
               </button>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430]">
+              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430]">
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
@@ -952,7 +998,7 @@ export default function PayrollPage() {
         </Card>
       </div>
 
-      <footer className="mt-20 py-8 border-t border-[#E4E4E1] flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
+      <footer className="mt-20 py-8 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
         <div className="flex flex-col sm:flex-row items-center gap-6 lg:gap-16">
           <p className="text-[12px] font-bold text-[#203430]">
             Copyright © 2025 Peterdraw
@@ -974,9 +1020,9 @@ export default function PayrollPage() {
       {/* ----------------- FINALIZE PAYROLL MODAL ----------------- */}
       {showModal === "finalize" && selectedEmployee && (
         <div className="fixed inset-0 bg-[#161c1a]/60 backdrop-blur-[4px] z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-5xl h-[85vh] max-h-[850px] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-[#E4E4E1] animate-in fade-in zoom-in-95 duration-200 text-left">
+          <div className="bg-white w-full max-w-5xl h-[85vh] max-h-[850px] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-line animate-in fade-in zoom-in-95 duration-200 text-left">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-[#E4E4E1] flex justify-between items-center bg-[#F3F3F0]">
+            <div className="px-6 py-4 border-b border-line flex justify-between items-center bg-[#F3F3F0]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-[#E4F2D3] flex items-center justify-center text-[#0E4D41]">
                   <Check className="h-6 w-6 text-[#0E4D41]" />
@@ -1010,7 +1056,7 @@ export default function PayrollPage() {
               {/* Left Column - Scrollable Form */}
               <div className="flex-1 p-6 overflow-y-auto space-y-6 text-left">
                 {/* 1. Employee Profile Summary header */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-[#F3F3F0] p-4 rounded-xl border border-[#E4E4E1]">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-[#F3F3F0] p-4 rounded-xl border border-line">
                   <img
                     alt="Employee Avatar"
                     className="h-14 w-14 rounded-full object-cover border-2 border-brand/20 shrink-0"
@@ -1055,7 +1101,7 @@ export default function PayrollPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
                   {/* Earnings Panel */}
                   <div className="space-y-4 text-left">
-                    <div className="flex justify-between items-center pb-2 border-b border-[#E4E4E1]">
+                    <div className="flex justify-between items-center pb-2 border-b border-line">
                       <h4 className="text-[13px] font-bold text-brand flex items-center gap-1.5">
                         <Plus className="h-4 w-4 text-brand" />
                         Earnings & Allowances
@@ -1081,7 +1127,7 @@ export default function PayrollPage() {
                           placeholder="Allowance Title (e.g. Performance Bonus)"
                           value={newEarningName}
                           onChange={(e) => setNewEarningName(e.target.value)}
-                          className="w-full text-[12px] bg-white border border-[#E4E4E1] rounded-md px-2 py-1 focus:ring-1 focus:ring-brand focus:border-brand"
+                          className="w-full text-[12px] bg-white border border-line rounded-md px-2 py-1 focus:ring-1 focus:ring-brand focus:border-brand"
                         />
                         <div className="grid grid-cols-2 gap-2">
                           <input
@@ -1089,20 +1135,20 @@ export default function PayrollPage() {
                             placeholder="Amount ($)"
                             value={newEarningVal}
                             onChange={(e) => setNewEarningVal(e.target.value)}
-                            className="text-[12px] bg-white border border-[#E4E4E1] rounded-md px-2 py-1 focus:ring-1 focus:ring-brand focus:border-brand"
+                            className="text-[12px] bg-white border border-line rounded-md px-2 py-1 focus:ring-1 focus:ring-brand focus:border-brand"
                           />
                           <input
                             type="text"
                             placeholder="Description (optional)"
                             value={newEarningDesc}
                             onChange={(e) => setNewEarningDesc(e.target.value)}
-                            className="text-[12px] bg-white border border-[#E4E4E1] rounded-md px-2 py-1 focus:ring-1 focus:ring-brand focus:border-brand"
+                            className="text-[12px] bg-white border border-line rounded-md px-2 py-1 focus:ring-1 focus:ring-brand focus:border-brand"
                           />
                         </div>
                         <div className="flex justify-end gap-2 pt-1">
                           <button
                             onClick={() => setShowAddEarningForm(false)}
-                            className="px-2 py-1 text-[11px] font-medium text-[#63716E] bg-white border border-[#E6E6E4] rounded hover:bg-slate-200 transition-colors"
+                            className="px-2 py-1 text-[11px] font-medium text-[#63716E] bg-white border border-line rounded hover:bg-slate-200 transition-colors"
                           >
                             Cancel
                           </button>
@@ -1118,7 +1164,7 @@ export default function PayrollPage() {
 
                     <div className="space-y-3 text-left">
                       {/* Fixed Base Salary Row */}
-                      <div className="flex items-center justify-between p-3 bg-[#F3F3F0] rounded-xl border border-[#E4E4E1]">
+                      <div className="flex items-center justify-between p-3 bg-[#F3F3F0] rounded-xl border border-line">
                         <div className="text-left">
                           <p className="text-[12px] font-bold text-[#203430]">
                             Base Salary
@@ -1142,7 +1188,7 @@ export default function PayrollPage() {
                             Housing & Lodging Support
                           </p>
                         </div>
-                        <div className="flex items-center gap-1 bg-white border border-[#E4E4E1] px-2 py-1 rounded-lg">
+                        <div className="flex items-center gap-1 bg-white border border-line px-2 py-1 rounded-lg">
                           <span className="text-[12px] font-bold text-brand">
                             $
                           </span>
@@ -1169,7 +1215,7 @@ export default function PayrollPage() {
                             Monthly Fuel & Commute
                           </p>
                         </div>
-                        <div className="flex items-center gap-1 bg-white border border-[#E4E4E1] px-2 py-1 rounded-lg">
+                        <div className="flex items-center gap-1 bg-white border border-line px-2 py-1 rounded-lg">
                           <span className="text-[12px] font-bold text-brand">
                             $
                           </span>
@@ -1222,7 +1268,7 @@ export default function PayrollPage() {
 
                   {/* Deductions Panel */}
                   <div className="space-y-4 text-left">
-                    <div className="flex justify-between items-center pb-2 border-b border-[#E4E4E1]">
+                    <div className="flex justify-between items-center pb-2 border-b border-line">
                       <h4 className="text-[13px] font-bold text-red-600 flex items-center gap-1.5">
                         <Trash2 className="h-4 w-4 text-red-600" />
                         Deductions (Outflow)
@@ -1248,7 +1294,7 @@ export default function PayrollPage() {
                           placeholder="Deduction Title (e.g. Health Premium)"
                           value={newDeductionName}
                           onChange={(e) => setNewDeductionName(e.target.value)}
-                          className="w-full text-[12px] bg-white border border-[#E4E4E1] rounded-md px-2 py-1 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                          className="w-full text-[12px] bg-white border border-line rounded-md px-2 py-1 focus:ring-1 focus:ring-red-500 focus:border-red-500"
                         />
                         <div className="grid grid-cols-2 gap-2">
                           <input
@@ -1256,7 +1302,7 @@ export default function PayrollPage() {
                             placeholder="Amount ($)"
                             value={newDeductionVal}
                             onChange={(e) => setNewDeductionVal(e.target.value)}
-                            className="text-[12px] bg-white border border-[#E4E4E1] rounded-md px-2 py-1 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                            className="text-[12px] bg-white border border-line rounded-md px-2 py-1 focus:ring-1 focus:ring-red-500 focus:border-red-500"
                           />
                           <input
                             type="text"
@@ -1265,7 +1311,7 @@ export default function PayrollPage() {
                             onChange={(e) =>
                               setNewDeductionDesc(e.target.value)
                             }
-                            className="text-[12px] bg-white border border-[#E4E4E1] rounded-md px-2 py-1 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                            className="text-[12px] bg-white border border-line rounded-md px-2 py-1 focus:ring-1 focus:ring-red-500 focus:border-red-500"
                           />
                         </div>
                         <div className="flex justify-end gap-2 pt-1">
@@ -1287,7 +1333,7 @@ export default function PayrollPage() {
 
                     <div className="space-y-3 text-left">
                       {/* Fixed Federal Tax Row */}
-                      <div className="flex items-center justify-between p-3 bg-[#F3F3F0] rounded-xl border border-[#E4E4E1] text-left">
+                      <div className="flex items-center justify-between p-3 bg-[#F3F3F0] rounded-xl border border-line text-left">
                         <div className="text-left">
                           <p className="text-[12px] font-bold text-[#203430]">
                             Federal Tax (PAYE)
@@ -1311,7 +1357,7 @@ export default function PayrollPage() {
                             Social & Pension Recovery
                           </p>
                         </div>
-                        <div className="flex items-center gap-1 bg-white border border-[#E4E4E1] px-2 py-1 rounded-lg">
+                        <div className="flex items-center gap-1 bg-white border border-line px-2 py-1 rounded-lg">
                           <span className="text-[12px] font-bold text-red-600">
                             $
                           </span>
@@ -1338,7 +1384,7 @@ export default function PayrollPage() {
                             Staff Cash Loan Compensation
                           </p>
                         </div>
-                        <div className="flex items-center gap-1 bg-white border border-[#E4E4E1] px-2 py-1 rounded-lg">
+                        <div className="flex items-center gap-1 bg-white border border-line px-2 py-1 rounded-lg">
                           <span className="text-[12px] font-bold text-red-600">
                             $
                           </span>
@@ -1397,7 +1443,7 @@ export default function PayrollPage() {
                   </h4>
                   <textarea
                     placeholder="Provide any remarks regarding this finalization..."
-                    className="w-full h-24 text-[13px] bg-slate-50 border border-[#E4E4E1] rounded-xl p-3 focus:ring-1 focus:ring-brand focus:border-brand resize-none"
+                    className="w-full h-24 text-[13px] bg-slate-50 border border-line rounded-xl p-3 focus:ring-1 focus:ring-brand focus:border-brand resize-none"
                     value={adminRemarks}
                     onChange={(e) => setAdminRemarks(e.target.value)}
                   />
@@ -1405,7 +1451,7 @@ export default function PayrollPage() {
               </div>
 
               {/* Right Summary Column */}
-              <div className="w-full md:w-80 bg-[#F3F3F0] border-t md:border-t-0 md:border-l border-[#E4E4E1] p-6 flex flex-col justify-between overflow-y-auto text-left">
+              <div className="w-full md:w-80 bg-[#F3F3F0] border-t md:border-t-0 md:border-l border-line p-6 flex flex-col justify-between overflow-y-auto text-left">
                 <div className="space-y-6 text-left">
                   <div>
                     <h4 className="text-[11px] font-bold text-[#63716E] tracking-widest uppercase mb-4">
@@ -1424,7 +1470,7 @@ export default function PayrollPage() {
                           -${totalDeductions.toLocaleString()}
                         </span>
                       </div>
-                      <div className="pt-3 border-t border-[#E4E4E1] flex justify-between items-end text-left">
+                      <div className="pt-3 border-t border-line flex justify-between items-end text-left">
                         <div className="flex-1 text-left">
                           <p className="text-[11px] font-bold text-brand uppercase tracking-wider">
                             Net Payable Pay
@@ -1437,7 +1483,7 @@ export default function PayrollPage() {
                     </div>
                   </div>
 
-                  <div className="bg-white p-4 rounded-xl border border-[#E4E4E1] space-y-3 text-left">
+                  <div className="bg-white p-4 rounded-xl border border-line space-y-3 text-left">
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] font-bold text-[#63716E] uppercase">
                         Net Ratio
@@ -1465,7 +1511,7 @@ export default function PayrollPage() {
                 <div className="space-y-3 mt-6">
                   <button
                     onClick={handleReset}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 text-[11px] font-bold text-[#63716E] hover:text-[#203430] bg-white border border-[#E4E4E1] rounded-xl uppercase transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 text-[11px] font-bold text-[#63716E] hover:text-[#203430] bg-white border border-line rounded-xl uppercase transition-colors"
                   >
                     <RotateCcw className="h-4 w-4" />
                     Reset Calculation
@@ -1493,9 +1539,9 @@ export default function PayrollPage() {
       {/* ----------------- PAYROLL DETAILS MODAL ----------------- */}
       {showModal === "detail" && selectedEmployee && (
         <div className="fixed inset-0 bg-[#161c1a]/60 backdrop-blur-[4px] z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-4xl h-[85vh] max-h-[800px] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-[#E4E4E1] animate-in fade-in zoom-in-95 duration-200 text-left">
+          <div className="bg-white w-full max-w-4xl h-[85vh] max-h-[800px] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-line animate-in fade-in zoom-in-95 duration-200 text-left">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-[#E4E4E1] flex justify-between items-center bg-[#F3F3F0]">
+            <div className="px-6 py-4 border-b border-line flex justify-between items-center bg-[#F3F3F0]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-[#0E4D41]">
                   <CircleDollarSign className="h-6 w-6 text-brand" />
@@ -1517,7 +1563,7 @@ export default function PayrollPage() {
             <div className="flex-1 overflow-y-auto p-6 space-y-6 text-left bg-white">
               {/* Employee Summary & Status Banner */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-                <div className="md:col-span-2 flex items-center gap-4 p-4 rounded-xl bg-[#F3F3F0] border border-[#E4E4E1] text-left">
+                <div className="md:col-span-2 flex items-center gap-4 p-4 rounded-xl bg-[#F3F3F0] border border-line text-left">
                   <img
                     className="w-16 h-16 rounded-full object-cover border-2 border-brand/20 shrink-0"
                     src={selectedEmployee.avatar}
@@ -1554,8 +1600,8 @@ export default function PayrollPage() {
               {/* Financial breakdown */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
                 {/* Earnings breakdown card */}
-                <div className="bg-white border border-[#E4E4E1] rounded-xl overflow-hidden text-left">
-                  <div className="bg-[#F3F3F0] px-4 py-3 border-b border-[#E4E4E1] flex justify-between items-center">
+                <div className="bg-white border border-line rounded-xl overflow-hidden text-left">
+                  <div className="bg-[#F3F3F0] px-4 py-3 border-b border-line flex justify-between items-center">
                     <span className="text-[12px] font-bold text-[#203430]">
                       Earnings & Inflow
                     </span>
@@ -1604,7 +1650,7 @@ export default function PayrollPage() {
                         </span>
                       </div>
                     )}
-                    <div className="pt-3 border-t border-[#E4E4E1] flex justify-between text-[12px] font-bold">
+                    <div className="pt-3 border-t border-line flex justify-between text-[12px] font-bold">
                       <span className="text-[#203430]">
                         Total Gross Earnings
                       </span>
@@ -1629,8 +1675,8 @@ export default function PayrollPage() {
                 </div>
 
                 {/* Deductions card */}
-                <div className="bg-white border border-[#E4E4E1] rounded-xl overflow-hidden text-left">
-                  <div className="bg-[#F3F3F0] px-4 py-3 border-b border-[#E4E4E1] flex justify-between items-center">
+                <div className="bg-white border border-line rounded-xl overflow-hidden text-left">
+                  <div className="bg-[#F3F3F0] px-4 py-3 border-b border-line flex justify-between items-center">
                     <span className="text-[12px] font-bold text-[#203430]">
                       Deductions & Outflow
                     </span>
@@ -1676,7 +1722,7 @@ export default function PayrollPage() {
                         ).toLocaleString()}
                       </span>
                     </div>
-                    <div className="pt-3 border-t border-[#E4E4E1] flex justify-between text-[12px] font-bold">
+                    <div className="pt-3 border-t border-line flex justify-between text-[12px] font-bold">
                       <span className="text-[#203430]">Total Deductions</span>
                       <span className="text-red-600">
                         -$
@@ -1721,7 +1767,7 @@ export default function PayrollPage() {
 
               {/* Additional Specs Bento grid */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-left">
-                <div className="md:col-span-1 p-3 bg-slate-50 border border-[#E4E4E1] rounded-xl flex flex-col items-center justify-center text-center">
+                <div className="md:col-span-1 p-3 bg-slate-50 border border-line rounded-xl flex flex-col items-center justify-center text-center">
                   <Clock className="h-5 w-5 text-brand mb-1" />
                   <p className="text-[10px] text-[#63716E] uppercase font-semibold">
                     Working Days
@@ -1730,7 +1776,7 @@ export default function PayrollPage() {
                     22 Days
                   </p>
                 </div>
-                <div className="md:col-span-1 p-3 bg-slate-50 border border-[#E4E4E1] rounded-xl flex flex-col items-center justify-center text-center">
+                <div className="md:col-span-1 p-3 bg-slate-50 border border-line rounded-xl flex flex-col items-center justify-center text-center">
                   <Activity className="h-5 w-5 text-brand mb-1" />
                   <p className="text-[10px] text-[#63716E] uppercase font-semibold">
                     Overtime logged
@@ -1759,7 +1805,7 @@ export default function PayrollPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-[#E4E4E1] bg-[#F3F3F0] flex flex-col sm:flex-row justify-between items-center gap-3 text-left">
+            <div className="px-6 py-4 border-t border-line bg-[#F3F3F0] flex flex-col sm:flex-row justify-between items-center gap-3 text-left">
               <div className="flex gap-2 w-full sm:w-auto text-left">
                 <button
                   onClick={() =>
@@ -1776,7 +1822,7 @@ export default function PayrollPage() {
                       `Going to edit profile of ${selectedEmployee.name}`,
                     );
                   }}
-                  className="px-4 py-2 border border-[#E4E4E1] bg-white text-[#203430] font-bold text-[12px] rounded-lg flex items-center justify-center gap-1.5 hover:bg-slate-50 transition-all w-full sm:w-auto cursor-pointer"
+                  className="px-4 py-2 border border-line bg-white text-[#203430] font-bold text-[12px] rounded-lg flex items-center justify-center gap-1.5 hover:bg-slate-50 transition-all w-full sm:w-auto cursor-pointer"
                 >
                   <Edit className="h-4 w-4" /> Go to Edit Profile
                 </button>

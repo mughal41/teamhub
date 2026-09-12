@@ -13,10 +13,17 @@ export interface Employee {
   joinDate: string;
   /** Reports-to employee id (e.g. EMP-0100). Null/undefined = no manager. */
   managerId?: string | null;
+  /** Linked user email when available (for messaging). */
+  email?: string;
+  managerName?: string;
+  managerRole?: string;
+  managerAvatar?: string;
+  managerEmail?: string;
 }
 
 export interface AttendanceRecord {
   id: string;
+  recordId?: number;
   name: string;
   role: string;
   subRole: string;
@@ -34,9 +41,11 @@ export interface AttendanceRecord {
   forwardedTo: string;
   forwardedStatus: string; // "None" | "Pending" | "Approved" | "Rejected"
   hrApprovalStatus: string; // "None" | "Pending" | "Approved" | "Rejected"
+  is_correction?: boolean;
 }
 
 export interface LeaveActivityItem {
+  leaveId?: number;
   id: string;
   name: string;
   role: string;
@@ -62,6 +71,7 @@ export interface LeaveActivityItem {
 }
 
 export interface PayrollItem {
+  payslipId?: number;
   id: string;
   name: string;
   role: string;
@@ -95,6 +105,7 @@ export interface PaymentMethod {
 
 export interface Department {
   id: string;
+  pk?: number;
   name: string;
   code: string;
   headName: string;

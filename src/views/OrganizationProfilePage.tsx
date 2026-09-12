@@ -255,7 +255,7 @@ export default function OrganizationProfilePage() {
           <div className="lg:col-span-8 space-y-6 lg:space-y-8">
             
             {/* Section 1: Company Details */}
-            <div className="bg-white rounded-2xl border border-[#E4E4E1] p-6 sm:p-8 flex flex-col gap-6">
+            <div className="bg-white rounded-2xl border border-line p-6 sm:p-8 flex flex-col gap-6">
               <div className="flex items-center gap-3.5 pb-4 border-b border-slate-50">
                 <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center shrink-0">
                   <Building className="h-5.5 w-5.5 text-brand" />
@@ -273,7 +273,7 @@ export default function OrganizationProfilePage() {
                 <div className="md:col-span-4 flex flex-col items-center justify-center p-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50/40 text-center gap-3">
                   <div 
                     onClick={() => { setShowUploadLogoModal(true); setUploadedLogoFile(null); setLogoPreviewUrl(null); }}
-                    className="relative w-24 h-24 rounded-2xl border border-[#E4E4E1] bg-white shadow-2xs overflow-hidden flex items-center justify-center group cursor-pointer"
+                    className="relative w-24 h-24 rounded-2xl border border-line bg-white shadow-2xs overflow-hidden flex items-center justify-center group cursor-pointer"
                   >
                     {logoPreview ? (
                       <img 
@@ -372,7 +372,7 @@ export default function OrganizationProfilePage() {
             </div>
 
             {/* Section 2: Brand Identity details */}
-            <div className="bg-white rounded-2xl border border-[#E4E4E1] p-6 sm:p-8 flex flex-col gap-6">
+            <div className="bg-white rounded-2xl border border-line p-6 sm:p-8 flex flex-col gap-6">
               <div className="flex items-center gap-3.5 pb-4 border-b border-slate-50">
                 <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
                   <Palette className="h-5.5 w-5.5 text-indigo-600" />
@@ -440,7 +440,7 @@ export default function OrganizationProfilePage() {
                     rows={2}
                     value={tagline}
                     onChange={(e) => setTagline(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 hover:border-[#E4E4E1] hover:border-slate-300 focus:border-brand rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all resize-none"
+                    className="w-full bg-slate-50 border border-slate-200 hover:border-line hover:border-slate-300 focus:border-brand rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all resize-none"
                   />
                   <p className="text-[10px] text-slate-400 font-medium">Provides metadata description tags for report summaries and email headings layouts.</p>
                 </div>
@@ -449,7 +449,7 @@ export default function OrganizationProfilePage() {
             </div>
 
             {/* Section 3: Headquarters Location details */}
-            <div className="bg-white rounded-2xl border border-[#E4E4E1] p-6 sm:p-8 flex flex-col gap-6">
+            <div className="bg-white rounded-2xl border border-line p-6 sm:p-8 flex flex-col gap-6">
               <div className="flex items-center gap-3.5 pb-4 border-b border-slate-50">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-850 flex items-center justify-center shrink-0">
                   <MapPin className="h-5.5 w-5.5 text-emerald-600" />
@@ -552,7 +552,7 @@ export default function OrganizationProfilePage() {
           <div className="lg:col-span-4 space-y-6 lg:space-y-8">
             
             {/* Section 4: Social Links (Optional) */}
-            <div className="bg-white rounded-2xl border border-[#E4E4E1] p-6 flex flex-col gap-5">
+            <div className="bg-white rounded-2xl border border-line p-6 flex flex-col gap-5">
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 pb-3 border-b border-slate-50">
                 <Globe2 className="h-4.5 w-4.5 text-slate-400" />
                 <span>Social Links & Handles</span>
@@ -634,7 +634,7 @@ export default function OrganizationProfilePage() {
           </div>
 
           {/* Action Sticky Footer Bar */}
-          <div className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white/90 backdrop-blur-md border-t border-[#E4E4E1] px-8 py-4.5 flex justify-end gap-4 z-40">
+          <div className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white/90 backdrop-blur-md border-t border-line px-8 py-4.5 flex justify-end gap-4 z-40">
             <button 
               type="button" 
               onClick={handleDiscard}
@@ -665,9 +665,9 @@ export default function OrganizationProfilePage() {
           />
 
           {/* Modal Container */}
-          <div className="relative bg-white w-full max-w-[520px] rounded-2xl shadow-2xl overflow-hidden border border-[#E4E4E1] flex flex-col font-sans animate-in fade-in zoom-in-95 duration-200 z-10">
+          <div className="relative bg-white w-full max-w-[520px] rounded-2xl shadow-2xl overflow-hidden border border-line flex flex-col font-sans animate-in fade-in zoom-in-95 duration-200 z-10">
             {/* Modal Header */}
-            <div className="px-6 py-4.5 border-b border-[#E4E4E1] flex justify-between items-center bg-white">
+            <div className="px-6 py-4.5 border-b border-line flex justify-between items-center bg-white">
               <h3 className="text-base sm:text-lg font-bold text-slate-900">Upload Logo</h3>
               <button 
                 type="button"
@@ -752,7 +752,7 @@ export default function OrganizationProfilePage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 bg-slate-50/50 border-t border-[#E4E4E1] flex justify-end gap-3 rounded-b-2xl">
+            <div className="px-6 py-4 bg-slate-50/50 border-t border-line flex justify-end gap-3 rounded-b-2xl">
               <button 
                 type="button"
                 disabled={isUploadingLogo}

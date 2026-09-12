@@ -388,7 +388,7 @@ export default function BillingPage() {
               <div className="lg:col-span-8 flex flex-col gap-8">
                 
                 {/* Subscription Card Widget matching user screens */}
-                <div className="bg-white rounded-2xl border border-[#E4E4E1] p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start gap-6 relative overflow-hidden group">
+                <div className="bg-white rounded-2xl border border-line p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start gap-6 relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-teal-500/5 rounded-bl-full pointer-events-none group-hover:bg-teal-500/10 transition-colors" />
                   
                   <div className="space-y-4 flex-1">
@@ -448,7 +448,7 @@ export default function BillingPage() {
                 </div>
 
                 {/* Savings payments section */}
-                <div className="bg-white rounded-2xl border border-[#E4E4E1] flex flex-col">
+                <div className="bg-white rounded-2xl border border-line flex flex-col">
                   <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-550/10">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-teal-50 text-teal-850 flex items-center justify-center">
@@ -501,7 +501,7 @@ export default function BillingPage() {
                             {!method.isDefault && (
                               <button 
                                 onClick={() => handleSetDefault(method.id)}
-                                className="text-xs font-bold text-slate-600 hover:text-[#006b5f] hover:bg-slate-50 px-3 py-1.5 rounded-lg border border-[#E4E4E1] hover:border-teal-500/30 transition-all cursor-pointer"
+                                className="text-xs font-bold text-slate-600 hover:text-[#006b5f] hover:bg-slate-50 px-3 py-1.5 rounded-lg border border-line hover:border-teal-500/30 transition-all cursor-pointer"
                               >
                                 Set default
                               </button>
@@ -521,7 +521,7 @@ export default function BillingPage() {
                 </div>
 
                 {/* Ledger Invoice List Table */}
-                <div className="bg-white rounded-2xl border border-[#E4E4E1] overflow-hidden flex flex-col font-sans">
+                <div className="bg-white rounded-2xl border border-line overflow-hidden flex flex-col font-sans">
                   <div className="p-6 border-b border-slate-50 bg-slate-50/10">
                     <h3 className="text-base font-bold text-slate-900">Billing & Invoicing History</h3>
                     <p className="text-xs text-slate-400 font-medium mt-0.5">Track and download previous business transaction invoices</p>
@@ -530,7 +530,7 @@ export default function BillingPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse whitespace-nowrap bg-white">
                       <thead>
-                        <tr className="bg-slate-550/10 bg-slate-50 font-bold uppercase tracking-wider text-[10px] text-slate-400 border-b border-[#E4E4E1]">
+                        <tr className="bg-slate-550/10 bg-slate-50 font-bold uppercase tracking-wider text-[10px] text-slate-400 border-b border-line">
                           <th className="px-6 py-4">Invoice ID</th>
                           <th className="px-6 py-4">Transaction Date</th>
                           <th className="px-6 py-4">Charged Amount</th>
@@ -580,7 +580,7 @@ export default function BillingPage() {
               <div className="lg:col-span-4 flex flex-col gap-6 lg:gap-8">
                 
                 {/* Billing Address profiles matching screen */}
-                <div className="bg-white rounded-2xl border border-[#E4E4E1] p-6 flex flex-col gap-4">
+                <div className="bg-white rounded-2xl border border-line p-6 flex flex-col gap-4">
                   <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 border-b border-slate-50 pb-2">
                     Billing Profiles
                   </h4>
@@ -609,7 +609,7 @@ export default function BillingPage() {
                 </div>
 
                 {/* Secure Payment Shield */}
-                <div className="rounded-2xl border border-[#E4E4E1] bg-[#f8f9fa] p-5 space-y-4 flex flex-col justify-between shadow-3xs">
+                <div className="rounded-2xl border border-line bg-[#f8f9fa] p-5 space-y-4 flex flex-col justify-between shadow-3xs">
                   <div className="flex gap-3">
                     <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center shrink-0">
                       <Lock className="h-5 w-5 text-[#006b5f]" />
@@ -638,7 +638,7 @@ export default function BillingPage() {
           <div className="space-y-8 animate-fade-in duration-200">
             
             {/* Header controls layout */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#E4E4E1] pb-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-line pb-6">
               <div>
                 <button 
                   onClick={() => setActiveView("billing")}
@@ -728,12 +728,12 @@ export default function BillingPage() {
               </div>
 
               {/* Secure storage usage card */}
-              <div className="bg-white rounded-2xl p-6 border border-[#E4E4E1] flex flex-col justify-between">
+              <div className="bg-white rounded-2xl p-6 border border-line flex flex-col justify-between">
                 <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 bg-slate-50 border border-[#E4E4E1] rounded-xl flex items-center justify-center text-[#006b5f] shadow-3xs">
+                  <div className="w-12 h-12 bg-slate-50 border border-line rounded-xl flex items-center justify-center text-[#006b5f] shadow-3xs">
                     <Database className="h-6 w-6" />
                   </div>
-                  <div className="text-xs text-slate-500 font-extrabold bg-slate-50 px-2.5 py-0.5 rounded-full border border-[#E4E4E1]">
+                  <div className="text-xs text-slate-500 font-extrabold bg-slate-50 px-2.5 py-0.5 rounded-full border border-line">
                     +1.4 GB / day
                   </div>
                 </div>
@@ -753,9 +753,9 @@ export default function BillingPage() {
               </div>
 
               {/* Seats monitor details */}
-              <div className="bg-white rounded-2xl p-6 border border-[#E4E4E1] flex flex-col justify-between">
+              <div className="bg-white rounded-2xl p-6 border border-line flex flex-col justify-between">
                 <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 bg-slate-50 border border-[#E4E4E1] rounded-xl flex items-center justify-center text-[#006b5f] shadow-3xs">
+                  <div className="w-12 h-12 bg-slate-50 border border-line rounded-xl flex items-center justify-center text-[#006b5f] shadow-3xs">
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
                   <div className="text-xs text-[#006b5f] font-extrabold bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-100">
@@ -794,7 +794,7 @@ export default function BillingPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               
               {/* API Requests daily volume (Span 8) */}
-              <div className="lg:col-span-8 bg-white border border-[#E4E4E1] p-6 rounded-2xl space-y-6">
+              <div className="lg:col-span-8 bg-white border border-line p-6 rounded-2xl space-y-6">
                 <div className="flex justify-between items-center">
                   <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">API Request Volume (Daily Trend)</h3>
                   <div className="flex gap-4 text-[10px] font-black uppercase tracking-wider text-slate-500">
@@ -810,7 +810,7 @@ export default function BillingPage() {
                 </div>
 
                 {/* Simulated Chart with SVG path precisely replicating mockups */}
-                <div className="h-60 w-full relative flex items-end justify-between border-b border-l border-[#E4E4E1] px-4 pt-4 pb-1 overflow-hidden" style={{ backgroundImage: "radial-gradient(#e2e8f0 1.5px, transparent 1.5px)", backgroundSize: "24px 24px" }}>
+                <div className="h-60 w-full relative flex items-end justify-between border-b border-l border-line px-4 pt-4 pb-1 overflow-hidden" style={{ backgroundImage: "radial-gradient(#e2e8f0 1.5px, transparent 1.5px)", backgroundSize: "24px 24px" }}>
                   
                   {/* Left horizontal values */}
                   <div className="absolute left-2 inset-y-4 flex flex-col justify-between text-[9px] font-mono font-bold text-slate-400 pointer-events-none z-0 select-none">
@@ -860,12 +860,12 @@ export default function BillingPage() {
               </div>
 
               {/* Storage projection Growth metric indicator (Span 4) */}
-              <div className="lg:col-span-4 bg-white border border-[#E4E4E1] p-6 rounded-2xl flex flex-col justify-between">
+              <div className="lg:col-span-4 bg-white border border-line p-6 rounded-2xl flex flex-col justify-between">
                 <div>
                   <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-4">Storage Growth Trend</h3>
                   
                   {/* Mini filled graph mock */}
-                  <div className="h-28 w-full bg-slate-50 border border-[#E4E4E1] rounded-xl relative overflow-hidden mb-4 p-2">
+                  <div className="h-28 w-full bg-slate-50 border border-line rounded-xl relative overflow-hidden mb-4 p-2">
                     <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
                       <defs>
                         <linearGradient id="storageGrad" x1="0" y1="0" x2="0" y2="1">
@@ -904,7 +904,7 @@ export default function BillingPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
               {/* Category table */}
-              <div className="lg:col-span-8 bg-white border border-[#E4E4E1] rounded-2xl overflow-hidden flex flex-col">
+              <div className="lg:col-span-8 bg-white border border-line rounded-2xl overflow-hidden flex flex-col">
                 <div className="px-6 py-4.5 border-b border-slate-150 flex justify-between items-center bg-slate-50/10">
                   <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Usage Breakdown by Category</h3>
                   <button onClick={() => triggerToast("Fully expanded granular telemetry logs loaded.")} className="text-[#006b5f] hover:text-[#005047] font-bold text-xs hover:underline cursor-pointer">
@@ -914,7 +914,7 @@ export default function BillingPage() {
 
                 <div className="overflow-x-auto whitespace-nowrap">
                   <table className="w-full text-left text-xs font-sans bg-white">
-                    <thead className="bg-slate-50 font-bold uppercase tracking-wider text-[10px] text-slate-400 border-b border-[#E4E4E1]">
+                    <thead className="bg-slate-50 font-bold uppercase tracking-wider text-[10px] text-slate-400 border-b border-line">
                       <tr>
                         <th className="px-6 py-4">Resource Category</th>
                         <th className="px-6 py-4">Units Used (Last {usagePeriod} Days)</th>
@@ -1093,7 +1093,7 @@ export default function BillingPage() {
             </div>
 
             {/* Mesh banner photo element inspired by provided layout */}
-            <div className="mt-8 rounded-2xl overflow-hidden h-64 relative border border-[#E4E4E1]">
+            <div className="mt-8 rounded-2xl overflow-hidden h-64 relative border border-line">
               <img 
                 src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&q=80" 
                 alt="HQ Business Workstations Analytics" 
@@ -1116,7 +1116,7 @@ export default function BillingPage() {
           <div className="space-y-8 animate-fade-in duration-200">
             
             {/* Header section backing controls */}
-            <div className="border-b border-[#E4E4E1] pb-6 flex flex-col gap-2">
+            <div className="border-b border-line pb-6 flex flex-col gap-2">
               <button 
                 onClick={() => setActiveView("billing")}
                 className="flex items-center text-[#006b5f] hover:text-[#005047] font-bold text-xs gap-1.5 self-start hover:-translate-x-1 transition-transform cursor-pointer"
@@ -1138,7 +1138,7 @@ export default function BillingPage() {
                 className={`bg-white rounded-2xl border p-8 flex flex-col justify-between transition-all hover: ${
                   isBasic 
                     ? "border-2 border-[#006b5f] ring-4 ring-teal-500/10 relative overflow-hidden" 
-                    : "border-[#E4E4E1]"
+                    : "border-line"
                 }`}
               >
                 {isBasic && (
@@ -1159,7 +1159,7 @@ export default function BillingPage() {
                     </p>
                   </div>
 
-                  <hr className="border-[#E4E4E1]" />
+                  <hr className="border-line" />
 
                   {/* Checklist of parameters */}
                   <div className="space-y-3.5 text-xs font-medium text-slate-700">
@@ -1202,7 +1202,7 @@ export default function BillingPage() {
                 className={`bg-white rounded-2xl border p-8 flex flex-col justify-between transition-all hover:shadow-xl relative ${
                   isPro 
                     ? "border-2 border-[#006b5f] ring-4 ring-[#006b5f]/10 shadow-lg transform lg:scale-[1.03]" 
-                    : "border-[#E4E4E1]"
+                    : "border-line"
                 }`}
               >
                 {/* Popular badges on high-conversion item */}
@@ -1229,7 +1229,7 @@ export default function BillingPage() {
                     </p>
                   </div>
 
-                  <hr className="border-[#E4E4E1]" />
+                  <hr className="border-line" />
 
                   {/* Checklist */}
                   <div className="space-y-3.5 text-xs font-medium text-slate-700">
@@ -1276,7 +1276,7 @@ export default function BillingPage() {
                 className={`bg-white rounded-2xl border p-8 flex flex-col justify-between transition-all hover: ${
                   isEnterprise 
                     ? "border-2 border-[#006b5f] ring-4 ring-teal-500/10 relative overflow-hidden" 
-                    : "border-[#E4E4E1]"
+                    : "border-line"
                 }`}
               >
                 {isEnterprise && (
@@ -1296,7 +1296,7 @@ export default function BillingPage() {
                     </p>
                   </div>
 
-                  <hr className="border-[#E4E4E1]" />
+                  <hr className="border-line" />
 
                   {/* Checklist */}
                   <div className="space-y-3.5 text-xs font-medium text-slate-700">
@@ -1369,10 +1369,10 @@ export default function BillingPage() {
           />
 
           {/* Modal popup element window */}
-          <div className="relative bg-white w-full max-w-md rounded-2xl border border-[#E4E4E1] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-10 flex flex-col font-sans">
+          <div className="relative bg-white w-full max-w-md rounded-2xl border border-line shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-10 flex flex-col font-sans">
             
             {/* Header layout */}
-            <div className="px-6 py-5 border-b border-[#E4E4E1] bg-slate-50/50 flex justify-between items-center">
+            <div className="px-6 py-5 border-b border-line bg-slate-50/50 flex justify-between items-center">
               <div>
                 <h3 className="text-base font-extrabold text-slate-900">Add Payment Method</h3>
                 <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest mt-0.5">Secure payment card setup</p>
@@ -1474,7 +1474,7 @@ export default function BillingPage() {
               </label>
 
               {/* Shield validation lock label block */}
-              <div className="bg-slate-50 p-4 border border-[#E4E4E1] rounded-2xl flex items-center gap-3">
+              <div className="bg-slate-50 p-4 border border-line rounded-2xl flex items-center gap-3">
                 <Lock className="h-4.5 w-4.5 text-emerald-600 shrink-0" />
                 <p className="text-[11px] text-slate-500 leading-normal font-semibold">
                   PCI-DSS Bank-grade 256-bit encryption safeguards credentials. Zero authorization risk of logs representation.
@@ -1482,7 +1482,7 @@ export default function BillingPage() {
               </div>
 
               {/* Modals trigger close saving footer buttons row */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E4E4E1] bg-slate-50/50 -mx-6 -mb-6 px-6 py-4 rounded-b-2xl">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-line bg-slate-50/50 -mx-6 -mb-6 px-6 py-4 rounded-b-2xl">
                 <button 
                   type="button" 
                   onClick={() => setShowAddCardModal(false)}
@@ -1513,9 +1513,9 @@ export default function BillingPage() {
           />
 
           {/* Modal Container */}
-          <div className="relative bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl border border-[#E4E4E1] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-10 flex flex-col font-sans">
+          <div className="relative bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl border border-line shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-10 flex flex-col font-sans">
             {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-[#E4E4E1] bg-white flex justify-between items-center">
+            <div className="px-6 py-5 border-b border-line bg-white flex justify-between items-center">
               <div>
                 <h3 className="text-xl font-bold text-[#006b5f] tracking-tight">Plan Details & Usage</h3>
                 <p className="text-xs text-slate-500 font-medium">Review your enterprise subscription and resource consumption</p>
@@ -1559,7 +1559,7 @@ export default function BillingPage() {
                   </div>
 
                   {/* Included Features List */}
-                  <div className="bg-white border border-[#E4E4E1] rounded-xl p-6 shadow-3xs space-y-4">
+                  <div className="bg-white border border-line rounded-xl p-6 shadow-3xs space-y-4">
                     <h5 className="font-bold text-sm text-slate-800 flex items-center gap-2">
                       <CheckCircle2 className="h-4.5 w-4.5 text-[#006b5f]" />
                       Included Features
@@ -1600,7 +1600,7 @@ export default function BillingPage() {
 
                 {/* Right Column: Usage Meters (col-span-12 to col-span-7) */}
                 <div className="lg:col-span-7 space-y-6">
-                  <div className="bg-white border border-[#E4E4E1] rounded-xl p-6 shadow-3xs space-y-6">
+                  <div className="bg-white border border-line rounded-xl p-6 shadow-3xs space-y-6">
                     <h5 className="font-bold text-sm text-slate-800">Current Usage</h5>
                     
                     <div className="space-y-5">
@@ -1691,7 +1691,7 @@ export default function BillingPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-[#E4E4E1] bg-white flex justify-end gap-3 rounded-b-2xl">
+            <div className="px-6 py-4 border-t border-line bg-white flex justify-end gap-3 rounded-b-2xl">
               <button 
                 type="button" 
                 onClick={() => setShowManagePlanModal(false)}

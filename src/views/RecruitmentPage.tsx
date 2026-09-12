@@ -121,6 +121,20 @@ export default function RecruitmentPage() {
   });
 
   React.useEffect(() => {
+    void (async () => {
+      try {
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+        setApplicantListStoreState(getCollection<any[]>("db_candidates", []));
+        setJobsListState(getCollection<any[]>("db_jobs", []));
+        setSchedulesStoreState(getCollection<any[]>("db_schedules", []));
+      } catch {
+        // keep cached
+      }
+    })();
+  }, []);
+
+  React.useEffect(() => {
     const handleDbUpdate = () => {
       setApplicantListStoreState(getCollection<any[]>("db_candidates", []));
       setJobsListState(getCollection<any[]>("db_jobs", []));
@@ -253,12 +267,12 @@ export default function RecruitmentPage() {
         { label: "Recruitment" },
       ]}
     >
-      <div className="space-y-5">
+      <div className="space-y-6">
         {/* Top Summary Section */}
         <div className="flex flex-col xl:flex-row gap-5">
           <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Total Applicants Card */}
-            <Card className="p-4 border-none rounded-[16px] bg-[#E4F2D3] flex flex-col justify-center relative overflow-hidden">
+            <Card className="p-4 border-none rounded-2xl bg-[#E4F2D3] flex flex-col justify-center relative overflow-hidden">
               <div className="z-10">
                 <div className="bg-[#0E4D41] h-10 w-10 rounded-lg flex items-center justify-center mb-4 text-white">
                   <FileText className="h-6 w-6" />
@@ -288,7 +302,7 @@ export default function RecruitmentPage() {
             </Card>
 
             {/* Interviewed Card */}
-            <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col justify-center">
+            <Card className="flex flex-col justify-center">
               <div className="flex items-center gap-3 mb-4">
                 <div className="h-10 w-10 rounded-full bg-[#F3F3F0] flex items-center justify-center text-brand">
                   <MessageSquare className="h-6 w-6" />
@@ -311,7 +325,7 @@ export default function RecruitmentPage() {
             </Card>
 
             {/* Hired Card */}
-            <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col justify-center">
+            <Card className="flex flex-col justify-center">
               <div className="flex items-center gap-3 mb-4">
                 <div className="h-10 w-10 rounded-full bg-[#F3F3F0] flex items-center justify-center text-brand">
                   <UserCheck className="h-6 w-6" />
@@ -335,19 +349,19 @@ export default function RecruitmentPage() {
           </div>
 
           {/* Application Line Chart */}
-          <Card className="xl:w-[349px] p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col min-h-[196px]">
+          <Card className="xl:w-[349px] flex flex-col min-h-[196px]">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-[14px] font-bold text-[#203430]">
                 Application
               </h3>
-              <button className="flex items-center gap-2 bg-white border border-[#E6E6E4] px-2 py-1 rounded-[6px] text-[11px] font-medium text-[#203430]">
+              <button className="flex items-center gap-2 bg-white border border-line px-2 py-1 rounded-[6px] text-[11px] font-medium text-[#203430]">
                 Last 12 Months <ChevronDown className="h-3 w-3" />
               </button>
             </div>
             <div className="flex-1 min-h-0 flex flex-col justify-center">
               {totalApplicants === 0 ? (
                 <div className="py-4 text-center flex flex-col items-center justify-center h-full">
-                  <div className="h-8 w-8 rounded-full bg-slate-50 border border-[#E4E4E1] flex items-center justify-center text-slate-400 mb-2">
+                  <div className="h-8 w-8 rounded-full bg-slate-50 border border-line flex items-center justify-center text-slate-400 mb-2">
                     <FileText className="h-4 w-4" />
                   </div>
                   <h4 className="text-[11px] font-bold text-[#203430]">
@@ -396,7 +410,7 @@ export default function RecruitmentPage() {
         <div className="flex flex-col xl:flex-row gap-5">
           {/* Current Vacancies Grid */}
           <div className="flex-1 space-y-5">
-            <div className="bg-white rounded-[16px] p-5">
+            <div className="admin-panel p-5">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-[16px] font-bold text-[#203430]">
                   Current Vacancies
@@ -408,7 +422,7 @@ export default function RecruitmentPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {jobsList.length === 0 ? (
-                  <div className="col-span-2 p-8 text-center bg-slate-50 border border-[#E4E4E1] rounded-[12px] flex flex-col items-center justify-center space-y-2">
+                  <div className="col-span-2 p-8 text-center bg-slate-50 border border-line/80 rounded-xl flex flex-col items-center justify-center space-y-2">
                     <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center border border-slate-200 text-slate-400">
                       <Briefcase className="h-4 w-4" />
                     </div>
@@ -423,7 +437,7 @@ export default function RecruitmentPage() {
                   jobsList.map((job) => (
                     <div
                       key={job.title}
-                      className="p-4 bg-white border border-[#E6E6E4] rounded-[12px] space-y-3"
+                      className="p-4 bg-white border border-line/80 rounded-xl space-y-3"
                     >
                       <h3 className={cn("text-[14px] font-bold", job.color)}>
                         {job.title}
@@ -456,7 +470,7 @@ export default function RecruitmentPage() {
           </div>
 
           {/* Application by Department Bar Chart */}
-          <Card className="xl:w-[349px] p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col min-h-[230px]">
+          <Card className="xl:w-[349px] flex flex-col min-h-[230px]">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[14px] font-bold text-[#203430]">
                 Application by Department
@@ -468,7 +482,7 @@ export default function RecruitmentPage() {
             <div className="flex-1 min-h-0 flex flex-col justify-center">
               {totalApplicants === 0 ? (
                 <div className="py-6 text-center flex flex-col items-center justify-center h-full">
-                  <div className="h-8 w-8 rounded-full bg-slate-50 border border-[#E4E4E1] flex items-center justify-center text-slate-400 mb-2">
+                  <div className="h-8 w-8 rounded-full bg-slate-50 border border-line flex items-center justify-center text-slate-400 mb-2">
                     <Users className="h-4 w-4" />
                   </div>
                   <h4 className="text-[11px] font-bold text-[#203430]">
@@ -530,8 +544,8 @@ export default function RecruitmentPage() {
         <div className="flex flex-col xl:flex-row gap-5">
           {/* Applicants Table Section */}
           <div className="flex-1 flex flex-col space-y-5">
-            <Card className="border border-[#E6E6E4] rounded-[16px] bg-white overflow-hidden p-0 flex flex-col min-h-[418px]">
-              <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 border-b border-[#E4E4E1]">
+            <Card className="overflow-hidden p-0 flex flex-col min-h-[418px]">
+              <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 border-b border-line">
                 <div className="flex items-center gap-3">
                   <h2 className="text-[16px] font-bold text-[#203430]">
                     Applicants
@@ -543,11 +557,11 @@ export default function RecruitmentPage() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search candidates..."
-                      className="pl-8 pr-2.5 py-1 text-[11px] bg-[#F3F3F0] border border-[#E6E6E4] rounded-[8px] text-[#203430] placeholder-[#A4ACAB] focus:ring-1 focus:ring-brand focus:bg-white transition-all w-44 outline-none font-medium"
+                      className="pl-8 pr-2.5 py-1 text-[11px] bg-[#F3F3F0] border border-line rounded-[8px] text-[#203430] placeholder-[#A4ACAB] focus:ring-1 focus:ring-brand focus:bg-white transition-all w-44 outline-none font-medium"
                     />
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-1 p-1 bg-white border border-[#E6E6E4] rounded-[8px]">
+                <div className="flex flex-wrap gap-1 p-1 bg-white border border-line rounded-[8px]">
                   {[
                     "All",
                     "Application Received",
@@ -607,7 +621,7 @@ export default function RecruitmentPage() {
                       <tr>
                         <td colSpan={6} className="px-5 py-16 text-center">
                           <div className="flex flex-col items-center justify-center space-y-2">
-                            <div className="h-10 w-10 bg-slate-50 border border-[#E4E4E1] rounded-full flex items-center justify-center text-slate-400 mx-auto">
+                            <div className="h-10 w-10 bg-slate-50 border border-line rounded-full flex items-center justify-center text-slate-400 mx-auto">
                               <Users className="h-4 w-4" />
                             </div>
                             <p className="text-[12px] font-bold text-[#203430] mt-1">
@@ -634,7 +648,7 @@ export default function RecruitmentPage() {
                                 "h-3 w-3 rounded-[3px] border",
                                 a.name === "Anya Rodriguez"
                                   ? "bg-brand border-brand flex items-center justify-center"
-                                  : "bg-[#F3F3F0] border-[#E4E4E1]",
+                                  : "bg-[#F3F3F0] border-line",
                               )}
                             >
                               {a.name === "Anya Rodriguez" && (
@@ -729,10 +743,10 @@ export default function RecruitmentPage() {
                 </table>
               </div>
 
-              <div className="p-5 border-t border-[#E4E4E1] flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="p-5 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div className="flex items-center gap-3">
                   <span className="text-[14px] text-[#63716E]">Show</span>
-                  <button className="flex items-center gap-2 bg-white border border-[#E6E6E4] h-[28px] px-3 rounded-[8px] text-[12px] font-bold text-[#203430]">
+                  <button className="flex items-center gap-2 bg-white border border-line h-[28px] px-3 rounded-[8px] text-[12px] font-bold text-[#203430]">
                     7 <ChevronDown className="h-3 w-3" />
                   </button>
                   <span className="text-[14px] text-[#63716E]">
@@ -746,17 +760,17 @@ export default function RecruitmentPage() {
                   <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-brand text-white text-[12px] font-bold">
                     1
                   </button>
-                  <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430] text-[12px] font-bold">
+                  <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430] text-[12px] font-bold">
                     2
                   </button>
-                  <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430] text-[12px] font-bold">
+                  <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430] text-[12px] font-bold">
                     3
                   </button>
                   <span className="px-1 text-[12px] text-[#63716E]">...</span>
-                  <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430] text-[12px] font-bold">
+                  <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430] text-[12px] font-bold">
                     11
                   </button>
-                  <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430] hover:bg-brand hover:text-white transition-all">
+                  <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430] hover:bg-brand hover:text-white transition-all">
                     <ChevronRight className="h-4 w-4" />
                   </button>
                 </div>
@@ -767,7 +781,7 @@ export default function RecruitmentPage() {
           {/* Right Sidebar Section */}
           <div className="xl:w-[272px] space-y-5">
             {/* Applicant Resources Card */}
-            <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white space-y-4 min-h-[250px]">
+            <Card className="space-y-4 min-h-[250px]">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-[14px] font-bold text-[#203430]">
                   Applicant Resources
@@ -779,7 +793,7 @@ export default function RecruitmentPage() {
               <div className="relative h-[180px] flex flex-col justify-center">
                 {totalApplicants === 0 ? (
                   <div className="py-6 text-center flex flex-col items-center justify-center">
-                    <div className="h-8 w-8 rounded-full bg-slate-50 border border-[#E4E4E1] flex items-center justify-center text-slate-400 mb-2">
+                    <div className="h-8 w-8 rounded-full bg-slate-50 border border-line flex items-center justify-center text-slate-400 mb-2">
                       <Briefcase className="h-4 w-4" />
                     </div>
                     <h4 className="text-[11px] font-bold text-[#203430]">
@@ -793,10 +807,10 @@ export default function RecruitmentPage() {
                   <div className="space-y-6 relative h-full">
                     {/* Vertical Grid Lines BG */}
                     <div className="absolute inset-0 flex justify-between px-2 pt-8 pointer-events-none opacity-50">
-                      <div className="w-[1px] h-full border-l border-dashed border-[#E4E4E1]" />
-                      <div className="w-[1px] h-[80%] border-l border-dashed border-[#E4E4E1]" />
-                      <div className="w-[1px] h-[80%] border-l border-dashed border-[#E4E4E1]" />
-                      <div className="w-[1px] h-[80%] border-l border-dashed border-[#E4E4E1]" />
+                      <div className="w-[1px] h-full border-l border-dashed border-line" />
+                      <div className="w-[1px] h-[80%] border-l border-dashed border-line" />
+                      <div className="w-[1px] h-[80%] border-l border-dashed border-line" />
+                      <div className="w-[1px] h-[80%] border-l border-dashed border-line" />
                     </div>
                     {dynamicResourcesData.map((res) => (
                       <div key={res.label} className="space-y-1 relative z-10">
@@ -839,7 +853,7 @@ export default function RecruitmentPage() {
             </Card>
 
             {/* Schedules Card */}
-            <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col">
+            <Card className="flex flex-col">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[14px] font-bold text-[#203430]">
                   Schedules
@@ -850,7 +864,7 @@ export default function RecruitmentPage() {
               </div>
 
               {/* Mini Calendar View */}
-              <div className="bg-white border border-[#E6E6E4] rounded-[12px] p-3 mb-4">
+              <div className="bg-white border border-line/80 rounded-xl p-3 mb-4">
                 <div className="flex items-center justify-between mb-3">
                   <button className="bg-white p-1 rounded-[6px]">
                     <ChevronLeft className="h-3 w-3" />
@@ -920,7 +934,7 @@ export default function RecruitmentPage() {
         </div>
       </div>
 
-      <footer className="mt-20 py-8 border-t border-[#E4E4E1] flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
+      <footer className="mt-20 py-8 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
         <div className="flex flex-col sm:flex-row items-center gap-6 lg:gap-16">
           <p className="text-[12px] font-bold text-[#203430]">
             Copyright © 2025 Peterdraw

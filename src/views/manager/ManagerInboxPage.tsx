@@ -2,12 +2,13 @@ import * as React from "react";
 import { AppLayout } from "@/src/components/layout/AppLayout";
 import { useAuth } from "@/src/context/AuthContext";
 import { getEmployeesForUser } from "@/src/lib/permissions";
+import { getCollection, saveCollection } from "@/src/lib/db";
 import { Button } from "@/src/components/ui/Button";
 import { Mail, Plus, Search, Send, Star, Inbox as InboxIcon } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 
 interface TeamMessage {
-  id: string;
+  id: string | number;
   fromId: string;
   fromName: string;
   fromAvatar: string;
@@ -19,75 +20,39 @@ interface TeamMessage {
   starred: boolean;
 }
 
-function seedMessages(): TeamMessage[] {
-  return [
-    {
-      id: "m1",
-      fromId: "EMP-0234",
-      fromName: "Olivia Mason",
-      fromAvatar:
-        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-      subject: "Leave request follow-up",
-      preview: "Hi Marcus, just confirming my leave dates for the wedding...",
-      body: "Hi Marcus,\n\nJust confirming my leave dates for the family wedding (25-27 June). Please let me know if you need coverage notes for the campaign handoff.\n\nThanks,\nOlivia",
-      time: "10:24 AM",
-      unread: true,
-      starred: true,
-    },
-    {
-      id: "m2",
-      fromId: "EMP-0178",
-      fromName: "Ethan Ray",
-      fromAvatar:
-        "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-      subject: "Design review ready",
-      preview: "The homepage redesign mocks are ready for your feedback...",
-      body: "Hi Marcus,\n\nThe homepage redesign mocks are ready for your feedback. I have shared the Figma link in the team folder.\n\nBest,\nEthan",
-      time: "Yesterday",
-      unread: true,
-      starred: false,
-    },
-    {
-      id: "m3",
-      fromId: "EMP-0401",
-      fromName: "Nora Chen",
-      fromAvatar:
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-      subject: "Content calendar update",
-      preview: "Updated June social calendar attached for approval...",
-      body: "Hi Marcus,\n\nUpdated June social calendar attached for approval. Please flag any posts that need legal review.\n\nNora",
-      time: "Mon",
-      unread: false,
-      starred: false,
-    },
-    {
-      id: "m4",
-      fromId: "EMP-0275",
-      fromName: "Anya Rodriguez",
-      fromAvatar:
-        "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-      subject: "Asset pack delivery",
-      preview: "Brand illustration pack for Q3 campaign is uploaded...",
-      body: "Hi Marcus,\n\nBrand illustration pack for Q3 campaign is uploaded to the shared drive. Ready for your review when you have a moment.\n\nAnya",
-      time: "Sun",
-      unread: false,
-      starred: false,
-    },
-  ];
+function mapEmails(myEmployeeId: string): TeamMessage[] {
+  const rows = getCollection<any[]>("db_emails", []);
+  return rows.map((m, idx) => ({
+    id: m.id ?? idx,
+    fromId: String(m.fromId || (m.category === "Sent" ? myEmployeeId : "")),
+    fromName: String(m.fromName || m.sender || "TeamHub"),
+    fromAvatar: String(
+      m.fromAvatar ||
+        m.avatar ||
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80"
+    ),
+    subject: String(m.subject || m.title || "(No Subject)"),
+    preview: String(m.preview || m.snippet || ""),
+    body: String(m.body || m.preview || ""),
+    time: String(m.time || "Today"),
+    unread: Boolean(m.unread),
+    starred: Boolean(m.starred),
+  }));
 }
 
 export default function ManagerInboxPage() {
   const { user } = useAuth();
-  const myEmployeeId = user?.employeeId || "EMP-0100";
+  const myEmployeeId = user?.employeeId || "";
   const displayName = user?.name || "Manager";
   const displayAvatar =
     user?.avatar ||
     "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80";
-  const team = React.useMemo(() => getEmployeesForUser(user), [user]);
+  const [tick, setTick] = React.useState(0);
+  const team = React.useMemo(() => getEmployeesForUser(user), [user, tick]);
 
   const [folder, setFolder] = React.useState<"Inbox" | "Starred" | "Sent">("Inbox");
-  const [messages, setMessages] = React.useState<TeamMessage[]>(seedMessages);
-  const [selectedId, setSelectedId] = React.useState("m1");
+  const [messages, setMessages] = React.useState<TeamMessage[]>(() => mapEmails(myEmployeeId));
+  const [selectedId, setSelectedId] = React.useState<string | number | null>(null);
   const [search, setSearch] = React.useState("");
   const [reply, setReply] = React.useState("");
   const [showCompose, setShowCompose] = React.useState(false);
@@ -95,19 +60,72 @@ export default function ManagerInboxPage() {
   const [composeSubject, setComposeSubject] = React.useState("");
   const [composeBody, setComposeBody] = React.useState("");
   const [toast, setToast] = React.useState("");
+  const [sending, setSending] = React.useState(false);
+
+  const reload = React.useCallback(async (activeFolder = folder) => {
+    try {
+      const { listMessages } = await import("@/src/lib/api/modules");
+      const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+      if (activeFolder === "Sent") {
+        const sent = await listMessages("Sent");
+        saveCollection(
+          "db_emails",
+          (sent as any[]).map((m, idx) => ({
+            id: m.id ?? idx,
+            fromId: myEmployeeId,
+            sender: displayName,
+            fromName: displayName,
+            fromAvatar: displayAvatar,
+            subject: m.subject,
+            preview: m.preview,
+            title: m.subject,
+            snippet: m.preview,
+            body: m.body,
+            time: m.time,
+            unread: false,
+            starred: m.starred,
+            avatar: displayAvatar,
+            category: "Sent",
+          }))
+        );
+      } else {
+        await syncCollectionsFromApi();
+      }
+    } catch {
+      // keep local
+    }
+    const next = mapEmails(myEmployeeId);
+    setMessages(next);
+    setTick((n) => n + 1);
+    if (next.length && selectedId == null) setSelectedId(next[0].id);
+  }, [folder, myEmployeeId, displayName, displayAvatar, selectedId]);
+
+  React.useEffect(() => {
+    void reload("Inbox");
+    const onUpdate = () => setMessages(mapEmails(myEmployeeId));
+    window.addEventListener("db_updated", onUpdate);
+    return () => window.removeEventListener("db_updated", onUpdate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   React.useEffect(() => {
     if (team.length > 0 && !composeTo) {
-      setComposeTo(team[0].id);
+      const withEmail = team.find((t) => t.email) || team[0];
+      setComposeTo(withEmail.id);
     }
   }, [team, composeTo]);
+
+  React.useEffect(() => {
+    void reload(folder);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [folder]);
 
   const selected = messages.find((m) => m.id === selectedId) || messages[0];
 
   const filtered = messages.filter((m) => {
     if (folder === "Starred" && !m.starred) return false;
-    if (folder === "Sent" && m.fromId !== myEmployeeId) return false;
-    if (folder === "Inbox" && m.fromId === myEmployeeId) return false;
+    if (folder === "Sent" && m.fromId && myEmployeeId && m.fromId !== myEmployeeId) return false;
+    if (folder === "Inbox" && m.fromId && myEmployeeId && m.fromId === myEmployeeId) return false;
     const q = search.toLowerCase();
     if (!q) return true;
     return (
@@ -119,49 +137,79 @@ export default function ManagerInboxPage() {
 
   const unreadCount = messages.filter((m) => m.unread && m.fromId !== myEmployeeId).length;
 
-  const openMessage = (id: string) => {
+  const openMessage = (id: string | number) => {
     setSelectedId(id);
     setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, unread: false } : m)));
   };
 
-  const toggleStar = (id: string) => {
+  const toggleStar = (id: string | number) => {
     setMessages((prev) =>
       prev.map((m) => (m.id === id ? { ...m, starred: !m.starred } : m))
     );
   };
 
+  const resolveRecipientEmail = (employeeCode: string) => {
+    const member = team.find((t) => t.id === employeeCode);
+    if (member?.email) return member.email;
+    const guess = `${String(member?.name || "team")
+      .toLowerCase()
+      .replace(/\s+/g, ".")}@teamhub.corp`;
+    return guess;
+  };
+
   const sendReply = () => {
-    if (!reply.trim()) return;
-    setToast("Reply sent to your team member.");
-    setReply("");
-    window.setTimeout(() => setToast(""), 2200);
+    if (!reply.trim() || !selected) return;
+    void (async () => {
+      setSending(true);
+      try {
+        const { sendMessage } = await import("@/src/lib/api/modules");
+        // Reply to original sender when possible via team email lookup by name
+        const member = team.find((t) => t.name === selected.fromName);
+        const toEmail = member?.email || resolveRecipientEmail(member?.id || composeTo);
+        await sendMessage({
+          toEmail,
+          subject: selected.subject.startsWith("Re:") ? selected.subject : `Re: ${selected.subject}`,
+          body: reply.trim(),
+        });
+        await reload("Sent");
+        setFolder("Sent");
+        setToast("Reply sent.");
+        setReply("");
+      } catch (err) {
+        setToast(err instanceof Error ? err.message : "Could not send reply.");
+      } finally {
+        setSending(false);
+        window.setTimeout(() => setToast(""), 2200);
+      }
+    })();
   };
 
   const sendNew = (e: React.FormEvent) => {
     e.preventDefault();
     const member = team.find((t) => t.id === composeTo);
-    if (!member || !user || !composeSubject.trim() || !composeBody.trim()) return;
-
-    const msg: TeamMessage = {
-      id: `m-${Date.now()}`,
-      fromId: myEmployeeId,
-      fromName: displayName,
-      fromAvatar: displayAvatar,
-      subject: composeSubject.trim(),
-      preview: composeBody.trim().slice(0, 80),
-      body: composeBody.trim(),
-      time: "Just now",
-      unread: false,
-      starred: false,
-    };
-    setMessages((prev) => [msg, ...prev]);
-    setSelectedId(msg.id);
-    setFolder("Sent");
-    setComposeSubject("");
-    setComposeBody("");
-    setShowCompose(false);
-    setToast(`Message sent to ${member.name}.`);
-    window.setTimeout(() => setToast(""), 2200);
+    if (!member || !composeSubject.trim() || !composeBody.trim()) return;
+    void (async () => {
+      setSending(true);
+      try {
+        const { sendMessage } = await import("@/src/lib/api/modules");
+        await sendMessage({
+          toEmail: resolveRecipientEmail(member.id),
+          subject: composeSubject.trim(),
+          body: composeBody.trim(),
+        });
+        await reload("Sent");
+        setFolder("Sent");
+        setComposeSubject("");
+        setComposeBody("");
+        setShowCompose(false);
+        setToast(`Message sent to ${member.name}.`);
+      } catch (err) {
+        setToast(err instanceof Error ? err.message : "Could not send message.");
+      } finally {
+        setSending(false);
+        window.setTimeout(() => setToast(""), 2200);
+      }
+    })();
   };
 
   return (
@@ -180,9 +228,8 @@ export default function ManagerInboxPage() {
           Team messaging only — conversations with your direct reports.
         </p>
 
-        <div className="grid min-h-[620px] gap-4 lg:grid-cols-12">
-          {/* Folders */}
-          <div className="lg:col-span-2 rounded-2xl border border-[#E4E4E1] bg-white p-4">
+        <div className="grid min-h-[620px] gap-5 lg:grid-cols-12">
+          <div className="lg:col-span-2 admin-panel p-4">
             <Button
               type="button"
               className="mb-4 h-10 w-full gap-2 font-bold"
@@ -195,7 +242,11 @@ export default function ManagerInboxPage() {
                 [
                   { id: "Inbox" as const, icon: InboxIcon, count: unreadCount },
                   { id: "Starred" as const, icon: Star, count: messages.filter((m) => m.starred).length },
-                  { id: "Sent" as const, icon: Send, count: messages.filter((m) => m.fromId === myEmployeeId).length },
+                  {
+                    id: "Sent" as const,
+                    icon: Send,
+                    count: messages.filter((m) => m.fromId === myEmployeeId).length,
+                  },
                 ]
               ).map((item) => (
                 <button
@@ -224,9 +275,8 @@ export default function ManagerInboxPage() {
             </div>
           </div>
 
-          {/* Message list */}
-          <div className="lg:col-span-4 flex flex-col overflow-hidden rounded-2xl border border-[#E4E4E1] bg-white">
-            <div className="border-b border-[#E4E4E1] p-3">
+          <div className="lg:col-span-4 flex flex-col overflow-hidden admin-panel p-0">
+            <div className="border-b border-line p-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
@@ -273,11 +323,10 @@ export default function ManagerInboxPage() {
             </div>
           </div>
 
-          {/* Reading pane */}
-          <div className="lg:col-span-6 flex flex-col rounded-2xl border border-[#E4E4E1] bg-white">
+          <div className="lg:col-span-6 flex flex-col admin-panel p-0">
             {selected ? (
               <>
-                <div className="flex items-center gap-3 border-b border-[#E4E4E1] px-5 py-4">
+                <div className="flex items-center gap-3 border-b border-line px-5 py-4">
                   <img
                     src={selected.fromAvatar}
                     alt=""
@@ -306,7 +355,7 @@ export default function ManagerInboxPage() {
                     {selected.body}
                   </p>
                 </div>
-                <div className="border-t border-[#E4E4E1] p-4">
+                <div className="border-t border-line p-4">
                   <textarea
                     value={reply}
                     onChange={(e) => setReply(e.target.value)}
@@ -314,8 +363,8 @@ export default function ManagerInboxPage() {
                     placeholder="Write a reply to your team member..."
                     className="mb-3 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand"
                   />
-                  <Button type="button" onClick={sendReply} className="gap-2 font-bold">
-                    <Send className="h-4 w-4" /> Send Message
+                  <Button type="button" onClick={sendReply} className="gap-2 font-bold" disabled={sending}>
+                    <Send className="h-4 w-4" /> {sending ? "Sending..." : "Send Message"}
                   </Button>
                 </div>
               </>
@@ -330,7 +379,7 @@ export default function ManagerInboxPage() {
 
         {showCompose ? (
           <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-[1px]">
-            <div className="w-full max-w-lg rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-2xl">
+            <div className="w-full max-w-lg admin-panel p-6 shadow-2xl">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-bold text-slate-900">New team message</h3>
                 <button
@@ -355,6 +404,7 @@ export default function ManagerInboxPage() {
                       team.map((m) => (
                         <option key={m.id} value={m.id}>
                           {m.name}
+                          {m.email ? ` (${m.email})` : ""}
                         </option>
                       ))
                     )}
@@ -379,8 +429,8 @@ export default function ManagerInboxPage() {
                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand"
                   />
                 </div>
-                <Button type="submit" className="w-full gap-2 font-bold" disabled={team.length === 0}>
-                  <Send className="h-4 w-4" /> Send
+                <Button type="submit" className="w-full gap-2 font-bold" disabled={team.length === 0 || sending}>
+                  <Send className="h-4 w-4" /> {sending ? "Sending..." : "Send"}
                 </Button>
               </form>
             </div>

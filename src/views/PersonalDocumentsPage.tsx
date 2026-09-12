@@ -290,7 +290,7 @@ export default function PersonalDocumentsPage() {
           </div>
         ) : null}
 
-        <div className="flex flex-col gap-4 rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 admin-panel p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-slate-500">
               Your personal document vault for {user?.name || "your account"}
@@ -311,7 +311,7 @@ export default function PersonalDocumentsPage() {
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
-            <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="admin-panel p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -319,13 +319,13 @@ export default function PersonalDocumentsPage() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search documents"
-                    className="h-11 w-full rounded-xl border border-[#E4E4E1] bg-white pl-10 pr-3 text-sm outline-none focus:border-[#28C2A9]"
+                    className="h-11 w-full rounded-xl border border-line bg-white pl-10 pr-3 text-sm outline-none focus:border-[#28C2A9]"
                   />
                 </div>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as any)}
-                  className="h-11 rounded-xl border border-[#E4E4E1] bg-[#F3F3F0] px-3 text-sm font-semibold text-slate-700"
+                  className="h-11 rounded-xl border border-line bg-[#F3F3F0] px-3 text-sm font-semibold text-slate-700"
                 >
                   <option value="All">All statuses</option>
                   <option value="Verified">Verified</option>
@@ -356,7 +356,7 @@ export default function PersonalDocumentsPage() {
 
             <div className="space-y-3">
               {filtered.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-[#E4E4E1] bg-white p-12 text-center">
+                <div className="rounded-2xl border border-dashed border-line bg-white p-12 text-center">
                   <FileText className="mx-auto mb-3 h-8 w-8 text-slate-300" />
                   <p className="font-semibold text-slate-800">No documents found</p>
                   <p className="mt-1 text-sm text-slate-500">Try another filter or upload a new file.</p>
@@ -367,7 +367,7 @@ export default function PersonalDocumentsPage() {
                   return (
                     <div
                       key={doc.id}
-                      className="rounded-2xl border border-[#E4E4E1] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+                      className="rounded-2xl border border-line bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
                     >
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-start gap-3">
@@ -396,7 +396,7 @@ export default function PersonalDocumentsPage() {
                           <button
                             type="button"
                             onClick={() => cycleStatus(doc.id)}
-                            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#E4E4E1] px-3 text-xs font-semibold text-slate-700 hover:bg-[#F3F3F0]"
+                            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-xs font-semibold text-slate-700 hover:bg-[#F3F3F0]"
                           >
                             <ShieldCheck className="h-3.5 w-3.5" />
                             Status
@@ -404,7 +404,7 @@ export default function PersonalDocumentsPage() {
                           <button
                             type="button"
                             onClick={() => downloadDoc(doc)}
-                            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#E4E4E1] px-3 text-xs font-semibold text-slate-700 hover:bg-[#F3F3F0]"
+                            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-xs font-semibold text-slate-700 hover:bg-[#F3F3F0]"
                           >
                             <Download className="h-3.5 w-3.5" />
                             Download
@@ -427,7 +427,7 @@ export default function PersonalDocumentsPage() {
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="admin-panel p-5">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#E4F2D3] text-[#0E4D41]">
                 <Database className="h-5 w-5" />
               </div>
@@ -447,7 +447,7 @@ export default function PersonalDocumentsPage() {
               )}
             </div>
 
-            <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="admin-panel p-5">
               <h3 className="font-bold text-slate-900">Recent activity</h3>
               <div className="mt-4 space-y-3">
                 {activities.map((item) => (
@@ -472,7 +472,7 @@ export default function PersonalDocumentsPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="admin-panel p-5">
               <div className="mb-2 flex items-center gap-2 text-amber-700">
                 <AlertTriangle className="h-4 w-4" />
                 <h3 className="font-bold">Tip</h3>
@@ -490,7 +490,7 @@ export default function PersonalDocumentsPage() {
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/40 p-4">
           <form
             onSubmit={commitUpload}
-            className="w-full max-w-lg rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-2xl"
+            className="w-full max-w-lg admin-panel p-6 shadow-2xl"
           >
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">Upload document</h3>
@@ -513,7 +513,7 @@ export default function PersonalDocumentsPage() {
               }}
               className={cn(
                 "flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed p-8 text-center",
-                dragActive ? "border-[#28C2A9] bg-[#E4F2D3]/40" : "border-[#E4E4E1] bg-[#F3F3F0]"
+                dragActive ? "border-[#28C2A9] bg-[#E4F2D3]/40" : "border-line bg-[#F3F3F0]"
               )}
             >
               <Upload className="mb-2 h-7 w-7 text-[#28C2A9]" />
@@ -534,7 +534,7 @@ export default function PersonalDocumentsPage() {
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-[#E4E4E1] px-3 text-sm outline-none focus:border-[#28C2A9]"
+                  className="h-11 w-full rounded-xl border border-line px-3 text-sm outline-none focus:border-[#28C2A9]"
                   required
                 />
               </label>
@@ -543,7 +543,7 @@ export default function PersonalDocumentsPage() {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as DocType)}
-                  className="h-11 w-full rounded-xl border border-[#E4E4E1] px-3 text-sm outline-none focus:border-[#28C2A9]"
+                  className="h-11 w-full rounded-xl border border-line px-3 text-sm outline-none focus:border-[#28C2A9]"
                 >
                   <option value="Contracts">Contracts</option>
                   <option value="Tax & Financial">Tax & Financial</option>
@@ -556,7 +556,7 @@ export default function PersonalDocumentsPage() {
                   type="checkbox"
                   checked={internalOnly}
                   onChange={(e) => setInternalOnly(e.target.checked)}
-                  className="h-4 w-4 rounded border-[#E4E4E1] text-[#28C2A9]"
+                  className="h-4 w-4 rounded border-line text-[#28C2A9]"
                 />
                 Mark as internal only
               </label>

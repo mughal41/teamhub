@@ -7,9 +7,25 @@ import { cn } from "@/src/lib/utils";
 
 export default function MyTeamPage() {
   const { user } = useAuth();
-  const team = getEmployeesForUser(user);
+  const [tick, setTick] = React.useState(0);
+  const team = React.useMemo(() => getEmployeesForUser(user), [user, tick]);
   const [search, setSearch] = React.useState("");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    void (async () => {
+      try {
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+      } catch {
+        // keep cached
+      }
+      setTick((n) => n + 1);
+    })();
+    const onUpdate = () => setTick((n) => n + 1);
+    window.addEventListener("db_updated", onUpdate);
+    return () => window.removeEventListener("db_updated", onUpdate);
+  }, []);
 
   const filtered = team.filter(
     (e) =>
@@ -45,20 +61,20 @@ export default function MyTeamPage() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-[#28C2A9]/15 text-[#0E4D41]">
               <Users className="h-4 w-4" />
             </div>
             <p className="text-sm text-slate-500">Team size</p>
             <p className="text-2xl font-bold text-slate-900">{team.length}</p>
           </div>
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <p className="text-sm text-slate-500">Active</p>
             <p className="text-2xl font-bold text-slate-900">
               {team.filter((e) => e.status === "Active").length}
             </p>
           </div>
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <p className="text-sm text-slate-500">On leave / away</p>
             <p className="text-2xl font-bold text-slate-900">
               {team.filter((e) => e.status !== "Active").length}
@@ -67,11 +83,11 @@ export default function MyTeamPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-5">
-          <div className="lg:col-span-3 rounded-2xl border border-[#E4E4E1] bg-white overflow-hidden">
+          <div className="lg:col-span-3 rounded-2xl border border-line bg-white overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px] text-left bg-white">
                 <thead>
-                  <tr className="border-b border-[#E4E4E1] bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <tr className="border-b border-line bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-400">
                     <th className="px-5 py-3">Employee</th>
                     <th className="px-5 py-3">Role</th>
                     <th className="px-5 py-3">Type</th>
@@ -137,7 +153,7 @@ export default function MyTeamPage() {
             </div>
           </div>
 
-          <div className="lg:col-span-2 rounded-2xl border border-[#E4E4E1] bg-white p-6">
+          <div className="lg:col-span-2 admin-panel p-6">
             {selected ? (
               <div className="space-y-5">
                 <div className="text-center">

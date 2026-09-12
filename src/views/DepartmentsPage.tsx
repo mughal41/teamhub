@@ -1,6 +1,13 @@
 import * as React from "react";
 import { AppLayout } from "../components/layout/AppLayout";
-import { getCollection, saveCollection, type Department, type Employee } from "../lib/db";
+import { getCollection, type Department, type Employee } from "../lib/db";
+import {
+  createDepartment,
+  deleteDepartment,
+  listDepartments,
+  updateDepartment,
+} from "@/src/lib/api/departments";
+import { syncCollectionsFromApi } from "@/src/lib/api/auth";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import {
@@ -20,7 +27,7 @@ export default function DepartmentsPage() {
   const [departments, setDepartments] = React.useState<Department[]>(() =>
     getCollection<Department[]>("db_departments", [])
   );
-  const [employees] = React.useState<Employee[]>(() =>
+  const [employees, setEmployees] = React.useState<Employee[]>(() =>
     getCollection<Employee[]>("db_employees", [])
   );
   const [search, setSearch] = React.useState("");
@@ -34,11 +41,25 @@ export default function DepartmentsPage() {
     status: "Active" as Department["status"],
   });
   const [error, setError] = React.useState("");
+  const [saving, setSaving] = React.useState(false);
 
-  const sync = (next: Department[]) => {
-    setDepartments(next);
-    saveCollection("db_departments", next);
-  };
+  const reload = React.useCallback(async () => {
+    try {
+      const [deps, emps] = await Promise.all([
+        listDepartments(),
+        syncCollectionsFromApi().then(() => getCollection<Employee[]>("db_employees", [])),
+      ]);
+      setDepartments(deps as Department[]);
+      setEmployees(emps);
+    } catch {
+      setDepartments(getCollection<Department[]>("db_departments", []));
+      setEmployees(getCollection<Employee[]>("db_employees", []));
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void reload();
+  }, [reload]);
 
   const headcount = (deptName: string) =>
     employees.filter((e) => e.dept.toLowerCase() === deptName.toLowerCase()).length;
@@ -78,63 +99,49 @@ export default function DepartmentsPage() {
     setModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (!form.name.trim() || !form.code.trim()) {
       setError("Department name and code are required.");
       return;
     }
-    const duplicate = departments.some(
-      (d) =>
-        d.id !== editing?.id &&
-        (d.name.toLowerCase() === form.name.trim().toLowerCase() ||
-          d.code.toLowerCase() === form.code.trim().toLowerCase())
-    );
-    if (duplicate) {
-      setError("A department with this name or code already exists.");
-      return;
-    }
-
-    if (editing) {
-      sync(
-        departments.map((d) =>
-          d.id === editing.id
-            ? {
-                ...d,
-                name: form.name.trim(),
-                code: form.code.trim().toUpperCase(),
-                headName: form.headName.trim() || "Unassigned",
-                description: form.description.trim(),
-                status: form.status,
-                employeeCount: headcount(form.name.trim()) || d.employeeCount,
-              }
-            : d
-        )
-      );
-    } else {
-      const newDept: Department = {
-        id: `DEPT-${String(departments.length + 1).padStart(3, "0")}`,
+    setSaving(true);
+    try {
+      const payload = {
         name: form.name.trim(),
         code: form.code.trim().toUpperCase(),
         headName: form.headName.trim() || "Unassigned",
         description: form.description.trim(),
-        employeeCount: headcount(form.name.trim()),
         status: form.status,
-        createdAt: new Date().toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        }),
+        employeeCount: headcount(form.name.trim()),
       };
-      sync([...departments, newDept]);
+      if (editing?.pk) {
+        await updateDepartment(editing.pk, payload);
+      } else {
+        await createDepartment(payload);
+      }
+      await reload();
+      setModalOpen(false);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Could not save department.");
+    } finally {
+      setSaving(false);
     }
-    setModalOpen(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (dept: Department) => {
     if (!confirm("Delete this department? Employees keep their current department label.")) return;
-    sync(departments.filter((d) => d.id !== id));
+    if (!dept.pk) {
+      setDepartments((prev) => prev.filter((d) => d.id !== dept.id));
+      return;
+    }
+    try {
+      await deleteDepartment(dept.pk);
+      await reload();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Could not delete department.");
+    }
   };
 
   return (
@@ -146,7 +153,7 @@ export default function DepartmentsPage() {
       ]}
     >
       <div className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl bg-[#28C2A9] p-5 text-white">
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
               <Building2 className="h-5 w-5" />
@@ -154,21 +161,21 @@ export default function DepartmentsPage() {
             <p className="text-sm font-medium text-white/80">Total Departments</p>
             <p className="mt-1 text-3xl font-bold">{departments.length}</p>
           </div>
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#E4F2D3] text-[#0E4D41]">
               <Users className="h-5 w-5" />
             </div>
             <p className="text-sm font-medium text-slate-500">Assigned Employees</p>
             <p className="mt-1 text-3xl font-bold text-slate-900">{totalHeadcount}</p>
           </div>
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
               <Briefcase className="h-5 w-5" />
             </div>
             <p className="text-sm font-medium text-slate-500">Active Departments</p>
             <p className="mt-1 text-3xl font-bold text-slate-900">{activeCount}</p>
           </div>
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-600">
               <UserCog className="h-5 w-5" />
             </div>
@@ -179,7 +186,7 @@ export default function DepartmentsPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="admin-panel p-5">
           <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-bold text-slate-900">Department Directory</h2>
@@ -205,7 +212,7 @@ export default function DepartmentsPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[800px] text-left bg-white">
               <thead>
-                <tr className="border-b border-[#E4E4E1] text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <tr className="border-b border-line text-xs font-semibold uppercase tracking-wider text-slate-400">
                   <th className="pb-3 pr-4">Code</th>
                   <th className="pb-3 pr-4">Department</th>
                   <th className="pb-3 pr-4">Head</th>
@@ -264,7 +271,7 @@ export default function DepartmentsPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleDelete(dept.id)}
+                            onClick={() => handleDelete(dept)}
                             className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
                             aria-label="Delete department"
                           >
@@ -283,7 +290,7 @@ export default function DepartmentsPage() {
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-[1px]">
-          <div className="w-full max-w-lg rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-lg rounded-2xl border border-line bg-white p-6 shadow-2xl">
             <div className="mb-5 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">
                 {editing ? "Edit Department" : "Add Department"}
@@ -349,8 +356,8 @@ export default function DepartmentsPage() {
                 <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" className="font-bold">
-                  {editing ? "Save Changes" : "Create Department"}
+                <Button type="submit" className="font-bold" disabled={saving}>
+                  {saving ? "Saving..." : editing ? "Save Changes" : "Create Department"}
                 </Button>
               </div>
             </form>

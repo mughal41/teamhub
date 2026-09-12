@@ -2,6 +2,7 @@ import * as React from "react";
 import { AppLayout } from "@/src/components/layout/AppLayout";
 import { useAuth } from "@/src/context/AuthContext";
 import { getEmployeesForUser } from "@/src/lib/permissions";
+import { getCollection } from "@/src/lib/db";
 import { Button } from "@/src/components/ui/Button";
 import {
   Calendar as CalendarIcon,
@@ -18,7 +19,7 @@ import { cn } from "@/src/lib/utils";
 type EventType = "Team" | "1:1" | "Review" | "Holiday";
 
 interface TeamEvent {
-  id: string;
+  id: string | number;
   title: string;
   day: number;
   time: string;
@@ -27,67 +28,32 @@ interface TeamEvent {
   location: string;
 }
 
+function mapScheduleEvents(): TeamEvent[] {
+  const rows = getCollection<any[]>("db_schedules", []);
+  const allowed = new Set(["Team", "1:1", "Review", "Holiday"]);
+  return rows.map((ev) => {
+    const raw = String(ev.type || ev.category || "Team");
+    return {
+      id: ev.id ?? `ev-${ev.day}-${ev.title}`,
+      title: String(ev.title || "Untitled"),
+      day: Number(ev.day || 1),
+      time: String(ev.time || "09:00 AM"),
+      type: (allowed.has(raw) ? raw : "Team") as EventType,
+      withWhom: String(ev.withWhom || ev.note || "Team"),
+      location: String(ev.location || ev.loc || "TBD"),
+    };
+  });
+}
+
 const MONTH_LABEL = "June 2035";
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-function buildSeedEvents(teamNames: string[]): TeamEvent[] {
-  const first = teamNames[0] || "Team member";
-  const second = teamNames[1] || first;
-  return [
-    {
-      id: "ev-1",
-      title: "Weekly Team Sync",
-      day: 20,
-      time: "10:00 AM",
-      type: "Team",
-      withWhom: "Full team",
-      location: "Meeting Room A",
-    },
-    {
-      id: "ev-2",
-      title: `1:1 with ${first}`,
-      day: 21,
-      time: "02:00 PM",
-      type: "1:1",
-      withWhom: first,
-      location: "Zoom",
-    },
-    {
-      id: "ev-3",
-      title: "Performance Check-in",
-      day: 22,
-      time: "11:30 AM",
-      type: "Review",
-      withWhom: second,
-      location: "HR Room 02",
-    },
-    {
-      id: "ev-4",
-      title: "Company Holiday — Mid-Year Break",
-      day: 24,
-      time: "All day",
-      type: "Holiday",
-      withWhom: "Company-wide",
-      location: "—",
-    },
-    {
-      id: "ev-5",
-      title: "Campaign Planning",
-      day: 25,
-      time: "09:30 AM",
-      type: "Team",
-      withWhom: "Full team",
-      location: "Marketing Hub",
-    },
-  ];
-}
 
 export default function ManagerCalendarPage() {
   const { user } = useAuth();
   const team = React.useMemo(() => getEmployeesForUser(user), [user]);
   const teamNames = team.map((t) => t.name);
 
-  const [events, setEvents] = React.useState<TeamEvent[]>(() => buildSeedEvents(teamNames));
+  const [events, setEvents] = React.useState<TeamEvent[]>(() => mapScheduleEvents());
   const [selectedDay, setSelectedDay] = React.useState(21);
   const [title, setTitle] = React.useState("");
   const [withWhom, setWithWhom] = React.useState(teamNames[0] || "Full team");
@@ -95,6 +61,21 @@ export default function ManagerCalendarPage() {
   const [type, setType] = React.useState<EventType>("Team");
   const [location, setLocation] = React.useState("Meeting Room A");
   const [savedMsg, setSavedMsg] = React.useState("");
+
+  React.useEffect(() => {
+    void (async () => {
+      try {
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+      } catch {
+        // keep cached
+      }
+      setEvents(mapScheduleEvents());
+    })();
+    const onUpdate = () => setEvents(mapScheduleEvents());
+    window.addEventListener("db_updated", onUpdate);
+    return () => window.removeEventListener("db_updated", onUpdate);
+  }, []);
 
   // June 2035 starts on Saturday
   const startOffset = 6;
@@ -109,21 +90,41 @@ export default function ManagerCalendarPage() {
   const addEvent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    setEvents((prev) => [
-      {
-        id: `ev-${Date.now()}`,
-        title: title.trim(),
-        day: selectedDay,
-        time,
-        type,
-        withWhom,
-        location: location.trim() || "TBD",
-      },
-      ...prev,
-    ]);
-    setTitle("");
-    setSavedMsg("Agenda added to your team calendar.");
-    window.setTimeout(() => setSavedMsg(""), 2200);
+    void (async () => {
+      try {
+        const { createCalendarEvent } = await import("@/src/lib/api/modules");
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await createCalendarEvent({
+          title: title.trim(),
+          type,
+          day: selectedDay,
+          month: 6,
+          year: 2035,
+          time,
+          location: location.trim() || "TBD",
+          withWhom,
+          visibility: "team",
+        });
+        await syncCollectionsFromApi();
+        setEvents(mapScheduleEvents());
+      } catch {
+        setEvents((prev) => [
+          {
+            id: `ev-${Date.now()}`,
+            title: title.trim(),
+            day: selectedDay,
+            time,
+            type,
+            withWhom,
+            location: location.trim() || "TBD",
+          },
+          ...prev,
+        ]);
+      }
+      setTitle("");
+      setSavedMsg("Agenda added to your team calendar.");
+      window.setTimeout(() => setSavedMsg(""), 2200);
+    })();
   };
 
   const typeStyle = (t: EventType) => {
@@ -166,13 +167,13 @@ export default function ManagerCalendarPage() {
               {events.filter((e) => e.type === "Team").length}
             </p>
           </div>
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <p className="text-sm text-slate-500">1:1s</p>
             <p className="mt-1 text-3xl font-bold text-slate-900">
               {events.filter((e) => e.type === "1:1").length}
             </p>
           </div>
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <p className="text-sm text-slate-500">Reviews</p>
             <p className="mt-1 text-3xl font-bold text-slate-900">
               {events.filter((e) => e.type === "Review").length}
@@ -181,7 +182,7 @@ export default function ManagerCalendarPage() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-5">
-          <div className="xl:col-span-3 rounded-2xl border border-[#E4E4E1] bg-white p-6">
+          <div className="xl:col-span-3 admin-panel p-6">
             <div className="mb-5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CalendarIcon className="h-5 w-5 text-[#28C2A9]" />
@@ -251,7 +252,7 @@ export default function ManagerCalendarPage() {
           </div>
 
           <div className="xl:col-span-2 space-y-6">
-            <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="admin-panel p-5">
               <h3 className="mb-1 font-bold text-slate-900">Details Schedule</h3>
               <p className="mb-4 text-xs text-slate-400">
                 {selectedDay} {MONTH_LABEL}
@@ -261,7 +262,7 @@ export default function ManagerCalendarPage() {
                   <p className="py-8 text-center text-sm text-slate-400">No events on this day.</p>
                 ) : (
                   dayEvents.map((ev) => (
-                    <div key={ev.id} className="rounded-xl border border-[#E4E4E1] bg-slate-50/60 p-4">
+                    <div key={ev.id} className="rounded-xl border border-line bg-slate-50/60 p-4">
                       <div className="mb-2 flex items-start justify-between gap-2">
                         <p className="text-sm font-semibold text-slate-900">{ev.title}</p>
                         <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold", typeStyle(ev.type))}>
@@ -288,7 +289,7 @@ export default function ManagerCalendarPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="admin-panel p-5">
               <h3 className="mb-4 font-bold text-slate-900">Add team agenda</h3>
               <form className="space-y-3" onSubmit={addEvent}>
                 <input

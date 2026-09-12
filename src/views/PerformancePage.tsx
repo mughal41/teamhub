@@ -151,6 +151,16 @@ export default function PerformancePage() {
       }));
     };
 
+    void (async () => {
+      try {
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+      } catch {
+        // keep local
+      }
+      handleDbUpdate();
+    })();
+
     window.addEventListener("storage", handleDbUpdate);
     window.addEventListener("db_updated", handleDbUpdate);
     window.addEventListener("roleChanged", handleDbUpdate);
@@ -505,17 +515,17 @@ export default function PerformancePage() {
             {/* Top Charts Row */}
             <div className="flex flex-col lg:flex-row gap-5">
               {/* Team Performance Card */}
-              <Card className="flex-1 min-h-[314px] p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col">
+              <Card className="flex-1 min-h-[314px] flex flex-col">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-[16px] font-bold text-[#203430]">
                     Team Performance
                   </h3>
-                  <button className="flex items-center gap-2 bg-white border border-[#E6E6E4] px-3 py-1.5 rounded-[8px] text-[12px] font-medium text-[#203430] cursor-not-allowed" disabled>
+                  <button className="flex items-center gap-2 bg-white border border-line px-3 py-1.5 rounded-[8px] text-[12px] font-medium text-[#203430] cursor-not-allowed" disabled>
                     Last Year <ChevronDown className="h-3 w-3" />
                   </button>
                 </div>
                 {employees.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed border-[#E4E4E1] rounded-[12px] gap-1 bg-white">
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed border-line rounded-[12px] gap-1 bg-white">
                     <TrendingUp className="h-7 w-7 text-[#63716E]/30 mb-1" />
                     <p className="text-xs font-bold text-[#203430]">No Trend Metrics Available</p>
                     <p className="text-[11px] text-[#63716E] max-w-[240px]">Historical department tracking compiles automatically once employees are seeded.</p>
@@ -592,7 +602,7 @@ export default function PerformancePage() {
               </Card>
 
               {/* Performance by Category Card */}
-              <Card className="lg:w-[466px] min-h-[314px] p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col uppercase tracking-tight">
+              <Card className="lg:w-[466px] min-h-[314px] flex flex-col uppercase tracking-tight">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-[16px] font-bold text-[#203430] normal-case">
                     Performance by Category
@@ -602,7 +612,7 @@ export default function PerformancePage() {
                   </button>
                 </div>
                 {employees.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed border-[#E4E4E1] rounded-[12px] gap-1 bg-white">
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed border-line rounded-[12px] gap-1 bg-white">
                     <Award className="h-7 w-7 text-[#63716E]/30 mb-1" />
                     <p className="text-xs font-bold text-[#203430] normal-case">No Categories Recorded</p>
                     <p className="text-[11px] text-[#63716E] max-w-[240px] normal-case">Competency levels show up when staff list is populated.</p>
@@ -640,7 +650,7 @@ export default function PerformancePage() {
             </div>
 
             {/* Employee Performance Table Card */}
-            <Card className="border border-[#E6E6E4] rounded-[16px] bg-white overflow-hidden p-0 flex flex-col min-h-[568px]">
+            <Card className="overflow-hidden p-0 flex flex-col min-h-[568px]">
               <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-2">
                 <div>
                   <h2 className="text-[16px] font-bold text-[#203430]">
@@ -704,7 +714,7 @@ export default function PerformancePage() {
                       <tr>
                         <td colSpan={10} className="px-6 py-16 text-center">
                           <div className="flex flex-col items-center justify-center space-y-2">
-                            <div className="h-10 w-10 bg-slate-50 border border-[#E4E4E1] rounded-full flex items-center justify-center text-slate-400 mx-auto">
+                            <div className="h-10 w-10 bg-slate-50 border border-line rounded-full flex items-center justify-center text-slate-400 mx-auto">
                               <TrendingUp className="h-4 w-4" />
                             </div>
                             <p className="text-[12px] font-bold text-[#203430] mt-1">
@@ -788,10 +798,10 @@ export default function PerformancePage() {
                 </table>
               </div>
 
-              <div className="p-6 border-t border-[#E4E4E1] flex flex-col sm:flex-row items-center justify-between gap-6 mt-auto">
+              <div className="p-6 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-6 mt-auto">
                 <div className="flex items-center gap-3">
                   <span className="text-[14px] text-[#63716E]">Show</span>
-                  <button className="flex items-center gap-2 bg-white border border-[#E6E6E4] h-[28px] px-3 rounded-[8px] text-[12px] font-bold text-[#203430]">
+                  <button className="flex items-center gap-2 bg-white border border-line h-[28px] px-3 rounded-[8px] text-[12px] font-bold text-[#203430]">
                     7 <ChevronDown className="h-3 w-3" />
                   </button>
                   <span className="text-[14px] text-[#63716E]">
@@ -817,7 +827,7 @@ export default function PerformancePage() {
           {/* Right Sidebar Area */}
           <div className="xl:w-[292px] space-y-5">
             {/* Average Performance Gauge */}
-            <Card className="h-[216px] p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col items-center">
+            <Card className="h-[216px] flex flex-col items-center">
               <div className="w-full flex items-center justify-between mb-2">
                 <h3 className="text-[16px] font-bold text-[#203430]">
                   Average Performance
@@ -876,7 +886,7 @@ export default function PerformancePage() {
             </Card>
 
             {/* Top Performers Card */}
-            <Card className="min-h-[394px] p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col">
+            <Card className="min-h-[394px] flex flex-col">
               <div className="w-full flex items-center justify-between mb-4">
                 <h3 className="text-[16px] font-bold text-[#203430]">
                   Top Performers
@@ -893,7 +903,7 @@ export default function PerformancePage() {
                 ) : (
                   topPerformers.map((p, i) => (
                     <React.Fragment key={p.name}>
-                      {i > 0 && <div className="border-t border-[#E4E4E1]" />}
+                      {i > 0 && <div className="border-t border-line" />}
                       <div className="flex items-center gap-3 py-2">
                         <img
                           src={p.avatar}
@@ -922,7 +932,7 @@ export default function PerformancePage() {
             </Card>
 
             {/* Time Management Alerts */}
-            <Card className="min-h-[252px] p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col justify-between">
+            <Card className="min-h-[252px] flex flex-col justify-between">
               <div>
                 <div className="w-full flex items-center justify-between mb-4">
                   <h3 className="text-[16px] font-bold text-[#203430]">
@@ -940,7 +950,7 @@ export default function PerformancePage() {
                   ) : (
                     alerts.map((a, i) => (
                       <React.Fragment key={a.name}>
-                        {i > 0 && <div className="border-t border-[#E4E4E1]" />}
+                        {i > 0 && <div className="border-t border-line" />}
                         <div className="flex gap-3.5 py-1">
                           <div className="relative shrink-0">
                             <img
@@ -996,7 +1006,7 @@ export default function PerformancePage() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.25 }}
-              className="bg-white w-full max-w-[600px] rounded-2xl shadow-2xl flex flex-col relative z-50 overflow-hidden border border-[#E4E4E1] max-h-[90vh]"
+              className="bg-white w-full max-w-[600px] rounded-2xl shadow-2xl flex flex-col relative z-50 overflow-hidden border border-line max-h-[90vh]"
             >
               <button
                 type="button"
@@ -1021,7 +1031,7 @@ export default function PerformancePage() {
                   </div>
 
                   {/* Employee Profile Mini-Card */}
-                  <div className="mx-6 md:mx-8 mb-6 p-4 bg-white rounded-xl border border-[#E4E4E1] flex items-center gap-4">
+                  <div className="mx-6 md:mx-8 mb-6 p-4 bg-white rounded-xl border border-line flex items-center gap-4">
                     <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-[#E4F2D3] shrink-0 bg-[#006b5f]/15">
                       <img
                         alt={`${selectedEmployee.name} Profile`}
@@ -1094,7 +1104,7 @@ export default function PerformancePage() {
                       className={cn(
                         "group flex flex-col p-5 bg-white border transition-all text-left rounded-xl",
                         (selectedEmployee.score === undefined || selectedEmployee.score === null)
-                          ? "opacity-60 cursor-not-allowed border-[#E4E4E1]"
+                          ? "opacity-60 cursor-not-allowed border-line"
                           : "border-slate-150 hover:border-[#006b5f] hover:bg-[#E4F2D3]/10 cursor-pointer"
                       )}
                       onClick={() => setModalStep(2)}
@@ -1119,7 +1129,7 @@ export default function PerformancePage() {
                       className={cn(
                         "group flex flex-col p-5 bg-white border transition-all text-left rounded-xl",
                         (selectedEmployee.score === undefined || selectedEmployee.score === null)
-                          ? "opacity-60 cursor-not-allowed border-[#E4E4E1]"
+                          ? "opacity-60 cursor-not-allowed border-line"
                           : "border-slate-150 hover:border-[#006b5f] hover:bg-[#E4F2D3]/10 cursor-pointer"
                       )}
                       onClick={() => {
@@ -1142,7 +1152,7 @@ export default function PerformancePage() {
                   </div>
 
                   {/* Footer */}
-                  <div className="px-6 md:px-8 py-4 bg-[#F3F3F0] flex justify-end gap-3 mt-auto border-t border-[#E4E4E1]">
+                  <div className="px-6 md:px-8 py-4 bg-[#F3F3F0] flex justify-end gap-3 mt-auto border-t border-line">
                     <button
                       type="button"
                       onClick={() => setShowModal(false)}
@@ -1157,7 +1167,7 @@ export default function PerformancePage() {
               {modalStep === 2 && (
                 <div id="step-2" className="flex flex-col h-full">
                   {/* Header */}
-                  <div className="p-6 md:p-8 pb-4 border-b border-[#E4E4E1]">
+                  <div className="p-6 md:p-8 pb-4 border-b border-line">
                     <h1 className="text-xl md:text-2xl font-bold text-[#203430] tracking-tight">
                       Select Review Period
                     </h1>
@@ -1279,7 +1289,7 @@ export default function PerformancePage() {
                   </div>
 
                   {/* Footer */}
-                  <div className="px-6 md:px-8 py-4 bg-[#F3F3F0] flex justify-between items-center mt-auto border-t border-[#E4E4E1]">
+                  <div className="px-6 md:px-8 py-4 bg-[#F3F3F0] flex justify-between items-center mt-auto border-t border-line">
                     <button
                       type="button"
                       onClick={() => setModalStep(1)}
@@ -1302,7 +1312,7 @@ export default function PerformancePage() {
               {modalStep === 3 && (
                 <div id="step-3" className="flex flex-col h-full">
                   {/* Header */}
-                  <div className="p-6 md:p-8 pb-4 border-b border-[#E4E4E1]">
+                  <div className="p-6 md:p-8 pb-4 border-b border-line">
                     <h1 className="text-xl md:text-2xl font-bold text-[#203430] tracking-tight">
                       Performance History
                     </h1>
@@ -1318,7 +1328,7 @@ export default function PerformancePage() {
                       (historyItem: any, index: number) => (
                         <div
                           key={index}
-                          className="p-4 bg-slate-50 rounded-xl border border-[#E4E4E1] flex items-center gap-4 hover:bg-slate-100/50 transition-colors"
+                          className="p-4 bg-slate-50 rounded-xl border border-line flex items-center gap-4 hover:bg-slate-100/50 transition-colors"
                         >
                           <div className="w-10 h-10 rounded-full bg-slate-200/50 flex items-center justify-center text-[#0E4D41] shrink-0 font-bold">
                             {historyItem.score}
@@ -1347,7 +1357,7 @@ export default function PerformancePage() {
                   </div>
 
                   {/* Footer */}
-                  <div className="px-6 md:px-8 py-4 bg-[#F3F3F0] flex justify-between items-center mt-auto border-t border-[#E4E4E1]">
+                  <div className="px-6 md:px-8 py-4 bg-[#F3F3F0] flex justify-between items-center mt-auto border-t border-line">
                     <button
                       type="button"
                       onClick={() => setModalStep(1)}
@@ -1371,7 +1381,7 @@ export default function PerformancePage() {
         )}
       </AnimatePresence>
 
-      <footer className="mt-20 py-8 border-t border-[#E4E4E1] flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
+      <footer className="mt-20 py-8 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
         <div className="flex flex-col sm:flex-row items-center gap-6 lg:gap-16">
           <p className="text-[12px] font-bold text-[#203430]">
             Copyright © 2025 Peterdraw

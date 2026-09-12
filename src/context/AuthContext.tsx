@@ -1,16 +1,22 @@
 import * as React from "react";
-import { createContext, useContext, useState, useMemo, useCallback } from "react";
+import { createContext, useContext, useState, useMemo, useCallback, useEffect } from "react";
 import {
   type AccessRole,
   type PublicAuthUser,
-  authenticate,
-  registerUser,
   loadSession,
   saveSession,
   clearSession,
-  updateUserProfile,
-  changeUserPassword,
 } from "../lib/auth";
+import {
+  apiLogin,
+  apiRegister,
+  apiMe,
+  apiUpdateProfile,
+  apiChangePassword,
+  apiLogout,
+  syncCollectionsFromApi,
+} from "../lib/api/auth";
+import { getAccessToken } from "../lib/api/client";
 
 export type { AccessRole };
 
@@ -33,19 +39,49 @@ interface AuthContextType {
     patch: Partial<Pick<PublicAuthUser, "name" | "avatar" | "roleTitle">>
   ) => Promise<void>;
   changePassword: (currentPassword: string, nextPassword: string) => Promise<void>;
+  refreshData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<PublicAuthUser | null>(() => loadSession());
-  const [isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrate() {
+      const token = getAccessToken();
+      if (!token) {
+        if (!cancelled) setIsLoading(false);
+        return;
+      }
+      try {
+        const me = await apiMe();
+        if (cancelled) return;
+        saveSession(me);
+        setUser(me);
+        await syncCollectionsFromApi();
+      } catch {
+        if (!cancelled) {
+          apiLogout();
+          clearSession();
+          setUser(null);
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    void hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const next = authenticate(email, password);
-    if (!next) {
-      throw new Error("Invalid credentials. Please try again.");
-    }
+    const next = await apiLogin(email, password);
     saveSession(next);
     setUser(next);
   }, []);
@@ -58,43 +94,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       lastName: string,
       organizationName: string
     ) => {
-      const result = registerUser({
+      const next = await apiRegister({
         email,
         password,
         firstName,
         lastName,
         organizationName,
       });
-      if ("error" in result) {
-        throw new Error(result.error);
-      }
-      saveSession(result.user);
-      setUser(result.user);
+      saveSession(next);
+      setUser(next);
     },
     []
   );
 
   const logout = useCallback(async () => {
+    apiLogout();
     clearSession();
     setUser(null);
   }, []);
 
   const updateProfile = useCallback(
     async (patch: Partial<Pick<PublicAuthUser, "name" | "avatar" | "roleTitle">>) => {
-      const session = loadSession();
-      if (!session) throw new Error("Not signed in.");
-      const next = updateUserProfile(session.id, patch);
-      if (!next) throw new Error("Could not update profile.");
+      const next = await apiUpdateProfile(patch);
+      saveSession(next);
       setUser(next);
     },
     []
   );
 
   const changePassword = useCallback(async (currentPassword: string, nextPassword: string) => {
-    const session = loadSession();
-    if (!session) throw new Error("Not signed in.");
-    const result = changeUserPassword(session.id, currentPassword, nextPassword);
-    if ("error" in result) throw new Error(result.error);
+    await apiChangePassword(currentPassword, nextPassword);
+  }, []);
+
+  const refreshData = useCallback(async () => {
+    await syncCollectionsFromApi();
   }, []);
 
   const accessRole = user?.accessRole ?? null;
@@ -119,8 +152,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       updateProfile,
       changePassword,
+      refreshData,
     }),
-    [user, isLoading, accessRole, hasRole, login, register, logout, updateProfile, changePassword]
+    [
+      user,
+      isLoading,
+      accessRole,
+      hasRole,
+      login,
+      register,
+      logout,
+      updateProfile,
+      changePassword,
+      refreshData,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

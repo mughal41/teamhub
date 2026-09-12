@@ -7,11 +7,41 @@ import { cn } from "@/src/lib/utils";
 
 export default function EmployeePayslipPage() {
   const { user } = useAuth();
-  const payslips = getPayrollForUser(user);
+  const [tick, setTick] = React.useState(0);
   const [toast, setToast] = React.useState("");
-  const [selectedId, setSelectedId] = React.useState(payslips[0]?.date || "");
+  const [selectedKey, setSelectedKey] = React.useState<string>("");
 
-  const selected = payslips.find((p) => p.date === selectedId) || payslips[0];
+  React.useEffect(() => {
+    void (async () => {
+      try {
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+      } catch {
+        // keep cached
+      }
+      setTick((n) => n + 1);
+    })();
+    const onUpdate = () => setTick((n) => n + 1);
+    window.addEventListener("db_updated", onUpdate);
+    return () => window.removeEventListener("db_updated", onUpdate);
+  }, []);
+
+  const payslips = React.useMemo(() => getPayrollForUser(user), [user, tick]);
+
+  const slipKey = (p: (typeof payslips)[0]) =>
+    p.payslipId != null ? `id-${p.payslipId}` : `date-${p.date}-${p.total}`;
+
+  React.useEffect(() => {
+    if (!payslips.length) {
+      setSelectedKey("");
+      return;
+    }
+    if (!selectedKey || !payslips.some((p) => slipKey(p) === selectedKey)) {
+      setSelectedKey(slipKey(payslips[0]));
+    }
+  }, [payslips, selectedKey]);
+
+  const selected = payslips.find((p) => slipKey(p) === selectedKey) || payslips[0];
 
   const download = () => {
     if (!selected || !user) return;
@@ -54,36 +84,39 @@ export default function EmployeePayslipPage() {
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-3 lg:col-span-1">
-            <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="admin-panel p-5">
               <h3 className="font-bold text-slate-900">Pay periods</h3>
               <div className="mt-4 space-y-2">
                 {payslips.length === 0 ? (
                   <p className="py-6 text-center text-sm text-slate-400">No payslips yet</p>
                 ) : (
-                  payslips.map((p) => (
-                    <button
-                      key={p.date}
-                      type="button"
-                      onClick={() => setSelectedId(p.date)}
-                      className={cn(
-                        "w-full rounded-xl border px-3 py-3 text-left transition",
-                        selected?.date === p.date
-                          ? "border-[#28C2A9] bg-[#E4F2D3]/50"
-                          : "border-[#E4E4E1] bg-[#F3F3F0] hover:border-[#28C2A9]"
-                      )}
-                    >
-                      <p className="text-sm font-semibold text-slate-900">{p.date}</p>
-                      <p className="text-xs text-slate-500">
-                        {p.total} · {p.status}
-                      </p>
-                    </button>
-                  ))
+                  payslips.map((p) => {
+                    const key = slipKey(p);
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setSelectedKey(key)}
+                        className={cn(
+                          "w-full rounded-xl border px-3 py-3 text-left transition",
+                          selected && slipKey(selected) === key
+                            ? "border-[#28C2A9] bg-[#E4F2D3]/50"
+                            : "border-line bg-[#F3F3F0] hover:border-[#28C2A9]"
+                        )}
+                      >
+                        <p className="text-sm font-semibold text-slate-900">{p.date}</p>
+                        <p className="text-xs text-slate-500">
+                          {p.total} · {p.status}
+                        </p>
+                      </button>
+                    );
+                  })
                 )}
               </div>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)] lg:col-span-2">
+          <div className="admin-panel p-6 lg:col-span-2">
             {!selected ? (
               <div className="py-16 text-center text-slate-400">
                 <CircleDollarSign className="mx-auto mb-2 h-8 w-8" />
@@ -101,7 +134,7 @@ export default function EmployeePayslipPage() {
                   <button
                     type="button"
                     onClick={download}
-                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#E4E4E1] px-4 text-sm font-semibold text-slate-700 hover:bg-[#F3F3F0]"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-line px-4 text-sm font-semibold text-slate-700 hover:bg-[#F3F3F0]"
                   >
                     <Download className="h-4 w-4" />
                     Download
@@ -119,7 +152,7 @@ export default function EmployeePayslipPage() {
                   ].map(([label, value]) => (
                     <div
                       key={label}
-                      className="rounded-xl border border-[#E4E4E1] bg-[#F3F3F0]/60 px-4 py-3"
+                      className="rounded-xl border border-line bg-[#F3F3F0]/60 px-4 py-3"
                     >
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         {label}
@@ -129,7 +162,7 @@ export default function EmployeePayslipPage() {
                   ))}
                 </div>
 
-                <div className="mt-5 rounded-xl border border-[#E4E4E1] bg-white px-4 py-3 text-sm text-slate-600">
+                <div className="mt-5 rounded-xl border border-line bg-white px-4 py-3 text-sm text-slate-600">
                   Status:{" "}
                   <span
                     className={cn(

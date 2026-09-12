@@ -31,6 +31,11 @@
     background-color: var(--color-surface);
   }
 
+  /* Shared surface for section panels (Card default + raw divs) */
+  .admin-panel {
+    @apply rounded-2xl border border-line bg-panel p-4 shadow-sm;
+  }
+
   .admin-shell .bg-white {
     background-color: #ffffff;
   }
@@ -127,6 +132,8 @@ html.dark .admin-shell tbody tr:hover td {
 
 /* Borders — neutralize light/white edges on cards, tables, and chrome */
 html.dark .border-\[\#E4E4E1\],
+html.dark .border-\[\#E6E6E4\],
+html.dark .border-line,
 html.dark .border-\[\#d7e6c8\],
 html.dark .border-\[\#F0F0ED\],
 html.dark .border-\[\#F3F3F0\],
@@ -151,7 +158,11 @@ html.dark .divide-\[\#E4E4E1\] > :not([hidden]) ~ :not([hidden]) {
 html.dark .admin-shell .rounded-2xl,
 html.dark .admin-shell .rounded-xl,
 html.dark .admin-shell .rounded-\[16px\],
-html.dark .admin-shell .rounded-lg {
+html.dark .admin-shell .rounded-\[12px\],
+html.dark .admin-shell .rounded-\[10px\],
+html.dark .admin-shell .rounded-\[8px\],
+html.dark .admin-shell .rounded-lg,
+html.dark .admin-shell .admin-panel {
   border-color: transparent !important;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) !important;
 }

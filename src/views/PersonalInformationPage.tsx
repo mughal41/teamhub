@@ -204,14 +204,14 @@ export default function PersonalInformationPage() {
           </div>
         ) : null}
 
-        <div className="rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="admin-panel p-6">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
             <div className="relative shrink-0">
               {avatar ? (
                 <img
                   src={avatar}
                   alt={displayName}
-                  className="h-24 w-24 rounded-2xl object-cover ring-2 ring-[#E4E4E1]"
+                  className="h-24 w-24 rounded-2xl object-cover ring-2 ring-line"
                 />
               ) : (
                 <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-[#F3F3F0] text-[#0E4D41]">
@@ -230,13 +230,13 @@ export default function PersonalInformationPage() {
               <h2 className="text-xl font-bold text-slate-900">{displayName}</h2>
               <p className="mt-1 text-sm font-medium text-[#28C2A9]">{user?.roleTitle || "Team member"}</p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
-                <span className="rounded-lg border border-[#E4E4E1] bg-[#F3F3F0] px-2.5 py-1">
+                <span className="rounded-lg border border-line bg-[#F3F3F0] px-2.5 py-1">
                   {user?.employeeId || "—"}
                 </span>
-                <span className="rounded-lg border border-[#E4E4E1] bg-[#F3F3F0] px-2.5 py-1">
+                <span className="rounded-lg border border-line bg-[#F3F3F0] px-2.5 py-1">
                   {extras.status}
                 </span>
-                <span className="rounded-lg border border-[#E4E4E1] bg-[#F3F3F0] px-2.5 py-1">
+                <span className="rounded-lg border border-line bg-[#F3F3F0] px-2.5 py-1">
                   {extras.joinDate}
                 </span>
               </div>
@@ -247,7 +247,7 @@ export default function PersonalInformationPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           <form
             onSubmit={handleSave}
-            className="space-y-5 rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)] lg:col-span-2"
+            className="space-y-5 admin-panel p-6 lg:col-span-2"
           >
             <div>
               <h3 className="text-base font-bold text-slate-900">Contact details</h3>
@@ -329,11 +329,11 @@ export default function PersonalInformationPage() {
               </Field>
             </div>
 
-            <div className="flex flex-col-reverse gap-3 border-t border-[#E4E4E1] pt-5 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={resetForm}
-                className="h-11 rounded-xl border border-[#E4E4E1] bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-[#F3F3F0]"
+                className="h-11 rounded-xl border border-line bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-[#F3F3F0]"
               >
                 Cancel
               </button>
@@ -349,7 +349,7 @@ export default function PersonalInformationPage() {
           </form>
 
           <div className="space-y-6">
-            <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="admin-panel p-5">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#E4F2D3] text-[#0E4D41]">
                 <Shield className="h-5 w-5" />
               </div>
@@ -367,7 +367,7 @@ export default function PersonalInformationPage() {
               </button>
             </div>
 
-            <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="admin-panel p-5">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3F3F0] text-slate-600">
                 <Info className="h-5 w-5" />
               </div>
@@ -392,7 +392,7 @@ export default function PersonalInformationPage() {
 
       {showPhotoModal ? (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-2xl border border-line bg-white p-6 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">Update photo</h3>
               <button
@@ -417,7 +417,7 @@ export default function PersonalInformationPage() {
               }}
               className={cn(
                 "flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed p-8 text-center transition",
-                dragActive ? "border-[#28C2A9] bg-[#E4F2D3]/40" : "border-[#E4E4E1] bg-[#F3F3F0]"
+                dragActive ? "border-[#28C2A9] bg-[#E4F2D3]/40" : "border-line bg-[#F3F3F0]"
               )}
             >
               {modalPreviewUrl ? (
@@ -438,7 +438,7 @@ export default function PersonalInformationPage() {
               <button
                 type="button"
                 onClick={() => setShowPhotoModal(false)}
-                className="h-10 rounded-xl border border-[#E4E4E1] px-4 text-sm font-semibold text-slate-700"
+                className="h-10 rounded-xl border border-line px-4 text-sm font-semibold text-slate-700"
               >
                 Cancel
               </button>
@@ -458,7 +458,7 @@ export default function PersonalInformationPage() {
 
       {privacyOpen ? (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-lg rounded-2xl border border-line bg-white p-6 shadow-2xl">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">Privacy note</h3>
               <button type="button" onClick={() => setPrivacyOpen(false)} className="rounded-lg p-1.5 hover:bg-[#F3F3F0]">
@@ -501,4 +501,4 @@ function Field({
 }
 
 const fieldClass =
-  "h-11 w-full rounded-xl border border-[#E4E4E1] bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-[#28C2A9] focus:ring-1 focus:ring-[#28C2A9]";
+  "h-11 w-full rounded-xl border border-line bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-[#28C2A9] focus:ring-1 focus:ring-[#28C2A9]";

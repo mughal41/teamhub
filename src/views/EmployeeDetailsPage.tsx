@@ -359,8 +359,8 @@ export default function EmployeeDetailsPage() {
         {/* Left Stats Column */}
         <div className="w-full space-y-6 xl:w-[272px] shrink-0">
           {/* Profile Card */}
-          <Card className="p-4 flex flex-col items-center text-center bg-white border border-[#E6E6E4] rounded-[16px]">
-            <div className="mt-8 mb-6 relative h-[140px] w-[140px] rounded-[24px] bg-[#28C2A9] flex items-center justify-center p-0.5 border border-[#E4E4E1]/50">
+          <Card className="p-4 flex flex-col items-center text-center bg-white border border-line rounded-2xl">
+            <div className="mt-8 mb-6 relative h-[140px] w-[140px] rounded-[24px] bg-[#28C2A9] flex items-center justify-center p-0.5 border border-line/50">
               <img
                 src={
                   employee.avatar ||
@@ -393,7 +393,7 @@ export default function EmployeeDetailsPage() {
               </span>
             </div>
 
-            <div className="w-full space-y-0 rounded-[16px] overflow-hidden border border-[#E4E4E1]/80 bg-white">
+            <div className="w-full space-y-0 rounded-2xl overflow-hidden border border-line/80 bg-white">
               {[
                 { label: "Employment Type", val: employee.type || "Full-Time" },
                 { label: "Work Model", val: employee.model || "Hybrid" },
@@ -403,7 +403,7 @@ export default function EmployeeDetailsPage() {
                   key={info.label}
                   className={cn(
                     "flex justify-between items-center px-4 py-3.5 text-[11px] bg-[#F3F3F0]",
-                    idx < 2 && "border-b border-[#E4E4E1]/60",
+                    idx < 2 && "border-b border-line/60",
                   )}
                 >
                   <span className="font-semibold text-[#63716E]">
@@ -430,7 +430,7 @@ export default function EmployeeDetailsPage() {
           </Card>
 
           {/* Personal Info Card */}
-          <Card className="p-4 bg-white border border-[#E6E6E4] rounded-[16px]">
+          <Card className="p-4 bg-white border border-line rounded-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[16px] font-bold text-[#203430]">
                 Personal Info
@@ -494,10 +494,10 @@ export default function EmployeeDetailsPage() {
               <Card
                 key={stat.label}
                 className={cn(
-                  "p-4 text-center border-none rounded-[16px] transition-all hover:",
+                  "p-4 text-center border-none rounded-2xl transition-all hover:",
                   stat.label === "All Leaves"
                     ? "bg-[#E4F2D3]/35 border border-[#E4F2D3]/60"
-                    : "bg-white border border-[#E4E4E1]/80"
+                    : "bg-white border border-line/80"
                 )}
               >
                 <div className="relative inline-flex mb-4">
@@ -544,7 +544,7 @@ export default function EmployeeDetailsPage() {
           </div>
 
           {/* Performance Overview */}
-          <Card className="p-6 border-none rounded-[16px]">
+          <Card className="p-6 border-none rounded-2xl">
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h3 className="text-[16px] font-bold text-[#203430]">
@@ -562,13 +562,13 @@ export default function EmployeeDetailsPage() {
                   </span>
                 </div>
               </div>
-              <button className="flex items-center gap-2 bg-white border border-[#E6E6E4] px-3 py-1.5 rounded-lg text-[12px] font-bold text-[#63716E]">
+              <button className="flex items-center gap-2 bg-white border border-line px-3 py-1.5 rounded-lg text-[12px] font-bold text-[#63716E]">
                 Last Year <ChevronDown className="h-4 w-4" />
               </button>
             </div>
 
             <div className="h-[250px] w-full relative">
-              <div className="absolute right-[120px] top-6 bg-white border border-[#E4E4E1] rounded-[8px] p-2 shadow-xl z-20 text-center">
+              <div className="absolute right-[120px] top-6 bg-white border border-line rounded-[8px] p-2 shadow-xl z-20 text-center">
                 <p className="text-[9px] font-medium text-[#63716E]">
                   Sept 2035
                 </p>
@@ -635,7 +635,7 @@ export default function EmployeeDetailsPage() {
           </Card>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <Card className="p-4 border-none rounded-[16px]">
+            <Card className="p-4 border-none rounded-2xl">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-[16px] font-bold text-[#203430]">
@@ -690,7 +690,7 @@ export default function EmployeeDetailsPage() {
               </div>
             </Card>
 
-            <Card className="p-4 border-none rounded-[16px]">
+            <Card className="p-4 border-none rounded-2xl">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-[16px] font-bold text-[#203430]">
                   Documents
@@ -723,7 +723,7 @@ export default function EmployeeDetailsPage() {
           </div>
 
           {/* Internal Notes */}
-          <Card className="p-4 border-none rounded-[16px]">
+          <Card className="p-4 border-none rounded-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[16px] font-bold text-[#203430]">
                 Internal Notes
@@ -753,7 +753,7 @@ export default function EmployeeDetailsPage() {
         {/* Right Stats Column */}
         <div className="w-full space-y-6 xl:w-[272px] shrink-0">
           {/* Mini Calendar */}
-          <Card className="p-4 bg-white border border-[#E6E6E4] rounded-[16px]">
+          <Card className="p-4 bg-white border border-line rounded-2xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-1 cursor-pointer">
                 <span className="text-[16px] font-bold text-[#203430]">
@@ -832,7 +832,7 @@ export default function EmployeeDetailsPage() {
           </Card>
 
           {/* Payroll Summary Card */}
-          <Card className="p-4 bg-white border border-[#E6E6E4] rounded-[16px]">
+          <Card className="p-4 bg-white border border-line rounded-2xl">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-[16px] font-bold text-[#203430]">
                 Payroll Summary
@@ -915,7 +915,7 @@ export default function EmployeeDetailsPage() {
                 ))}
               </div>
 
-              <div className="flex items-center justify-between pt-6 border-t border-[#E4E4E1]">
+              <div className="flex items-center justify-between pt-6 border-t border-line">
                 <span className="text-[14px] font-bold text-[#203430]">
                   Total Monthly Value
                 </span>
@@ -929,7 +929,7 @@ export default function EmployeeDetailsPage() {
       </div>
 
       {/* Footer */}
-      <footer className="mt-20 flex flex-col gap-6 md:flex-row md:items-center md:justify-between py-8 border-t border-[#E4E4E1] mb-8 px-4">
+      <footer className="mt-20 flex flex-col gap-6 md:flex-row md:items-center md:justify-between py-8 border-t border-line mb-8 px-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-10">
           <p className="text-[12px] text-[#203430] font-bold">
             Copyright © 2025 Peterdraw

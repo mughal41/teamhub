@@ -2,29 +2,55 @@ import * as React from "react";
 import { AppLayout } from "@/src/components/layout/AppLayout";
 import { useAuth } from "@/src/context/AuthContext";
 import { getAttendanceForUser } from "@/src/lib/permissions";
-import { getCollection, saveCollection, type AttendanceRecord } from "@/src/lib/db";
+import type { AttendanceRecord } from "@/src/lib/db";
 import { Clock, UserCheck, CheckCircle2, PenLine } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 
+function toClockLabel(hhmm: string) {
+  // "09:00" -> "09:00 AM"
+  const [hStr, mStr = "00"] = hhmm.split(":");
+  let h = Number(hStr);
+  const suffix = h >= 12 ? "PM" : "AM";
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+  return `${String(h).padStart(2, "0")}:${mStr} ${suffix}`;
+}
+
 export default function EmployeeAttendancePage() {
   const { user } = useAuth();
-  const [records, setRecords] = React.useState(() => getAttendanceForUser(user));
+  const [records, setRecords] = React.useState<AttendanceRecord[]>(() => getAttendanceForUser(user));
   const [toast, setToast] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
   const [showCorrection, setShowCorrection] = React.useState(false);
   const [corrDate, setCorrDate] = React.useState("");
   const [corrIn, setCorrIn] = React.useState("09:00");
   const [corrOut, setCorrOut] = React.useState("17:30");
   const [corrReason, setCorrReason] = React.useState("");
 
+  const refresh = React.useCallback(() => setRecords(getAttendanceForUser(user)), [user]);
+
   React.useEffect(() => {
-    setRecords(getAttendanceForUser(user));
-  }, [user]);
+    void (async () => {
+      try {
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+      } catch {
+        // keep cached
+      }
+      refresh();
+    })();
+    const onUpdate = () => refresh();
+    window.addEventListener("db_updated", onUpdate);
+    return () => window.removeEventListener("db_updated", onUpdate);
+  }, [refresh]);
 
   const today = records[0];
   const onTime = records.filter((r) => r.status === "On-Time").length;
   const late = records.filter((r) => r.status === "Late").length;
   const pendingCorrections = records.filter(
-    (r) => r.hrApprovalStatus === "Pending" || r.forwardedStatus === "Pending"
+    (r) =>
+      r.is_correction &&
+      (r.hrApprovalStatus === "Pending" || r.forwardedStatus === "Pending")
   ).length;
 
   const showToast = (msg: string) => {
@@ -32,91 +58,48 @@ export default function EmployeeAttendancePage() {
     window.setTimeout(() => setToast(""), 2200);
   };
 
-  const clockAction = (type: "in" | "out") => {
-    if (!user) return;
-    const all = getCollection<AttendanceRecord[]>("db_attendance", []);
-    const idx = all.findIndex((r) => r.id === user.employeeId);
-    const now = new Date().toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    if (idx >= 0) {
-      all[idx] = {
-        ...all[idx],
-        in: type === "in" ? now : all[idx].in,
-        out: type === "out" ? now : all[idx].out,
-        status: type === "in" ? "On-Time" : all[idx].status,
-        comment: type === "in" ? "Self clock-in from employee panel" : all[idx].comment,
-      };
-    } else {
-      all.unshift({
-        id: user.employeeId,
-        name: user.name,
-        role: user.roleTitle,
-        subRole: "Self",
-        dept: "—",
-        date: new Date().toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        }),
-        model: "Hybrid",
-        in: type === "in" ? now : "—",
-        out: type === "out" ? now : "—",
-        duration: "—",
-        overtime: "0h",
-        status: "On-Time",
-        avatar: user.avatar,
-        correctionRequestsThisMonth: 0,
-        comment: "Created from employee self clock",
-        forwardedTo: "None",
-        forwardedStatus: "None",
-        hrApprovalStatus: "None",
-      });
+  const clockAction = async (type: "in" | "out") => {
+    if (!user || busy) return;
+    setBusy(true);
+    try {
+      const { clockAttendance } = await import("@/src/lib/api/modules");
+      const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+      await clockAttendance(type);
+      await syncCollectionsFromApi();
+      refresh();
+      showToast(type === "in" ? "Clock-in recorded." : "Clock-out recorded.");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Could not clock.");
+    } finally {
+      setBusy(false);
     }
-    saveCollection("db_attendance", all);
-    setRecords(getAttendanceForUser(user));
-    showToast(type === "in" ? "Clock-in recorded." : "Clock-out recorded.");
   };
 
-  const submitCorrection = () => {
+  const submitCorrection = async () => {
     if (!user || !corrDate || !corrReason.trim()) {
       showToast("Date and reason are required.");
       return;
     }
-    const all = getCollection<AttendanceRecord[]>("db_attendance", []);
-    const monthCount =
-      all.filter((r) => r.id === user.employeeId).reduce((n, r) => n + (r.correctionRequestsThisMonth || 0), 0) + 1;
-
-    all.unshift({
-      id: user.employeeId,
-      name: user.name,
-      role: user.roleTitle,
-      subRole: "Correction",
-      dept: "—",
-      date: new Date(corrDate).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }),
-      model: "Hybrid",
-      in: corrIn,
-      out: corrOut,
-      duration: "—",
-      overtime: "0h",
-      status: "On-Time",
-      avatar: user.avatar,
-      correctionRequestsThisMonth: monthCount,
-      comment: corrReason.trim(),
-      forwardedTo: "Marcus Brody",
-      forwardedStatus: "Pending",
-      hrApprovalStatus: "Pending",
-    });
-    saveCollection("db_attendance", all);
-    setRecords(getAttendanceForUser(user));
-    setShowCorrection(false);
-    setCorrReason("");
-    showToast("Correction request submitted to your manager.");
+    setBusy(true);
+    try {
+      const { createAttendanceCorrection } = await import("@/src/lib/api/modules");
+      const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+      await createAttendanceCorrection({
+        date: corrDate,
+        clockIn: toClockLabel(corrIn),
+        clockOut: toClockLabel(corrOut),
+        reason: corrReason.trim(),
+      });
+      await syncCollectionsFromApi();
+      refresh();
+      setShowCorrection(false);
+      setCorrReason("");
+      showToast("Correction request submitted to your manager.");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Could not submit correction.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -132,8 +115,8 @@ export default function EmployeeAttendancePage() {
           </div>
         ) : null}
 
-        <div className="grid gap-4 sm:grid-cols-4">
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="grid gap-5 sm:grid-cols-4">
+          <div className="admin-panel p-5">
             <p className="text-sm text-slate-500">Today</p>
             <p className="mt-1 text-2xl font-bold text-slate-900">{today?.status || "—"}</p>
             <p className="mt-2 flex items-center gap-1 text-xs text-slate-500">
@@ -141,21 +124,21 @@ export default function EmployeeAttendancePage() {
               {today ? `${today.in} – ${today.out}` : "No record"}
             </p>
           </div>
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <p className="text-sm text-slate-500">On-time days</p>
             <p className="mt-1 text-2xl font-bold text-slate-900">{onTime}</p>
           </div>
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <p className="text-sm text-slate-500">Late days</p>
             <p className="mt-1 text-2xl font-bold text-slate-900">{late}</p>
           </div>
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <p className="text-sm text-slate-500">Pending corrections</p>
             <p className="mt-1 text-2xl font-bold text-slate-900">{pendingCorrections}</p>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="admin-panel p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="font-bold text-slate-900">Clock actions</h3>
@@ -164,22 +147,24 @@ export default function EmployeeAttendancePage() {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => clockAction("in")}
-                className="h-11 rounded-xl bg-[#28C2A9] px-4 text-sm font-bold text-white hover:bg-[#209f8a]"
+                disabled={busy}
+                onClick={() => void clockAction("in")}
+                className="h-11 rounded-xl bg-[#28C2A9] px-4 text-sm font-bold text-white hover:bg-[#209f8a] disabled:opacity-60"
               >
                 Clock in
               </button>
               <button
                 type="button"
-                onClick={() => clockAction("out")}
-                className="h-11 rounded-xl border border-[#E4E4E1] bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-[#F3F3F0]"
+                disabled={busy}
+                onClick={() => void clockAction("out")}
+                className="h-11 rounded-xl border border-line bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-[#F3F3F0] disabled:opacity-60"
               >
                 Clock out
               </button>
               <button
                 type="button"
                 onClick={() => setShowCorrection((v) => !v)}
-                className="h-11 inline-flex items-center gap-2 rounded-xl border border-[#E4E4E1] bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-[#F3F3F0]"
+                className="h-11 inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-[#F3F3F0]"
               >
                 <PenLine className="h-4 w-4" />
                 Request correction
@@ -188,14 +173,14 @@ export default function EmployeeAttendancePage() {
           </div>
 
           {showCorrection ? (
-            <div className="mt-5 grid gap-3 rounded-xl border border-[#E4E4E1] bg-[#F3F3F0] p-4 sm:grid-cols-2">
+            <div className="mt-5 grid gap-3 rounded-xl border border-line bg-[#F3F3F0] p-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-500">Work date</label>
                 <input
                   type="date"
                   value={corrDate}
                   onChange={(e) => setCorrDate(e.target.value)}
-                  className="h-10 w-full rounded-xl border border-[#E4E4E1] bg-white px-3 text-sm outline-none focus:border-[#28C2A9]"
+                  className="h-10 w-full rounded-xl border border-line bg-white px-3 text-sm outline-none focus:border-[#28C2A9]"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -205,7 +190,7 @@ export default function EmployeeAttendancePage() {
                     type="time"
                     value={corrIn}
                     onChange={(e) => setCorrIn(e.target.value)}
-                    className="h-10 w-full rounded-xl border border-[#E4E4E1] bg-white px-3 text-sm outline-none focus:border-[#28C2A9]"
+                    className="h-10 w-full rounded-xl border border-line bg-white px-3 text-sm outline-none focus:border-[#28C2A9]"
                   />
                 </div>
                 <div>
@@ -214,7 +199,7 @@ export default function EmployeeAttendancePage() {
                     type="time"
                     value={corrOut}
                     onChange={(e) => setCorrOut(e.target.value)}
-                    className="h-10 w-full rounded-xl border border-[#E4E4E1] bg-white px-3 text-sm outline-none focus:border-[#28C2A9]"
+                    className="h-10 w-full rounded-xl border border-line bg-white px-3 text-sm outline-none focus:border-[#28C2A9]"
                   />
                 </div>
               </div>
@@ -225,7 +210,7 @@ export default function EmployeeAttendancePage() {
                   onChange={(e) => setCorrReason(e.target.value)}
                   rows={2}
                   placeholder="e.g. Forgot to clock out after client call"
-                  className="w-full rounded-xl border border-[#E4E4E1] bg-white px-3 py-2 text-sm outline-none focus:border-[#28C2A9]"
+                  className="w-full rounded-xl border border-line bg-white px-3 py-2 text-sm outline-none focus:border-[#28C2A9]"
                 />
               </div>
               <div className="sm:col-span-2 flex justify-end gap-2">
@@ -238,8 +223,9 @@ export default function EmployeeAttendancePage() {
                 </button>
                 <button
                   type="button"
-                  onClick={submitCorrection}
-                  className="h-10 rounded-xl bg-[#28C2A9] px-4 text-sm font-bold text-white hover:bg-[#209f8a]"
+                  disabled={busy}
+                  onClick={() => void submitCorrection()}
+                  className="h-10 rounded-xl bg-[#28C2A9] px-4 text-sm font-bold text-white hover:bg-[#209f8a] disabled:opacity-60"
                 >
                   Submit to manager
                 </button>
@@ -248,14 +234,14 @@ export default function EmployeeAttendancePage() {
           ) : null}
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-[#E4E4E1] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-          <div className="border-b border-[#E4E4E1] px-5 py-4">
+        <div className="admin-panel p-0 overflow-hidden">
+          <div className="border-b border-line px-5 py-4">
             <h3 className="font-bold text-slate-900">Attendance history</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[820px] bg-white text-left text-sm">
               <thead>
-                <tr className="border-b border-[#E4E4E1] text-xs uppercase tracking-wide text-slate-400">
+                <tr className="border-b border-line text-xs uppercase tracking-wide text-slate-400">
                   <th className="px-5 py-3 font-semibold">Date</th>
                   <th className="px-5 py-3 font-semibold">In</th>
                   <th className="px-5 py-3 font-semibold">Out</th>
@@ -274,7 +260,10 @@ export default function EmployeeAttendancePage() {
                   </tr>
                 ) : (
                   records.map((r) => (
-                    <tr key={`${r.id}-${r.date}-${r.in}-${r.comment}`} className="border-b border-[#E4E4E1] last:border-0">
+                    <tr
+                      key={r.recordId ?? `${r.id}-${r.date}-${r.in}-${r.comment}`}
+                      className="border-b border-line last:border-0"
+                    >
                       <td className="px-5 py-3 font-medium text-slate-800">{r.date}</td>
                       <td className="px-5 py-3 text-slate-600">{r.in}</td>
                       <td className="px-5 py-3 text-slate-600">{r.out}</td>
@@ -293,11 +282,11 @@ export default function EmployeeAttendancePage() {
                         </span>
                       </td>
                       <td className="px-5 py-3 text-xs text-slate-500">
-                        {r.hrApprovalStatus === "Pending" || r.forwardedStatus === "Pending"
-                          ? "Pending review"
-                          : r.subRole === "Correction"
-                            ? r.hrApprovalStatus || "Submitted"
-                            : "—"}
+                        {r.is_correction
+                          ? r.forwardedStatus === "Pending" || r.hrApprovalStatus === "Pending"
+                            ? "Pending review"
+                            : r.forwardedStatus || r.hrApprovalStatus || "Submitted"
+                          : "—"}
                       </td>
                     </tr>
                   ))

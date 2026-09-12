@@ -44,6 +44,7 @@ import { cn } from "@/src/lib/utils";
 import { getCollection, saveCollection } from "../lib/db";
 
 export interface LeaveActivityItem {
+  leaveId?: number;
   name: string;
   id: string;
   role: string;
@@ -201,6 +202,16 @@ export default function LeaveManagementPage() {
     const handleDbUpdate = () => {
       setActivitiesState(getCollection<LeaveActivityItem[]>("db_leaves", []));
     };
+
+    void (async () => {
+      try {
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+        handleDbUpdate();
+      } catch {
+        handleDbUpdate();
+      }
+    })();
 
     window.addEventListener("storage", handleDbUpdate);
     window.addEventListener("db_updated", handleDbUpdate);
@@ -624,11 +635,46 @@ export default function LeaveManagementPage() {
     );
   };
 
-  const handleUpdateStatus = (newStatus: "Approved" | "Rejected") => {
+  const matchLeaveItem = (item: LeaveActivityItem, target: LeaveActivityItem) =>
+    (target.leaveId != null && item.leaveId === target.leaveId) ||
+    (item.id === target.id &&
+      item.startDate === target.startDate &&
+      item.type === target.type &&
+      item.submit === target.submit);
+
+  const persistLeaveDecision = async (
+    target: LeaveActivityItem,
+    newStatus: "Approved" | "Rejected",
+    comment?: string,
+  ) => {
+    if (target.leaveId != null) {
+      try {
+        const { decideLeave } = await import("@/src/lib/api/modules");
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await decideLeave(target.leaveId, newStatus, comment);
+        await syncCollectionsFromApi();
+        setActivitiesState(getCollection<LeaveActivityItem[]>("db_leaves", []));
+        return;
+      } catch {
+        // fall through to local update
+      }
+    }
+    setActivities((prev) =>
+      prev.map((item) =>
+        matchLeaveItem(item, target)
+          ? { ...item, status: newStatus, comment: comment || item.comment }
+          : item,
+      ),
+    );
+  };
+
+  const handleUpdateStatus = async (newStatus: "Approved" | "Rejected") => {
     if (!selectedActivity) return;
+    const target = selectedActivity;
+    await persistLeaveDecision(target, newStatus, commentText || target.comment);
     setActivities((prev) =>
       prev.map((item) => {
-        if (item.id === selectedActivity.id) {
+        if (matchLeaveItem(item, target)) {
           return {
             ...item,
             status: newStatus,
@@ -679,10 +725,10 @@ export default function LeaveManagementPage() {
         { label: "Leave Management" },
       ]}
     >
-      <div className="space-y-5">
+      <div className="space-y-6">
         {/* Top Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          <Card className="p-4 border-none rounded-[16px] bg-[#E4F2D3] flex flex-col justify-center">
+          <Card className="p-4 border-none rounded-2xl bg-[#E4F2D3] flex flex-col justify-center">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-6 w-6 rounded-full bg-brand flex items-center justify-center text-white">
                 <CalendarIcon className="h-4 w-4" />
@@ -740,10 +786,10 @@ export default function LeaveManagementPage() {
           ].map((stat) => (
             <Card
               key={stat.label}
-              className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col justify-center"
+              className="flex flex-col justify-center"
             >
               <div className="flex items-center gap-2 mb-4">
-                <div className="h-6 w-6 rounded-full bg-white border border-[#E6E6E4] flex items-center justify-center">
+                <div className="h-6 w-6 rounded-full bg-white border border-line flex items-center justify-center">
                   <stat.icon className="h-4 w-4 text-brand" />
                 </div>
                 <span className="text-[11px] text-[#63716E]">{stat.label}</span>
@@ -771,7 +817,7 @@ export default function LeaveManagementPage() {
         {/* Middle row: Overview, Calendar, Leaves, Types with custom proportional columns */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-5">
           {/* 1. Leave Overview */}
-          <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col h-[320px] md:col-span-1 xl:col-span-4">
+          <Card className="flex flex-col h-[320px] md:col-span-1 xl:col-span-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[16px] font-bold text-[#203430]">
                 Leave Overview
@@ -790,7 +836,7 @@ export default function LeaveManagementPage() {
                       className="fixed inset-0 z-20"
                       onClick={() => setIsOverviewMenuOpen(false)}
                     />
-                    <ul className="absolute right-0 mt-1 w-36 bg-white border border-[#E4E4E1] rounded-xl shadow-xl py-1.5 z-30 text-[11px] font-bold text-slate-700">
+                    <ul className="absolute right-0 mt-1 w-36 bg-white border border-line rounded-xl shadow-xl py-1.5 z-30 text-[11px] font-bold text-slate-700">
                       {["This Week", "This Month", "This Year"].map((range) => (
                         <li
                           key={range}
@@ -814,7 +860,7 @@ export default function LeaveManagementPage() {
               </div>
             </div>
             {activities.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed border-[#E4E4E1] rounded-[12px] gap-1 bg-white">
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed border-line rounded-[12px] gap-1 bg-white">
                 <CalendarIcon className="h-7 w-7 text-[#63716E]/30 mb-1" />
                 <p className="text-xs font-bold text-[#203430]">No Trend Metrics Available</p>
                 <p className="text-[11px] text-[#63716E] max-w-[240px]">Historical tracking trends compile automatically once staff submit leave requests.</p>
@@ -864,7 +910,7 @@ export default function LeaveManagementPage() {
           </Card>
 
           {/* Calendar and Employee Leaves/Types */}
-          <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col h-[320px] justify-between md:col-span-1 xl:col-span-3">
+          <Card className="flex flex-col h-[320px] justify-between md:col-span-1 xl:col-span-3">
             {/* Calendar Section */}
             <div className="flex-1 space-y-4">
               <div className="flex items-center justify-between">
@@ -943,7 +989,7 @@ export default function LeaveManagementPage() {
           </Card>
 
           {/* 3. Employee Leaves Card */}
-          <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col h-[320px] md:col-span-1 xl:col-span-3">
+          <Card className="flex flex-col h-[320px] md:col-span-1 xl:col-span-3">
             {/* Employee Leaves List */}
             <div className="flex-1 space-y-4 flex flex-col">
               <div className="flex items-center justify-between font-bold">
@@ -969,7 +1015,7 @@ export default function LeaveManagementPage() {
                         className="fixed inset-0 z-20"
                         onClick={() => setIsEmpLeavesMenuOpen(false)}
                       />
-                      <ul className="absolute right-0 mt-1 w-48 bg-white border border-[#E4E4E1] rounded-xl shadow-xl py-1.5 z-30 text-[11px] font-bold text-slate-700">
+                      <ul className="absolute right-0 mt-1 w-48 bg-white border border-line rounded-xl shadow-xl py-1.5 z-30 text-[11px] font-bold text-slate-700">
                         <li
                           className="px-3.5 py-2 hover:bg-[#E4F2D3] hover:text-[#0E4D41] cursor-pointer flex items-center gap-2 transition-colors"
                           onClick={() => {
@@ -996,16 +1042,15 @@ export default function LeaveManagementPage() {
                           className="px-3.5 py-2 hover:bg-[#E4F2D3] hover:text-[#0E4D41] cursor-pointer flex items-center gap-2 transition-colors"
                           onClick={() => {
                             setIsEmpLeavesMenuOpen(false);
-                            setActivities((prev) =>
-                              prev.map((item) =>
-                                item.status === "Pending"
-                                  ? { ...item, status: "Approved" }
-                                  : item,
-                              ),
-                            );
-                            showToast(
-                              "All pending leave applications approved concurrently!",
-                            );
+                            void (async () => {
+                              const pending = activities.filter((item) => item.status === "Pending");
+                              for (const item of pending) {
+                                await persistLeaveDecision(item, "Approved");
+                              }
+                              showToast(
+                                "All pending leave applications approved concurrently!",
+                              );
+                            })();
                           }}
                         >
                           <CheckCircle className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
@@ -1021,7 +1066,7 @@ export default function LeaveManagementPage() {
                   dynamicEmployeeLeavesAtSelectedDay.map((e, index) => (
                     <div
                       key={e.id + "-" + index}
-                      className="flex items-center gap-2.5 p-2 bg-white hover:bg-[#E4F2D3]/20 transition-all rounded-[10px] border border-[#E4E4E1]/55 cursor-pointer"
+                      className="flex items-center gap-2.5 p-2 bg-white hover:bg-[#E4F2D3]/20 transition-all rounded-[10px] border border-line/55 cursor-pointer"
                       onClick={() => handleOpenDetailsModal(e)}
                     >
                       <img
@@ -1056,7 +1101,7 @@ export default function LeaveManagementPage() {
           </Card>
 
           {/* Leave Types Donut */}
-          <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col h-[320px] justify-between md:col-span-1 xl:col-span-2">
+          <Card className="flex flex-col h-[320px] justify-between md:col-span-1 xl:col-span-2">
             <div className="flex items-center justify-between">
               <h3 className="text-[16px] font-bold text-[#203430]">
                 Leave Types
@@ -1074,7 +1119,7 @@ export default function LeaveManagementPage() {
                       className="fixed inset-0 z-20"
                       onClick={() => setIsTypesMenuOpen(false)}
                     />
-                    <ul className="absolute right-0 mt-1 w-48 bg-white border border-[#E4E4E1] rounded-xl shadow-xl py-1.5 z-30 text-[11px] font-bold text-slate-700">
+                    <ul className="absolute right-0 mt-1 w-48 bg-white border border-line rounded-xl shadow-xl py-1.5 z-30 text-[11px] font-bold text-slate-700">
                       <li
                         className="px-3.5 py-2 hover:bg-[#E4F2D3] hover:text-[#0E4D41] cursor-pointer flex items-center gap-2 transition-colors"
                         onClick={() => {
@@ -1121,7 +1166,7 @@ export default function LeaveManagementPage() {
               </div>
             </div>
             {statsApprovedCount.totalApproved === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-3 border border-dashed border-[#E4E4E1] rounded-[12px] gap-1 bg-white">
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-3 border border-dashed border-line rounded-[12px] gap-1 bg-white">
                 <Umbrella className="h-6 w-6 text-[#63716E]/30 mb-0.5" />
                 <p className="text-[11px] font-bold text-[#203430]">No Approved Leaves</p>
                 <p className="text-[9px] text-[#63716E] max-w-[150px]">Approved leaves populate the distribution.</p>
@@ -1184,7 +1229,7 @@ export default function LeaveManagementPage() {
         </div>
 
         {/* Leave Activity Table Card */}
-        <Card className="border border-[#E6E6E4] rounded-[16px] bg-white overflow-hidden p-0 flex flex-col min-h-[708px]">
+        <Card className="overflow-hidden p-0 flex flex-col min-h-[708px]">
           <div className="p-6 flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-slate-50">
             <div>
               <h2 className="text-[16px] font-bold text-[#203430]">
@@ -1322,7 +1367,7 @@ export default function LeaveManagementPage() {
                   <tr>
                     <td colSpan={10} className="px-6 py-16 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
-                        <div className="h-10 w-10 bg-slate-50 border border-[#E4E4E1] rounded-full flex items-center justify-center text-slate-400 mx-auto">
+                        <div className="h-10 w-10 bg-slate-50 border border-line rounded-full flex items-center justify-center text-slate-400 mx-auto">
                           <Check className="h-4 w-4" />
                         </div>
                         <p className="text-[12px] font-bold text-[#203430] mt-1">
@@ -1358,7 +1403,7 @@ export default function LeaveManagementPage() {
                             "h-3 w-3 rounded-[3px] border",
                             e.status === "Approved"
                               ? "bg-brand border-brand flex items-center justify-center"
-                              : "bg-[#F3F3F0] border-[#E4E4E1]",
+                              : "bg-[#F3F3F0] border-line",
                           )}
                         >
                           {e.status === "Approved" && (
@@ -1418,7 +1463,7 @@ export default function LeaveManagementPage() {
                         {e.duration}
                       </td>
                       <td className="px-6 py-3">
-                        <div className="min-w-[120px] max-w-[200px] p-2 bg-white border border-[#E6E6E4] rounded-[4px]">
+                        <div className="min-w-[120px] max-w-[200px] p-2 bg-white border border-line rounded-[4px]">
                           <span className="text-[10px] text-[#203430] truncate block">
                             {e.reason}
                           </span>
@@ -1462,13 +1507,7 @@ export default function LeaveManagementPage() {
                           <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => {
-                                setActivities((prev) =>
-                                  prev.map((item) =>
-                                    item.id === e.id
-                                      ? { ...item, status: "Approved" }
-                                      : item,
-                                  ),
-                                );
+                                void persistLeaveDecision(e, "Approved");
                               }}
                               className="flex items-center gap-1 bg-[#E4F2D3] px-2 py-1 rounded-[12px] hover:bg-brand group/btn transition-all"
                               title="Quick Approve"
@@ -1480,13 +1519,7 @@ export default function LeaveManagementPage() {
                             </button>
                             <button
                               onClick={() => {
-                                setActivities((prev) =>
-                                  prev.map((item) =>
-                                    item.id === e.id
-                                      ? { ...item, status: "Rejected" }
-                                      : item,
-                                  ),
-                                );
+                                void persistLeaveDecision(e, "Rejected");
                               }}
                               className="p-1 bg-[#E4F2D3] rounded-full hover:bg-[#E63D4B] group/btn2 transition-all"
                               title="Quick Reject"
@@ -1503,10 +1536,10 @@ export default function LeaveManagementPage() {
             </table>
           </div>
 
-          <div className="p-6 border-t border-[#E4E4E1] flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="p-6 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <span className="text-[14px] text-[#63716E]">Show</span>
-              <button className="flex items-center gap-2 bg-white border border-[#E6E6E4] h-[28px] px-3 rounded-[8px] text-[12px] font-bold text-[#203430]">
+              <button className="flex items-center gap-2 bg-white border border-line h-[28px] px-3 rounded-[8px] text-[12px] font-bold text-[#203430]">
                 10 <ChevronDown className="h-3 w-3" />
               </button>
               <span className="text-[14px] text-[#63716E]">of 102 results</span>
@@ -1518,17 +1551,17 @@ export default function LeaveManagementPage() {
               <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-brand text-white text-[12px] font-bold">
                 1
               </button>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430] text-[12px] font-bold">
+              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430] text-[12px] font-bold">
                 2
               </button>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430] text-[12px] font-bold">
+              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430] text-[12px] font-bold">
                 3
               </button>
               <span className="px-1 text-[12px] text-[#63716E]">...</span>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430] text-[12px] font-bold">
+              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430] text-[12px] font-bold">
                 11
               </button>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430]">
+              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430]">
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
@@ -1536,7 +1569,7 @@ export default function LeaveManagementPage() {
         </Card>
       </div>
 
-      <footer className="mt-20 py-8 border-t border-[#E4E4E1] flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
+      <footer className="mt-20 py-8 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
         <div className="flex flex-col sm:flex-row items-center gap-6 lg:gap-16">
           <p className="text-[12px] font-bold text-[#203430]">
             Copyright © 2025 Peterdraw
@@ -1561,9 +1594,9 @@ export default function LeaveManagementPage() {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm"
           id="leaveDetailModal"
         >
-          <div className="bg-white w-full max-w-[500px] rounded-2xl shadow-xl border border-[#E4E4E1] flex flex-col max-h-[90vh] overflow-hidden">
+          <div className="bg-white w-full max-w-[500px] rounded-2xl shadow-xl border border-line flex flex-col max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="px-6 py-4.5 border-b border-[#E4E4E1] flex items-center justify-between">
+            <div className="px-6 py-4.5 border-b border-line flex items-center justify-between">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">
                   Leave Application Review
@@ -1609,7 +1642,7 @@ export default function LeaveManagementPage() {
 
               {/* Leave Detail Info Grid */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50/20 p-3 rounded-xl border border-[#E4E4E1]">
+                <div className="bg-slate-50/20 p-3 rounded-xl border border-line">
                   <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider mb-1">
                     Leave Type
                   </span>
@@ -1617,7 +1650,7 @@ export default function LeaveManagementPage() {
                     {selectedActivity.type}
                   </span>
                 </div>
-                <div className="bg-slate-50/20 p-3 rounded-xl border border-[#E4E4E1]">
+                <div className="bg-slate-50/20 p-3 rounded-xl border border-line">
                   <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider mb-1">
                     Total Duration
                   </span>
@@ -1625,7 +1658,7 @@ export default function LeaveManagementPage() {
                     {selectedActivity.duration}
                   </span>
                 </div>
-                <div className="bg-slate-50/20 p-3 rounded-xl border border-[#E4E4E1]">
+                <div className="bg-slate-50/20 p-3 rounded-xl border border-line">
                   <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider mb-1">
                     Period Details
                   </span>
@@ -1633,7 +1666,7 @@ export default function LeaveManagementPage() {
                     {selectedActivity.period}
                   </span>
                 </div>
-                <div className="bg-slate-50/20 p-3 rounded-xl border border-[#E4E4E1]">
+                <div className="bg-slate-50/20 p-3 rounded-xl border border-line">
                   <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider mb-1">
                     Request Status
                   </span>
@@ -1659,7 +1692,7 @@ export default function LeaveManagementPage() {
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   Application Reason
                 </span>
-                <div className="bg-slate-50/50 p-3.5 rounded-xl border border-[#E4E4E1]">
+                <div className="bg-slate-50/50 p-3.5 rounded-xl border border-line">
                   <p className="text-xs text-slate-650 font-medium leading-relaxed italic">
                     "{selectedActivity.reason || "Personal matter"}"
                   </p>
@@ -1760,7 +1793,7 @@ export default function LeaveManagementPage() {
             </div>
 
             {/* Bottom Actions footer with high-fidelity side-by-side design */}
-            <div className="p-4.5 bg-slate-50 border-t border-[#E4E4E1] grid grid-cols-2 gap-3 shrink-0">
+            <div className="p-4.5 bg-slate-50 border-t border-line grid grid-cols-2 gap-3 shrink-0">
               <button
                 onClick={() => {
                   handleUpdateStatus("Rejected");
@@ -1804,9 +1837,9 @@ export default function LeaveManagementPage() {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
           id="createLeaveRequestModal"
         >
-          <div className="bg-white w-full max-w-[840px] rounded-[24px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-[#E4E4E1] flex flex-col max-h-[92vh] overflow-hidden animate-scale-up">
+          <div className="bg-white w-full max-w-[840px] rounded-[24px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-line flex flex-col max-h-[92vh] overflow-hidden animate-scale-up">
             {/* Modal Header */}
-            <div className="p-5 border-b border-[#E4E4E1] flex items-center justify-between">
+            <div className="p-5 border-b border-line flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="h-7 w-7 rounded-md bg-teal-50 text-teal-850 flex items-center justify-center">
                   <Plus className="h-4 w-4 text-teal-750 font-black" />
@@ -1852,7 +1885,7 @@ export default function LeaveManagementPage() {
                 </div>
 
                 {/* Available Balance Pill card matching Screenshot 3 perfectly */}
-                <div className="border border-[#E4E4E1] rounded-xl p-5 bg-gradient-to-br from-emerald-50/10 to-teal-50/20 space-y-3.5 relative">
+                <div className="border border-line rounded-xl p-5 bg-gradient-to-br from-emerald-50/10 to-teal-50/20 space-y-3.5 relative">
                   <div className="flex justify-between items-center text-[11px] font-extrabold text-slate-505">
                     <span className="uppercase text-[9px] tracking-wider text-[#63716E]">
                       Available Balance
@@ -1898,7 +1931,7 @@ export default function LeaveManagementPage() {
                   </span>
                   <div className="border border-slate-150 rounded-xl p-4 bg-white flex flex-col">
                     {/* Month selector line */}
-                    <div className="flex items-center justify-between border-b pb-2.5 mb-2.5 border-[#E4E4E1]/50">
+                    <div className="flex items-center justify-between border-b pb-2.5 mb-2.5 border-line/50">
                       <span className="text-[13px] font-black text-[#203430]">
                         June 2035
                       </span>
@@ -1976,7 +2009,7 @@ export default function LeaveManagementPage() {
                     </div>
 
                     {/* Dynamic Selected Date Summary matching Screenshot 3 in bottom of picker */}
-                    <div className="mt-3.5 pt-3 border-t border-[#E4E4E1]/50 flex items-center justify-between text-[11px] font-extrabold text-[#0E4D41]">
+                    <div className="mt-3.5 pt-3 border-t border-line/50 flex items-center justify-between text-[11px] font-extrabold text-[#0E4D41]">
                       <span>
                         Selected:{" "}
                         <span className="font-semibold text-slate-850">
@@ -2150,7 +2183,7 @@ export default function LeaveManagementPage() {
             </div>
 
             {/* Submit & Cancel buttons */}
-            <div className="p-5 border-t border-[#E4E4E1] bg-white flex items-center justify-end gap-3 rounded-b-[24px]">
+            <div className="p-5 border-t border-line bg-white flex items-center justify-end gap-3 rounded-b-[24px]">
               <button
                 type="button"
                 onClick={() => setIsAddLeaveModalOpen(false)}
@@ -2161,14 +2194,13 @@ export default function LeaveManagementPage() {
               <button
                 type="button"
                 onClick={() => {
-                  // Final submission action
+                  void (async () => {
                   const formatPeriod = `${Math.min(createStartDay, createEndDay)}-${Math.max(createStartDay, createEndDay)} June 2035`;
                   const formatDuration = `${Math.max(createStartDay, createEndDay) - Math.min(createStartDay, createEndDay) + 1} Day${Math.max(createStartDay, createEndDay) - Math.min(createStartDay, createEndDay) > 0 ? "s" : ""}`;
                   const customStartDate = `2035-06-${Math.min(createStartDay, createEndDay).toString().padStart(2, "0")}`;
                   const customEndDate = `2035-06-${Math.max(createStartDay, createEndDay).toString().padStart(2, "0")}`;
 
                   if (isEditingExisting && editRequestOriginalId) {
-                    // Update main state database entries
                     setActivities((prev) =>
                       prev.map((a) => {
                         if (a.id === editRequestOriginalId) {
@@ -2193,36 +2225,62 @@ export default function LeaveManagementPage() {
                     );
                     showToast(`Leave request modifications stored!`);
                   } else {
-                    // Create beautiful custom employee leaf entry (Screenshot 3 Flow)
-                    const formatId = `EMP-0${Math.floor(Math.random() * 200) + 200}`;
-                    const newEntry: LeaveActivityItem = {
-                      name: "Anya Rodriguez",
-                      id: formatId,
-                      role: "Graphic Designer",
-                      dept: "Marketing",
-                      type: createLeaveType,
-                      submit: "01 Jun 2035",
-                      period: formatPeriod,
-                      duration: formatDuration,
-                      reason: createLeaveReason || "Personal matter",
-                      status: "Pending",
-                      avatar:
-                        "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-                      startDate: customStartDate,
-                      endDate: customEndDate,
-                      casualLeavesRemaining: 2,
-                      sickLeavesRemaining: 5,
-                      annualLeavesRemaining: 10,
-                      otherLeavesRemaining: 3,
-                    };
-                    setActivities((prev) => [newEntry, ...prev]);
-                    showToast(
-                      `Create request submitted successfully for Anya Rodriguez!`,
-                      "success",
-                    );
+                    const employees = getCollection<any[]>("db_employees", []);
+                    const emp =
+                      employees.find((row) => /anya/i.test(String(row.name || ""))) ||
+                      employees.find((row) => row.status === "Active") ||
+                      employees[0];
+                    if (!emp) {
+                      showToast("No employees available to attach leave.");
+                      return;
+                    }
+                    try {
+                      const { createLeave } = await import("@/src/lib/api/modules");
+                      const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+                      await createLeave({
+                        employeeCode: emp.id,
+                        type: createLeaveType,
+                        startDate: customStartDate,
+                        endDate: customEndDate,
+                        duration: formatDuration,
+                        reason: createLeaveReason || "Personal matter",
+                      });
+                      await syncCollectionsFromApi();
+                      setActivitiesState(getCollection<LeaveActivityItem[]>("db_leaves", []));
+                      showToast(
+                        `Leave request submitted for ${emp.name}!`,
+                        "success",
+                      );
+                    } catch {
+                      const newEntry: LeaveActivityItem = {
+                        name: emp.name,
+                        id: emp.id,
+                        role: emp.role,
+                        dept: emp.dept,
+                        type: createLeaveType,
+                        submit: "01 Jun 2035",
+                        period: formatPeriod,
+                        duration: formatDuration,
+                        reason: createLeaveReason || "Personal matter",
+                        status: "Pending",
+                        avatar: emp.avatar,
+                        startDate: customStartDate,
+                        endDate: customEndDate,
+                        casualLeavesRemaining: 2,
+                        sickLeavesRemaining: 5,
+                        annualLeavesRemaining: 10,
+                        otherLeavesRemaining: 3,
+                      };
+                      setActivities((prev) => [newEntry, ...prev]);
+                      showToast(
+                        `Create request submitted successfully for ${emp.name}!`,
+                        "success",
+                      );
+                    }
                   }
 
                   setIsAddLeaveModalOpen(false);
+                  })();
                 }}
                 className="px-6 py-2.5 bg-[#006352] hover:bg-[#004D40] text-white text-xs font-black rounded-xl transition-all flex items-center gap-1.5"
               >

@@ -172,7 +172,35 @@ export default function InboxPage() {
       return;
     }
     setComposeSendStatus("sending");
-    
+
+    void (async () => {
+      const recipient = composeTo.find((r) => r.type === "individual") || composeTo[0];
+      const toEmailGuess =
+        recipient && "email" in recipient && recipient.email
+          ? String(recipient.email)
+          : String(recipient?.name || "")
+              .toLowerCase()
+              .replace(/\s+/g, ".") + "@teamhub.corp";
+      try {
+        const { sendMessage } = await import("@/src/lib/api/modules");
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await sendMessage({
+          toEmail: toEmailGuess.includes("@") ? toEmailGuess : "olivia.chen@teamhub.corp",
+          subject: composeSubject || "(No Subject)",
+          body: composeBody,
+        });
+        await syncCollectionsFromApi();
+        setEmailsStoreState(getCollection<any[]>("db_emails", []));
+        setComposeSendStatus("sent");
+        setTimeout(() => {
+          setIsComposeOpen(false);
+          setComposeSendStatus("idle");
+        }, 800);
+        return;
+      } catch {
+        // fall through to local send
+      }
+
     setTimeout(() => {
       // Build sent email
       const newSentMail = {
@@ -220,6 +248,7 @@ export default function InboxPage() {
         setActiveEmailId(newSentMail.id);
       }, 800);
     }, 1500);
+    })();
   };
 
   const [emailsStore, setEmailsStoreState] = React.useState<any[]>(() => {
@@ -243,6 +272,15 @@ export default function InboxPage() {
     const handleDbUpdate = () => {
       setEmailsStoreState(getCollection<any[]>("db_emails", []));
     };
+    void (async () => {
+      try {
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+      } catch {
+        // keep local
+      }
+      handleDbUpdate();
+    })();
     window.addEventListener("storage", handleDbUpdate);
     window.addEventListener("db_updated", handleDbUpdate);
     return () => {
@@ -420,7 +458,7 @@ export default function InboxPage() {
                        <cat.icon className={cn("h-5 w-5 transition-colors shrink-0", isActive ? "text-[#203430]" : "text-[#63716E] group-hover:text-[#203430]")} />
                        <span className="text-[14px] font-medium flex-1 truncate">{cat.label}</span>
                        {!!cat.count && (
-                         <div className={cn("h-6 w-6 rounded-full flex items-center justify-center", isActive ? "bg-brand" : "bg-white border border-[#E4E4E1]")}>
+                         <div className={cn("h-6 w-6 rounded-full flex items-center justify-center", isActive ? "bg-brand" : "bg-white border border-line")}>
                             <span className={cn("text-[11px] font-bold", isActive ? "text-white" : "text-[#63716E]")}>{cat.count}</span>
                          </div>
                        )}
@@ -455,7 +493,7 @@ export default function InboxPage() {
         </div>
 
         {/* Email List Column */}
-        <Card className="flex-1 w-[385px] border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col p-4 gap-4 min-w-[320px]">
+        <Card className="flex-1 w-[385px] flex flex-col p-4 gap-4 min-w-[320px]">
            <div className="flex gap-2.5">
               <div className="relative flex-1">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[#203430]" />
@@ -483,7 +521,7 @@ export default function InboxPage() {
            <div className="flex-1 overflow-y-auto space-y-0.5 pr-2 custom-scrollbar">
               {filteredEmails.length === 0 ? (
                 <div className="py-12 px-4 text-center flex flex-col items-center justify-center h-full gap-3">
-                  <div className="h-12 w-12 rounded-full bg-slate-50 border border-[#E4E4E1] flex items-center justify-center text-slate-400">
+                  <div className="h-12 w-12 rounded-full bg-slate-50 border border-line flex items-center justify-center text-slate-400">
                     <InboxIcon className="h-6 w-6" />
                   </div>
                   <div>
@@ -510,7 +548,7 @@ export default function InboxPage() {
                     }}
                     className={cn(
                       "w-full p-4 flex gap-4 rounded-[8px] transition-all text-left relative",
-                      e.id === activeEmailId ? "bg-white" : "bg-white border-b border-[#E4E4E1] last:border border-[#E6E6E4]",
+                       e.id === activeEmailId ? "bg-white" : "bg-white border-b border-line last:border-b-0",
                       e.unread && "border-l-[3px] border-l-[#0E4D41]"
                     )}
                    >
@@ -557,7 +595,7 @@ export default function InboxPage() {
         </Card>
 
         {/* Email Detail View Column */}
-        <div className="flex-[1.5] w-[543px] border-l border-[#E4E4E1] bg-white rounded-r-[16px] lg:rounded-[16px] flex flex-col p-4 min-w-0">
+        <div className="flex-[1.5] w-[543px] border-l border-line bg-white rounded-r-[16px] lg:rounded-2xl flex flex-col p-4 min-w-0">
            {!activeEmail ? (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-slate-50/40 border border-dashed border-slate-200 rounded-[12px]">
                  <FileText className="h-10 w-10 text-slate-300 mb-3" />
@@ -569,7 +607,7 @@ export default function InboxPage() {
            ) : (
              <>
                {/* Detail Header */}
-               <div className="bg-white border border-[#E6E6E4] rounded-[10px] p-2 flex items-center justify-between mb-4">
+               <div className="bg-white border border-line rounded-[10px] p-2 flex items-center justify-between mb-4">
                   <div className="flex gap-2">
                      {[ArrowLeft, Archive, Trash2, Printer, MoreHorizontal].map((Icon, i) => (
                         <button 
@@ -597,7 +635,7 @@ export default function InboxPage() {
                          const prevIndex = filteredEmails.indexOf(activeEmail) - 1;
                          if (prevIndex >= 0) setActiveEmailId(filteredEmails[prevIndex].id);
                        }}
-                       className="h-7 w-7 flex items-center justify-center bg-white rounded-[8px] border border-[#E4E4E1] hover:bg-white disabled:opacity-50"
+                       className="h-7 w-7 flex items-center justify-center bg-white rounded-[8px] border border-line hover:bg-white disabled:opacity-50"
                      >
                         <ChevronLeft className="h-4 w-4" />
                      </button>
@@ -607,7 +645,7 @@ export default function InboxPage() {
                          const nextIndex = filteredEmails.indexOf(activeEmail) + 1;
                          if (nextIndex < filteredEmails.length) setActiveEmailId(filteredEmails[nextIndex].id);
                        }}
-                       className="h-7 w-7 flex items-center justify-center bg-white rounded-[8px] border border-[#E4E4E1] hover:bg-white disabled:opacity-50"
+                       className="h-7 w-7 flex items-center justify-center bg-white rounded-[8px] border border-line hover:bg-white disabled:opacity-50"
                      >
                         <ChevronRight className="h-4 w-4" />
                      </button>
@@ -631,11 +669,11 @@ export default function InboxPage() {
                      <div className="flex flex-col items-end gap-2">
                         <span className="text-[11px] text-[#777779] font-medium">{activeEmail.date || "Today"} – {activeEmail.time}</span>
                         <div className="flex gap-2">
-                           <button className="flex items-center gap-1.5 bg-white border border-[#E6E6E4] h-6 px-2 rounded-[8px] group hover:bg-[#203430] transition-all">
+                           <button className="flex items-center gap-1.5 bg-white border border-line h-6 px-2 rounded-[8px] group hover:bg-[#203430] transition-all">
                               <Reply className="h-3 w-3 text-[#203430] group-hover:text-white" />
                               <span className="text-[11px] font-bold text-[#203430] group-hover:text-white">Reply</span>
                            </button>
-                           <button className="flex items-center gap-1.5 bg-white border border-[#E6E6E4] h-6 px-2 rounded-[8px] group hover:bg-[#203430] transition-all">
+                           <button className="flex items-center gap-1.5 bg-white border border-line h-6 px-2 rounded-[8px] group hover:bg-[#203430] transition-all">
                               <Forward className="h-3 w-3 text-[#203430] group-hover:text-white" />
                               <span className="text-[11px] font-bold text-[#203430] group-hover:text-white">Forward</span>
                            </button>
@@ -665,12 +703,12 @@ export default function InboxPage() {
                </div>
 
                {/* Composition/Reply Section */}
-               <div className="mt-4 border border-[#E4E4E1] rounded-[16px] overflow-hidden flex flex-col min-h-[298px]">
+               <div className="mt-4 border border-line rounded-2xl overflow-hidden flex flex-col min-h-[298px]">
                   <div className="p-4 flex-1 flex flex-col gap-4">
                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                            <span className="text-[14px] text-[#63716E]">To:</span>
-                           <div className="bg-white border border-[#E6E6E4] rounded-[4px] px-1.5 py-1 flex items-center gap-2">
+                           <div className="bg-white border border-line rounded-[4px] px-1.5 py-1 flex items-center gap-2">
                               <span className="text-[14px] font-bold text-[#203430]">{activeEmail.sender}</span>
                               <X 
                                 onClick={() => setActiveEmailId(null)}
@@ -721,7 +759,7 @@ export default function InboxPage() {
                   </div>
 
                   {/* Bottom Send Bar */}
-                  <div className="bg-[#F3F3F0] p-4 flex items-center justify-between border-t border-[#E4E4E1]">
+                  <div className="bg-[#F3F3F0] p-4 flex items-center justify-between border-t border-line">
                      <div className="flex gap-4 items-center">
                         <div className="flex overflow-hidden rounded-[8px] shrink-0">
                            <button 
@@ -755,7 +793,7 @@ export default function InboxPage() {
         </div>
       </div>
 
-      <footer className="mt-10 py-8 border-t border-[#E4E4E1] flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
+      <footer className="mt-10 py-8 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
          <div className="flex flex-col sm:flex-row items-center gap-6 lg:gap-16 font-sans">
             <p className="text-[12px] font-bold text-[#203430]">Copyright © 2025 Peterdraw</p>
             <div className="flex gap-6">
@@ -1126,7 +1164,7 @@ export default function InboxPage() {
                                   setShowColorPicker(false);
                                   showToast(`Aesthetic font color changed!`);
                                 }}
-                                className="h-5 w-5 rounded-full border border-[#E4E4E1] shrink-0 cursor-pointer hover:scale-110 duration-75"
+                                className="h-5 w-5 rounded-full border border-line shrink-0 cursor-pointer hover:scale-110 duration-75"
                                 style={{ backgroundColor: colorHex }}
                                 type="button"
                               />
@@ -1149,7 +1187,7 @@ export default function InboxPage() {
                     textDecoration: isUnderline ? "underline" : "none",
                     color: selectedTextColor
                   }}
-                  className="w-full h-36 md:h-44 p-4 bg-white text-xs leading-relaxed border border-[#E6E6E4] focus:ring-0 resize-none placeholder:text-[#bbc9c5] font-sans tracking-wide leading-relaxed outline-none" 
+                  className="w-full h-36 md:h-44 p-4 bg-white text-xs leading-relaxed border border-line focus:ring-0 resize-none placeholder:text-[#bbc9c5] font-sans tracking-wide leading-relaxed outline-none" 
                   placeholder="Write your message here..."
                 />
               </div>

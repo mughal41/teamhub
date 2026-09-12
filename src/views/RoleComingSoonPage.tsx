@@ -10,7 +10,7 @@ export default function RoleComingSoonPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface p-6">
-      <div className="w-full max-w-lg rounded-2xl border border-[#E4E4E1] bg-white p-10 text-center">
+      <div className="w-full max-w-lg rounded-2xl border border-line bg-white p-10 text-center">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#E4F2D3] text-[#0E4D41]">
           <Construction className="h-8 w-8" />
         </div>

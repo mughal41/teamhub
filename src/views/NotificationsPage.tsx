@@ -277,7 +277,7 @@ export default function NotificationsPage() {
           <section className="flex-1 w-full space-y-6">
             
             {/* Header Area */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white border border-[#E4E4E1] p-6 rounded-2xl shadow-3xs">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white border border-line p-6 rounded-2xl shadow-3xs">
               <div>
                 <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   <Bell className="h-5.5 w-5.5 text-[#006b5f]" />
@@ -299,10 +299,10 @@ export default function NotificationsPage() {
             </div>
 
             {/* Advanced Filters Bar */}
-            <div className="bg-white rounded-2xl border border-[#E4E4E1] p-4 shadow-3xs flex flex-col md:flex-row items-center gap-4">
+            <div className="bg-white rounded-2xl border border-line p-4 shadow-3xs flex flex-col md:flex-row items-center gap-4">
               
               {/* Category tabs */}
-              <div className="flex p-1 bg-slate-50 border border-[#E4E4E1] rounded-xl w-full md:w-auto shrink-0 space-x-1">
+              <div className="flex p-1 bg-slate-50 border border-line rounded-xl w-full md:w-auto shrink-0 space-x-1">
                 <button
                   type="button"
                   onClick={() => { setActiveCategory("all"); setSelectedIds([]); }}
@@ -363,14 +363,14 @@ export default function NotificationsPage() {
                   placeholder="Filter by title, keywords or employees..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50/50 pl-10 pr-4 py-2 border border-[#E4E4E1] rounded-xl text-xs font-medium focus:ring-2 focus:ring-[#006b5f]/40 outline-none transition-all"
+                  className="w-full bg-slate-50/50 pl-10 pr-4 py-2 border border-line rounded-xl text-xs font-medium focus:ring-2 focus:ring-[#006b5f]/40 outline-none transition-all"
                 />
               </div>
 
             </div>
 
             {/* Bulk Actions Console */}
-            <div className="flex items-center gap-4 bg-white border border-[#E4E4E1] px-5 py-3 rounded-2xl w-fit shadow-4xs text-xs font-bold">
+            <div className="flex items-center gap-4 bg-white border border-line px-5 py-3 rounded-2xl w-fit shadow-4xs text-xs font-bold">
               <div className="flex items-center gap-2">
                 <input 
                   type="checkbox"
@@ -414,8 +414,8 @@ export default function NotificationsPage() {
             {/* Notifications Feed list structure */}
             <div className="space-y-4">
               {filteredNotifications.length === 0 ? (
-                <div className="bg-white border border-[#E4E4E1] rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
-                  <div className="w-14 h-14 rounded-full bg-slate-50 border border-[#E4E4E1] flex items-center justify-center text-[#006b5f] shadow-3xs">
+                <div className="bg-white border border-line rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
+                  <div className="w-14 h-14 rounded-full bg-slate-50 border border-line flex items-center justify-center text-[#006b5f] shadow-3xs">
                     <Bell className="h-6 w-6" />
                   </div>
                   <div className="space-y-1 max-w-sm">
@@ -444,7 +444,7 @@ export default function NotificationsPage() {
                   <div 
                     key={item.id}
                     className={`bg-white border hover:border-[#006b5f]/30 rounded-2xl p-5 flex gap-4 transition-all shadow-4xs group relative items-start ${
-                      item.unread ? "border-[#006b5f]/20 bg-[#d4e7d8]/5" : "border-[#E4E4E1] opacity-92"
+                      item.unread ? "border-[#006b5f]/20 bg-[#d4e7d8]/5" : "border-line opacity-92"
                     }`}
                   >
                     {/* Item Checkbox */}
@@ -561,7 +561,7 @@ export default function NotificationsPage() {
           <aside className="w-full xl:w-[340px] shrink-0 space-y-6">
             
             {/* Critical Alerts Console (Important Alerts Section) */}
-            <div className="bg-white border border-[#E4E4E1] rounded-2xl p-6 shadow-3xs space-y-4">
+            <div className="bg-white border border-line rounded-2xl p-6 shadow-3xs space-y-4">
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                 <ShieldAlert className="h-5 w-5 text-[#006b5f] shrink-0" />
                 <span>Important Alerts</span>
@@ -588,7 +588,7 @@ export default function NotificationsPage() {
                 </div>
 
                 {/* Profile alert */}
-                <div className="p-4 bg-[#e8e2d4]/50 text-slate-800 rounded-xl border-l-[4px] border-[#cbc6b9] shadow-3xs space-y-1.5 border border-[#E4E4E1]">
+                <div className="p-4 bg-[#e8e2d4]/50 text-slate-800 rounded-xl border-l-[4px] border-[#cbc6b9] shadow-3xs space-y-1.5 border border-line">
                   <div className="flex items-center gap-2 text-[#49473d]">
                     <Sliders className="h-4.5 w-4.5 shrink-0" />
                     <span className="font-bold text-xs">Profile Incomplete</span>
@@ -602,7 +602,7 @@ export default function NotificationsPage() {
             </div>
 
             {/* Notification Toggles Console */}
-            <div className="bg-white rounded-2xl border border-[#E4E4E1] p-6 shadow-3xs space-y-4">
+            <div className="bg-white rounded-2xl border border-line p-6 shadow-3xs space-y-4">
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                 <SlidersHorizontal className="h-5 w-5 text-[#006b5f] shrink-0" />
                 <span>Notification Toggles</span>

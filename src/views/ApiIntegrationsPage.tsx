@@ -41,7 +41,7 @@ export default function ApiIntegrationsPage() {
       ]}
     >
       <div className="space-y-6">
-        <div className="rounded-2xl border border-[#E4E4E1] bg-white p-6">
+        <div className="admin-panel p-6">
           <div className="mb-6 flex items-start gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#E4F2D3] text-[#0E4D41]">
               <KeyRound className="h-6 w-6" />
@@ -65,7 +65,7 @@ export default function ApiIntegrationsPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#E4E4E1] bg-white p-6">
+        <div className="admin-panel p-6">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
               <Webhook className="h-5 w-5" />
@@ -79,7 +79,7 @@ export default function ApiIntegrationsPage() {
             {INTEGRATIONS.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col justify-between rounded-xl border border-[#E4E4E1] bg-slate-50/50 p-5"
+                className="flex flex-col justify-between rounded-xl border border-line bg-slate-50/50 p-5"
               >
                 <div className="mb-4 flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#28C2A9]">

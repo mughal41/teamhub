@@ -163,6 +163,15 @@ export default function AttendancePage() {
     const handleDbUpdate = () => {
       setRecordsState(getCollection<any[]>("db_attendance", []));
     };
+    void (async () => {
+      try {
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+        handleDbUpdate();
+      } catch {
+        handleDbUpdate();
+      }
+    })();
     window.addEventListener("db_updated", handleDbUpdate);
     window.addEventListener("storage", handleDbUpdate);
     return () => {
@@ -288,8 +297,30 @@ export default function AttendancePage() {
       hrApprovalStatus: "Approved",
     };
 
-    setRecords((prev) => [newRecord, ...prev]);
-    setIsApplyModalOpen(false);
+    void (async () => {
+      try {
+        const { createAttendance } = await import("@/src/lib/api/modules");
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await createAttendance({
+          id: applyID,
+          employeeCode: applyID,
+          date: applyDate,
+          model: applyModel,
+          in: applyIn,
+          out: applyOut,
+          duration,
+          overtime,
+          status,
+          comment: applyComment,
+          hrApprovalStatus: "Approved",
+        });
+        await syncCollectionsFromApi();
+        setRecordsState(getCollection<any[]>("db_attendance", []));
+      } catch {
+        setRecords((prev) => [newRecord, ...prev]);
+      }
+      setIsApplyModalOpen(false);
+    })();
   };
 
   // Modal Editing Draft States
@@ -315,18 +346,40 @@ export default function AttendancePage() {
     setSelectedRequest(null);
   };
 
+  const matchAttendance = (rec: any, target: any) =>
+    (target.recordId != null && rec.recordId === target.recordId) ||
+    (rec.id === target.id && rec.date === target.date && rec.in === target.in);
+
   const handleUpdateStatus = (newStatus: "Approved" | "Rejected") => {
     if (!selectedRequest) return;
-    setRecords((prev) =>
-      prev.map((rec) =>
-        rec.id === selectedRequest.id
-          ? { ...rec, hrApprovalStatus: newStatus }
-          : rec,
-      ),
-    );
-    setSelectedRequest((prev) =>
-      prev ? { ...prev, hrApprovalStatus: newStatus } : null,
-    );
+    const target = selectedRequest;
+    void (async () => {
+      if (target.recordId != null) {
+        try {
+          const { updateAttendance } = await import("@/src/lib/api/modules");
+          const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+          await updateAttendance(target.recordId, { hrApprovalStatus: newStatus });
+          await syncCollectionsFromApi();
+          setRecordsState(getCollection<any[]>("db_attendance", []));
+          setSelectedRequest((prev) =>
+            prev ? { ...prev, hrApprovalStatus: newStatus } : null,
+          );
+          return;
+        } catch {
+          // local fallback
+        }
+      }
+      setRecords((prev) =>
+        prev.map((rec) =>
+          matchAttendance(rec, target)
+            ? { ...rec, hrApprovalStatus: newStatus }
+            : rec,
+        ),
+      );
+      setSelectedRequest((prev) =>
+        prev ? { ...prev, hrApprovalStatus: newStatus } : null,
+      );
+    })();
   };
 
   const handleSaveDrafts = (e: React.FormEvent) => {
@@ -396,47 +449,44 @@ export default function AttendancePage() {
       overtime = "—";
     }
 
-    setRecords((prev) =>
-      prev.map((rec) => {
-        if (rec.id === selectedRequest.id) {
-          return {
-            ...rec,
-            in: editIn,
-            out: editOut,
-            comment: commentText,
-            forwardedTo: forwardTo,
-            forwardedStatus:
-              forwardTo && forwardTo !== rec.forwardedTo
-                ? "Pending"
-                : rec.forwardedStatus,
-            status: newStatus,
-            duration,
-            overtime,
-          };
+    const target = selectedRequest;
+    const payload = {
+      in: editIn,
+      out: editOut,
+      comment: commentText,
+      forwardedTo: forwardTo,
+      forwardedStatus:
+        forwardTo && forwardTo !== target.forwardedTo
+          ? "Pending"
+          : target.forwardedStatus,
+      status: newStatus,
+      duration,
+      overtime,
+    };
+    void (async () => {
+      if (target.recordId != null) {
+        try {
+          const { updateAttendance } = await import("@/src/lib/api/modules");
+          const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+          await updateAttendance(Number(target.recordId), payload);
+          await syncCollectionsFromApi();
+          setRecordsState(getCollection<any[]>("db_attendance", []));
+        } catch {
+          setRecords((prev) =>
+            prev.map((rec) =>
+              matchAttendance(rec, target) ? { ...rec, ...payload } : rec,
+            ),
+          );
         }
-        return rec;
-      }),
-    );
-
-    // Update active modal display
-    setSelectedRequest((prev) =>
-      prev
-        ? {
-            ...prev,
-            in: editIn,
-            out: editOut,
-            comment: commentText,
-            forwardedTo: forwardTo,
-            forwardedStatus:
-              forwardTo && forwardTo !== prev.forwardedTo
-                ? "Pending"
-                : prev.forwardedStatus,
-            status: newStatus,
-            duration,
-            overtime,
-          }
-        : null,
-    );
+      } else {
+        setRecords((prev) =>
+          prev.map((rec) =>
+            matchAttendance(rec, target) ? { ...rec, ...payload } : rec,
+          ),
+        );
+      }
+      setSelectedRequest((prev) => (prev ? { ...prev, ...payload } : null));
+    })();
   };
 
   const handleForwardRequest = (managerName: string) => {
@@ -511,7 +561,7 @@ export default function AttendancePage() {
         {/* Stats Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           {/* Present Card */}
-          <Card className="lg:col-span-3 h-[195px] flex flex-col p-0 border border-[#E6E6E4] rounded-[16px] bg-white overflow-hidden">
+          <Card className="lg:col-span-3 h-[195px] flex flex-col p-0 overflow-hidden">
             <div className="bg-[#E4F2D3] p-4">
               <h3 className="text-[16px] font-bold text-[#203430]">Present</h3>
             </div>
@@ -524,13 +574,13 @@ export default function AttendancePage() {
                   <p className="text-[10px] text-[#63716E] mt-2">Employees</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <div className="bg-white border border-[#E6E6E4] px-2 py-1 rounded-[6px] flex items-center gap-1">
+                  <div className="bg-white border border-line px-2 py-1 rounded-[6px] flex items-center gap-1">
                     <span className="text-[16px] font-bold text-brand">+4</span>
                   </div>
                   <p className="text-[10px] text-[#63716E]">vs yesterday</p>
                 </div>
               </div>
-              <div className="mt-4 flex gap-4 bg-white border border-[#E6E6E4] rounded-[8px] p-2">
+              <div className="mt-4 flex gap-4 bg-white border border-line rounded-[8px] p-2">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[16px] font-bold text-[#0E4D41]">
                     {onTimeCount}
@@ -548,7 +598,7 @@ export default function AttendancePage() {
           </Card>
 
           {/* On Leave Card */}
-          <Card className="lg:col-span-4 h-[195px] flex flex-col p-0 border border-[#E6E6E4] rounded-[16px] bg-white overflow-hidden">
+          <Card className="lg:col-span-4 h-[195px] flex flex-col p-0 overflow-hidden">
             <div className="bg-brand p-4">
               <h3 className="text-[16px] font-bold text-white">On Leave</h3>
             </div>
@@ -561,14 +611,14 @@ export default function AttendancePage() {
                   <p className="text-[10px] text-[#63716E] mt-2">Employees</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <div className="bg-white border border-[#E6E6E4] px-2 py-1 rounded-[6px] flex items-center gap-1">
+                  <div className="bg-white border border-line px-2 py-1 rounded-[6px] flex items-center gap-1">
                     <span className="text-[16px] font-bold text-brand">+1</span>
                   </div>
                   <p className="text-[10px] text-[#63716E]">vs yesterday</p>
                 </div>
               </div>
-              <div className="mt-4 flex justify-between bg-white border border-[#E6E6E4] rounded-[8px] p-2">
-                <div className="flex items-center gap-1.5 shrink-0 px-1 border-r border-[#E4E4E1]">
+              <div className="mt-4 flex justify-between bg-white border border-line rounded-[8px] p-2">
+                <div className="flex items-center gap-1.5 shrink-0 px-1 border-r border-line">
                   <span className="text-[16px] font-bold text-[#0E4D41]">
                     {getCollection<any[]>("db_leaves", []).filter(l => l.type === "Annual Leave" && l.status === "Approved").length}
                   </span>
@@ -576,7 +626,7 @@ export default function AttendancePage() {
                     Annual Leave
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0 px-1 border-r border-[#E4E4E1]">
+                <div className="flex items-center gap-1.5 shrink-0 px-1 border-r border-line">
                   <span className="text-[16px] font-bold text-[#0E4D41]">
                     {getCollection<any[]>("db_leaves", []).filter(l => l.type === "Sick Leave" && l.status === "Approved").length}
                   </span>
@@ -593,7 +643,7 @@ export default function AttendancePage() {
           </Card>
 
           {/* Absent Card */}
-          <Card className="lg:col-span-2 h-[195px] flex flex-col p-0 border border-[#E6E6E4] rounded-[16px] bg-white overflow-hidden">
+          <Card className="lg:col-span-2 h-[195px] flex flex-col p-0 overflow-hidden">
             <div className="bg-[#0E4D41] p-4">
               <h3 className="text-[16px] font-bold text-white">Absent</h3>
             </div>
@@ -605,7 +655,7 @@ export default function AttendancePage() {
                 <p className="text-[10px] text-[#63716E] mt-2">Employees</p>
               </div>
               <div className="flex items-center justify-center gap-2">
-                <div className="bg-white border border-[#E6E6E4] px-2 py-1 rounded-[6px]">
+                <div className="bg-white border border-line px-2 py-1 rounded-[6px]">
                   <span className="text-[16px] font-bold text-[#E63D4B]">
                     +2
                   </span>
@@ -620,7 +670,7 @@ export default function AttendancePage() {
           </Card>
 
           {/* Chart Overview */}
-          <Card className="lg:col-span-3 h-[195px] p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col">
+          <Card className="lg:col-span-3 h-[195px] flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div className="flex flex-col">
                 <h3 className="text-[16px] font-bold text-[#203430]">
@@ -642,13 +692,13 @@ export default function AttendancePage() {
                 </div>
               </div>
               <div className="self-start">
-                <button className="flex items-center gap-2 bg-white border border-[#E6E6E4] px-3 py-1.5 rounded-[8px] text-[12px] font-medium text-[#203430]">
+                <button className="flex items-center gap-2 bg-white border border-line px-3 py-1.5 rounded-[8px] text-[12px] font-medium text-[#203430]">
                   Last 6 Months <ChevronDown className="h-3 w-3" />
                 </button>
               </div>
             </div>
             {records.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-3 border border-dashed border-[#E4E4E1] rounded-[12px] min-h-[100px] gap-1">
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-3 border border-dashed border-line rounded-[12px] min-h-[100px] gap-1">
                 <Clock className="h-5 w-5 text-[#63716E]/40" />
                 <p className="text-[10px] font-bold text-[#203430]">No Attendance Stats</p>
                 <p className="text-[9px] text-[#63716E]">Charts will populate once employees check in.</p>
@@ -690,7 +740,7 @@ export default function AttendancePage() {
         </div>
 
         {/* Employee Attendance Table */}
-        <Card className="border border-[#E6E6E4] rounded-[16px] bg-white overflow-hidden p-0 flex flex-col min-h-[700px]">
+        <Card className="overflow-hidden p-0 flex flex-col min-h-[700px]">
           <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-50">
             <div>
               <h2 className="text-[16px] font-bold text-[#203430]">
@@ -824,7 +874,7 @@ export default function AttendancePage() {
                   <tr>
                     <td colSpan={8} className="px-6 py-16 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
-                        <div className="h-10 w-10 bg-slate-50 border border-[#E4E4E1] rounded-full flex items-center justify-center text-slate-400 mx-auto">
+                        <div className="h-10 w-10 bg-slate-50 border border-line rounded-full flex items-center justify-center text-slate-400 mx-auto">
                           <Check className="h-4 w-4" />
                         </div>
                         <p className="text-[12px] font-bold text-[#203430] mt-1">
@@ -949,10 +999,10 @@ export default function AttendancePage() {
             </table>
           </div>
 
-          <div className="p-6 border-t border-[#E4E4E1] flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="p-6 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <span className="text-[14px] text-[#63716E]">Show</span>
-              <button className="flex items-center gap-2 bg-white border border-[#E6E6E4] h-[28px] px-3 rounded-[8px] text-[12px] font-bold text-[#203430] cursor-not-allowed" disabled>
+              <button className="flex items-center gap-2 bg-white border border-line h-[28px] px-3 rounded-[8px] text-[12px] font-bold text-[#203430] cursor-not-allowed" disabled>
                 10 <ChevronDown className="h-3 w-3" />
               </button>
               <span className="text-[14px] text-[#63716E]">of {sortedRecords.length} results</span>
@@ -964,13 +1014,13 @@ export default function AttendancePage() {
               <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-brand text-white text-[12px] font-bold">
                 1
               </button>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430] text-[12px] font-bold cursor-not-allowed" disabled>
+              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430] text-[12px] font-bold cursor-not-allowed" disabled>
                 2
               </button>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430] text-[12px] font-bold cursor-not-allowed" disabled>
+              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430] text-[12px] font-bold cursor-not-allowed" disabled>
                 3
               </button>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-[#E6E6E4] text-[#203430] cursor-not-allowed" disabled>
+              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-white border border-line text-[#203430] cursor-not-allowed" disabled>
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
@@ -978,7 +1028,7 @@ export default function AttendancePage() {
         </Card>
       </div>
 
-      <footer className="mt-20 py-8 border-t border-[#E4E4E1] flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
+      <footer className="mt-20 py-8 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
         <div className="flex flex-col sm:flex-row items-center gap-6 lg:gap-16">
           <p className="text-[12px] font-bold text-[#203430]">
             Copyright © 2025 Peterdraw
@@ -1011,9 +1061,9 @@ export default function AttendancePage() {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm"
           id="attendanceDetailModal"
         >
-          <div className="bg-white w-full max-w-[500px] rounded-2xl shadow-xl border border-[#E4E4E1] flex flex-col max-h-[90vh] overflow-hidden">
+          <div className="bg-white w-full max-w-[500px] rounded-2xl shadow-xl border border-line flex flex-col max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="px-6 py-4.5 border-b border-[#E4E4E1] flex items-center justify-between">
+            <div className="px-6 py-4.5 border-b border-line flex items-center justify-between">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">
                   Attendance Timesheet Correction
@@ -1058,7 +1108,7 @@ export default function AttendancePage() {
 
               {/* Attendance Info Grid */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50/20 p-3 rounded-xl border border-[#E4E4E1]">
+                <div className="bg-slate-50/20 p-3 rounded-xl border border-line">
                   <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider mb-1">
                     Target Work Date
                   </span>
@@ -1066,7 +1116,7 @@ export default function AttendancePage() {
                     {selectedRequest.date || "Today"}
                   </span>
                 </div>
-                <div className="bg-slate-50/20 p-3 rounded-xl border border-[#E4E4E1]">
+                <div className="bg-slate-50/20 p-3 rounded-xl border border-line">
                   <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider mb-1">
                     Working Model
                   </span>
@@ -1190,7 +1240,7 @@ export default function AttendancePage() {
                   onChange={(e) => setCommentText(e.target.value)}
                 />
                 {selectedRequest.comment && (
-                  <div className="bg-slate-50 border border-[#E4E4E1] p-2.5 rounded-lg flex items-start gap-2">
+                  <div className="bg-slate-50 border border-line p-2.5 rounded-lg flex items-start gap-2">
                     <MessageSquare className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
                     <p className="text-xs text-slate-650 leading-relaxed">
                       <strong className="font-semibold">Original Note:</strong>{" "}
@@ -1202,7 +1252,7 @@ export default function AttendancePage() {
             </div>
 
             {/* Bottom Actions Footer */}
-            <div className="p-4 bg-slate-50 border-t border-[#E4E4E1] flex items-center justify-between gap-3 shrink-0">
+            <div className="p-4 bg-slate-50 border-t border-line flex items-center justify-between gap-3 shrink-0">
               <button
                 onClick={handleSaveDrafts}
                 className="bg-white border border-slate-200 hover:bg-slate-150 text-slate-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer transition-colors"
@@ -1237,9 +1287,9 @@ export default function AttendancePage() {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm"
           id="applyAttendanceModal"
         >
-          <div className="bg-white w-full max-w-[500px] rounded-2xl shadow-xl border border-[#E4E4E1] flex flex-col max-h-[90vh] overflow-hidden">
+          <div className="bg-white w-full max-w-[500px] rounded-2xl shadow-xl border border-line flex flex-col max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="p-4 border-b border-[#E4E4E1] flex items-center justify-between bg-white shrink-0">
+            <div className="p-4 border-b border-line flex items-center justify-between bg-white shrink-0">
               <div className="flex items-center gap-2">
                 <div className="h-7 w-7 rounded-full bg-[#E4F2D3] flex items-center justify-center">
                   <Clock className="h-4 w-4 text-brand" />
@@ -1390,7 +1440,7 @@ export default function AttendancePage() {
               </div>
 
               {/* Actions */}
-              <div className="pt-4 border-t border-[#E4E4E1] flex items-center justify-end gap-3 shrink-0">
+              <div className="pt-4 border-t border-line flex items-center justify-end gap-3 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsApplyModalOpen(false)}

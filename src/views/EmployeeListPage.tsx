@@ -102,6 +102,21 @@ export default function EmployeeListPage() {
     };
     window.addEventListener("db_updated", handleDbUpdate);
     window.addEventListener("storage", handleDbUpdate);
+
+    // Pull latest employees from Django API
+    void (async () => {
+      try {
+        const { listEmployees } = await import("@/src/lib/api/employees");
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+        const rows = await listEmployees();
+        setEmployeeStoreState(rows);
+        saveCollection("db_employees", rows);
+      } catch {
+        handleDbUpdate();
+      }
+    })();
+
     return () => {
       window.removeEventListener("db_updated", handleDbUpdate);
       window.removeEventListener("storage", handleDbUpdate);
@@ -160,7 +175,7 @@ export default function EmployeeListPage() {
       <div className="space-y-6">
         {/* Toggle View & Global Actions */}
         <div className="flex items-center justify-end gap-2 mb-2">
-          <div className="flex items-center bg-white border border-[#E4E4E1] rounded-xl p-1">
+          <div className="flex items-center bg-white border border-line rounded-xl p-1">
             <button
               onClick={() => setView("grid")}
               className={cn(
@@ -345,7 +360,7 @@ export default function EmployeeListPage() {
             </div>
 
             {/* Table Controls */}
-            <Card className="p-0 overflow-hidden bg-white">
+            <Card className="p-0 overflow-hidden">
               <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-50">
                 <div className="flex items-center gap-4 flex-1">
                   <h2 className="text-sm font-bold text-[#203430]">
@@ -455,7 +470,7 @@ export default function EmployeeListPage() {
                       <tr>
                         <td colSpan={9} className="px-5 py-20 text-center">
                           <div className="flex flex-col items-center justify-center space-y-2 max-w-sm mx-auto">
-                            <div className="h-10 w-10 bg-slate-50 border border-[#E4E4E1] rounded-full flex items-center justify-center text-slate-400">
+                            <div className="h-10 w-10 bg-slate-50 border border-line rounded-full flex items-center justify-center text-slate-400">
                               <Users className="h-5 w-5" />
                             </div>
                             <h4 className="font-bold text-[12px] text-[#203430] mt-2">
@@ -654,8 +669,8 @@ export default function EmployeeListPage() {
             {/* Grid Render */}
             <div className="w-full">
               {filteredEmployees.length === 0 ? (
-                <Card className="p-12 text-center max-w-sm mx-auto flex flex-col items-center justify-center space-y-3 bg-white border border-[#E4E4E1] rounded-2xl">
-                  <div className="h-10 w-10 bg-slate-50 border border-[#E4E4E1] rounded-full flex items-center justify-center text-slate-400">
+                <Card className="p-12 text-center max-w-sm mx-auto flex flex-col items-center justify-center space-y-3 bg-white border border-line rounded-2xl">
+                  <div className="h-10 w-10 bg-slate-50 border border-line rounded-full flex items-center justify-center text-slate-400">
                     <Users className="h-5 w-5" />
                   </div>
                   <h4 className="font-bold text-[12px] text-[#203430] mt-2">
@@ -671,7 +686,7 @@ export default function EmployeeListPage() {
                   {filteredEmployees.map((emp) => (
                     <Card
                       key={emp.id}
-                      className="relative flex flex-col p-5 hover:border-[#28C2A9] transition-all group overflow-hidden cursor-pointer bg-white rounded-[16px] border border-[#E4E4E1]"
+                      className="relative flex flex-col p-5 hover:border-[#28C2A9] transition-all group overflow-hidden cursor-pointer bg-white rounded-2xl border border-line"
                       onClick={() => {
                         if (emp.status === "Draft") {
                           navigate(`/employees/new?id=${emp.id}`);
@@ -682,7 +697,7 @@ export default function EmployeeListPage() {
                     >
                       {/* Avatar and name header centered */}
                       <div className="flex flex-col items-center text-center mb-4">
-                        <div className="relative h-20 w-20 rounded-full bg-[#28C2A9] flex items-center justify-center p-0.5 border border-[#E4E4E1] shrink-0 mb-3">
+                        <div className="relative h-20 w-20 rounded-full bg-[#28C2A9] flex items-center justify-center p-0.5 border border-line shrink-0 mb-3">
                           <img
                             src={emp.avatar}
                             className="h-full w-full rounded-full object-cover border-2 border-white group-hover:scale-105 duration-500 transition-transform"
@@ -698,7 +713,7 @@ export default function EmployeeListPage() {
                       </div>
 
                       {/* Details block with gray background and line divider */}
-                      <div className="w-full bg-white border border-[#E6E6E4] rounded-[12px] p-3.5 space-y-2 mb-4 text-[10px] text-left">
+                      <div className="w-full bg-white border border-line/80 rounded-xl p-3.5 space-y-2 mb-4 text-[10px] text-left">
                         <div className="flex items-center pb-2 border-b border-slate-200/50">
                           <span className="font-semibold text-slate-450 w-[80px] shrink-0 text-left">Job Title</span>
                           <span className="font-bold text-[#203430] text-left truncate flex-1">{emp.role}</span>
@@ -752,7 +767,7 @@ export default function EmployeeListPage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between py-6">
               <div className="flex items-center gap-3">
                 <span className="text-xs text-slate-400">Showing</span>
-                <button className="flex items-center gap-1.5 bg-white border border-[#E4E4E1] px-2 py-1 rounded-lg text-xs font-bold text-slate-700 cursor-default">
+                <button className="flex items-center gap-1.5 bg-white border border-line px-2 py-1 rounded-lg text-xs font-bold text-slate-700 cursor-default">
                   {filteredEmployees.length} <ChevronDown className="h-3 w-3" />
                 </button>
                 <span className="text-xs text-slate-400">of {employeeStore.length} recorded</span>

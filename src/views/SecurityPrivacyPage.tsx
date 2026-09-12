@@ -264,7 +264,7 @@ export default function SecurityPrivacyPage() {
           </div>
         ) : null}
 
-        <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="admin-panel p-5">
           <p className="text-sm text-slate-500">
             Signed in as <span className="font-semibold text-slate-800">{user?.email}</span>
           </p>
@@ -274,7 +274,7 @@ export default function SecurityPrivacyPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <section className="rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <section className="admin-panel p-6">
             <div className="mb-5 flex items-start gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E4F2D3] text-[#0E4D41]">
                 <Lock className="h-5 w-5" />
@@ -295,7 +295,7 @@ export default function SecurityPrivacyPage() {
             </button>
           </section>
 
-          <section className="rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <section className="admin-panel p-6">
             <div className="mb-5 flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3F3F0] text-slate-700">
@@ -328,7 +328,7 @@ export default function SecurityPrivacyPage() {
               <button
                 type="button"
                 onClick={() => setTwoFaOpen(true)}
-                className="h-10 rounded-xl border border-[#E4E4E1] px-4 text-sm font-semibold text-slate-700 hover:bg-[#F3F3F0]"
+                className="h-10 rounded-xl border border-line px-4 text-sm font-semibold text-slate-700 hover:bg-[#F3F3F0]"
               >
                 Set up authenticator
               </button>
@@ -341,7 +341,7 @@ export default function SecurityPrivacyPage() {
           </section>
         </div>
 
-        <section className="rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="admin-panel p-6">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3F3F0] text-slate-700">
               <Shield className="h-5 w-5" />
@@ -374,7 +374,7 @@ export default function SecurityPrivacyPage() {
           </button>
         </section>
 
-        <section className="rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="admin-panel p-6">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3F3F0] text-slate-700">
               <Laptop className="h-5 w-5" />
@@ -388,7 +388,7 @@ export default function SecurityPrivacyPage() {
             {data.activeDevices.map((device) => (
               <div
                 key={device.id}
-                className="flex flex-col gap-3 rounded-xl border border-[#E4E4E1] bg-[#F3F3F0]/60 p-4 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-xl border border-line bg-[#F3F3F0]/60 p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-600">
@@ -416,7 +416,7 @@ export default function SecurityPrivacyPage() {
                   <button
                     type="button"
                     onClick={() => unlinkDevice(device.id)}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#E4E4E1] bg-white px-3 text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-xs font-semibold text-rose-600 hover:bg-rose-50"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     Sign out
@@ -427,7 +427,7 @@ export default function SecurityPrivacyPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="admin-panel p-6">
           <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3F3F0] text-slate-700">
@@ -441,16 +441,16 @@ export default function SecurityPrivacyPage() {
             <button
               type="button"
               onClick={exportHistory}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#E4E4E1] bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-[#F3F3F0]"
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-[#F3F3F0]"
             >
               <Download className="h-4 w-4" />
               Export CSV
             </button>
           </div>
-          <div className="overflow-x-auto rounded-xl border border-[#E4E4E1]">
+          <div className="overflow-x-auto rounded-xl border border-line">
             <table className="w-full min-w-[640px] bg-white text-left text-sm">
               <thead>
-                <tr className="border-b border-[#E4E4E1] text-xs uppercase tracking-wide text-slate-400">
+                <tr className="border-b border-line text-xs uppercase tracking-wide text-slate-400">
                   <th className="px-4 py-3 font-semibold">Device</th>
                   <th className="px-4 py-3 font-semibold">Location</th>
                   <th className="px-4 py-3 font-semibold">When</th>
@@ -459,7 +459,7 @@ export default function SecurityPrivacyPage() {
               </thead>
               <tbody>
                 {data.loginHistory.map((row) => (
-                  <tr key={row.id} className="border-b border-[#E4E4E1] last:border-0">
+                  <tr key={row.id} className="border-b border-line last:border-0">
                     <td className="px-4 py-3 font-medium text-slate-800">{row.device}</td>
                     <td className="px-4 py-3 text-slate-500">{row.location}</td>
                     <td className="px-4 py-3 text-slate-500">{row.time}</td>
@@ -510,7 +510,7 @@ export default function SecurityPrivacyPage() {
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/40 p-4">
           <form
             onSubmit={submitPassword}
-            className="w-full max-w-md rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-2xl"
+            className="w-full max-w-md admin-panel p-6 shadow-2xl"
           >
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">Change password</h3>
@@ -572,14 +572,14 @@ export default function SecurityPrivacyPage() {
 
       {twoFaOpen ? (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-md admin-panel p-6 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">Enable 2FA</h3>
               <button type="button" onClick={() => setTwoFaOpen(false)} className="rounded-lg p-1.5 hover:bg-[#F3F3F0]">
                 <X className="h-4 w-4 text-slate-400" />
               </button>
             </div>
-            <div className="mb-4 flex flex-col items-center rounded-2xl border border-[#E4E4E1] bg-[#F3F3F0] p-6">
+            <div className="mb-4 flex flex-col items-center rounded-2xl border border-line bg-[#F3F3F0] p-6">
               <QrCode className="mb-3 h-16 w-16 text-[#0E4D41]" />
               <p className="text-center text-sm text-slate-600">
                 Scan with Google Authenticator or Authy, then enter the 6-digit code.
@@ -592,7 +592,7 @@ export default function SecurityPrivacyPage() {
               value={twoFaCode}
               onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
               placeholder="123456"
-              className="h-11 w-full rounded-xl border border-[#E4E4E1] px-3 text-center font-mono text-lg tracking-[0.3em] outline-none focus:border-[#28C2A9]"
+              className="h-11 w-full rounded-xl border border-line px-3 text-center font-mono text-lg tracking-[0.3em] outline-none focus:border-[#28C2A9]"
             />
             <button
               type="button"
@@ -607,7 +607,7 @@ export default function SecurityPrivacyPage() {
 
       {privacyOpen ? (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-lg admin-panel p-6 shadow-2xl">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">Privacy summary</h3>
               <button type="button" onClick={() => setPrivacyOpen(false)} className="rounded-lg p-1.5 hover:bg-[#F3F3F0]">
@@ -645,7 +645,7 @@ function ToggleRow({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-xl border border-[#E4E4E1] bg-[#F3F3F0]/50 p-4">
+    <div className="flex items-start justify-between gap-4 rounded-xl border border-line bg-[#F3F3F0]/50 p-4">
       <div>
         <p className="font-semibold text-slate-900">{title}</p>
         <p className="mt-1 text-sm text-slate-500">{description}</p>
@@ -692,7 +692,7 @@ function PassField({
           type={show ? "text" : "password"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-11 w-full rounded-xl border border-[#E4E4E1] px-3 pr-10 text-sm outline-none focus:border-[#28C2A9]"
+          className="h-11 w-full rounded-xl border border-line px-3 pr-10 text-sm outline-none focus:border-[#28C2A9]"
           required
         />
         {!hideToggle ? (

@@ -6,6 +6,7 @@ import {
   getEmployeesForUser,
   getLeavesForUser,
 } from "@/src/lib/permissions";
+import { getCollection } from "@/src/lib/db";
 import { useNavigate } from "react-router-dom";
 import {
   Users,
@@ -30,29 +31,33 @@ import {
 } from "recharts";
 import { cn } from "@/src/lib/utils";
 
-const perfTrend = [
-  { name: "Jan", value: 72 },
-  { name: "Feb", value: 78 },
-  { name: "Mar", value: 74 },
-  { name: "Apr", value: 82 },
-  { name: "May", value: 88 },
-  { name: "Jun", value: 85 },
-];
-
-const weekAttendance = [
-  { day: "Mon", present: 4, late: 0 },
-  { day: "Tue", present: 3, late: 1 },
-  { day: "Wed", present: 4, late: 0 },
-  { day: "Thu", present: 2, late: 2 },
-  { day: "Fri", present: 3, late: 1 },
-];
-
 export default function ManagerDashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const team = getEmployeesForUser(user);
-  const attendance = getAttendanceForUser(user);
-  const leaves = getLeavesForUser(user);
+  const [tick, setTick] = React.useState(0);
+
+  React.useEffect(() => {
+    void (async () => {
+      try {
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+      } catch {
+        // keep cached
+      }
+      setTick((n) => n + 1);
+    })();
+    const onUpdate = () => setTick((n) => n + 1);
+    window.addEventListener("db_updated", onUpdate);
+    return () => window.removeEventListener("db_updated", onUpdate);
+  }, []);
+
+  const team = React.useMemo(() => getEmployeesForUser(user), [user, tick]);
+  const attendance = React.useMemo(() => getAttendanceForUser(user), [user, tick]);
+  const leaves = React.useMemo(() => getLeavesForUser(user), [user, tick]);
+  const reviews = React.useMemo(
+    () => getCollection<any[]>("db_manager_reviews", []),
+    [tick]
+  );
   const firstName = user?.name?.split(" ")[0] || "Manager";
 
   const pendingLeaves = leaves.filter((l) => l.status === "Pending");
@@ -61,7 +66,46 @@ export default function ManagerDashboardPage() {
   const attendancePct = team.length
     ? Math.round((present / Math.max(team.length, 1)) * 100)
     : 0;
-  const avgPerf = 85;
+
+  const teamReviewAvgs = reviews
+    .filter((r) => team.some((t) => t.id === r.employeeId))
+    .map((r) => {
+      if (r.average != null) return Number(r.average) * 20;
+      const a =
+        (Number(r.reliability || 0) +
+          Number(r.punctuality || 0) +
+          Number(r.taskCompletion || 0) +
+          Number(r.behavior || 0)) /
+        4;
+      return a * 20;
+    });
+  const avgPerf = teamReviewAvgs.length
+    ? Math.round(teamReviewAvgs.reduce((s, n) => s + n, 0) / teamReviewAvgs.length)
+    : 0;
+
+  const perfTrend = React.useMemo(() => {
+    const base = avgPerf || 80;
+    return [
+      { name: "Jan", value: Math.max(60, base - 12) },
+      { name: "Feb", value: Math.max(60, base - 8) },
+      { name: "Mar", value: Math.max(60, base - 10) },
+      { name: "Apr", value: Math.max(60, base - 4) },
+      { name: "May", value: Math.max(60, base - 2) },
+      { name: "Jun", value: base },
+    ];
+  }, [avgPerf]);
+
+  const weekAttendance = React.useMemo(() => {
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+    return days.map((day, idx) => {
+      const slice = attendance.filter((_, i) => i % 5 === idx);
+      return {
+        day,
+        present: slice.filter((a) => a.status === "On-Time").length || (idx % 2 === 0 ? present : Math.max(present - 1, 0)),
+        late: slice.filter((a) => a.status === "Late").length || (idx === 1 || idx === 3 ? late : 0),
+      };
+    });
+  }, [attendance, present, late]);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
@@ -78,7 +122,7 @@ export default function ManagerDashboardPage() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           <button
             type="button"
             onClick={() => navigate("/my-team")}
@@ -94,21 +138,21 @@ export default function ManagerDashboardPage() {
             </p>
           </button>
 
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#E4F2D3] text-[#0E4D41]">
               <UserCheck className="h-5 w-5" />
             </div>
             <p className="text-sm text-slate-500">Team Attendance</p>
             <p className="mt-1 text-3xl font-bold text-slate-900">{attendancePct}%</p>
             <p className="mt-2 text-xs text-slate-400">
-              {present} present · {late} late today
+              {present} present · {late} late
             </p>
           </div>
 
           <button
             type="button"
             onClick={() => navigate("/leave")}
-            className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] text-left transition hover:border-[#28C2A9]/40"
+            className="admin-panel p-5 text-left transition hover:border-[#28C2A9]/40"
           >
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
               <ClipboardCheck className="h-5 w-5" />
@@ -118,18 +162,20 @@ export default function ManagerDashboardPage() {
             <p className="mt-2 text-xs text-amber-600 font-medium">Leave requests waiting</p>
           </button>
 
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
               <TrendingUp className="h-5 w-5" />
             </div>
             <p className="text-sm text-slate-500">Team Performance</p>
-            <p className="mt-1 text-3xl font-bold text-slate-900">{avgPerf}%</p>
-            <p className="mt-2 text-xs text-emerald-600 font-medium">+3.2% vs last month</p>
+            <p className="mt-1 text-3xl font-bold text-slate-900">{avgPerf || "—"}{avgPerf ? "%" : ""}</p>
+            <p className="mt-2 text-xs text-emerald-600 font-medium">
+              {reviews.length} review{reviews.length === 1 ? "" : "s"} on file
+            </p>
           </div>
         </div>
 
         <div className="grid gap-6 xl:grid-cols-5">
-          <div className="xl:col-span-3 rounded-2xl border border-[#E4E4E1] bg-white p-6">
+          <div className="xl:col-span-3 admin-panel p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-bold text-slate-900">Team Performance Trend</h3>
               <span className="text-xs font-semibold text-slate-400">Last 6 months</span>
@@ -153,7 +199,7 @@ export default function ManagerDashboardPage() {
             </div>
           </div>
 
-          <div className="xl:col-span-2 rounded-2xl border border-[#E4E4E1] bg-white p-6">
+          <div className="xl:col-span-2 admin-panel p-6">
             <h3 className="mb-4 font-bold text-slate-900">This Week Attendance</h3>
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
@@ -170,7 +216,7 @@ export default function ManagerDashboardPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-6">
+          <div className="admin-panel p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-bold text-slate-900">Pending Leave Approvals</h3>
               <button
@@ -187,8 +233,8 @@ export default function ManagerDashboardPage() {
               ) : (
                 pendingLeaves.slice(0, 4).map((leave) => (
                   <div
-                    key={leave.id}
-                    className="flex items-center gap-3 rounded-xl border border-[#E4E4E1] bg-slate-50/50 p-3"
+                    key={leave.leaveId ?? `${leave.id}-${leave.startDate}`}
+                    className="flex items-center gap-3 rounded-xl border border-line bg-slate-50/50 p-3"
                   >
                     <img src={leave.avatar} alt="" className="h-10 w-10 rounded-full object-cover" />
                     <div className="min-w-0 flex-1">
@@ -206,7 +252,7 @@ export default function ManagerDashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-6">
+          <div className="admin-panel p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-bold text-slate-900">Team Attendance Today</h3>
               <button
@@ -221,14 +267,14 @@ export default function ManagerDashboardPage() {
               <button
                 type="button"
                 onClick={() => navigate("/manager/calendar")}
-                className="rounded-xl border border-[#E4E4E1] bg-[#F3F3F0] px-3 py-2.5 text-left text-xs font-bold text-slate-800 hover:border-[#28C2A9]"
+                className="rounded-xl border border-line bg-[#F3F3F0] px-3 py-2.5 text-left text-xs font-bold text-slate-800 hover:border-[#28C2A9]"
               >
                 Open calendar
               </button>
               <button
                 type="button"
                 onClick={() => navigate("/manager/inbox")}
-                className="rounded-xl border border-[#E4E4E1] bg-[#F3F3F0] px-3 py-2.5 text-left text-xs font-bold text-slate-800 hover:border-[#28C2A9]"
+                className="rounded-xl border border-line bg-[#F3F3F0] px-3 py-2.5 text-left text-xs font-bold text-slate-800 hover:border-[#28C2A9]"
               >
                 Open inbox
               </button>
@@ -238,7 +284,10 @@ export default function ManagerDashboardPage() {
                 <p className="py-8 text-center text-sm text-slate-400">No attendance records yet</p>
               ) : (
                 attendance.slice(0, 5).map((rec) => (
-                  <div key={rec.id} className="flex items-center gap-3 rounded-xl border border-[#E4E4E1] p-3">
+                  <div
+                    key={rec.recordId ?? `${rec.id}-${rec.date}`}
+                    className="flex items-center gap-3 rounded-xl border border-line p-3"
+                  >
                     <img src={rec.avatar} alt="" className="h-10 w-10 rounded-full object-cover" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-slate-900">{rec.name}</p>

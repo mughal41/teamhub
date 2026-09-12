@@ -2,52 +2,67 @@ import * as React from "react";
 import { AppLayout } from "@/src/components/layout/AppLayout";
 import { useAuth } from "@/src/context/AuthContext";
 import { getLeavesForUser } from "@/src/lib/permissions";
-import { getCollection, saveCollection, type LeaveActivityItem } from "@/src/lib/db";
+import { type LeaveActivityItem } from "@/src/lib/db";
 import { Button } from "@/src/components/ui/Button";
 import { Check, X, ClipboardCheck } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 
 export default function ManagerLeaveApprovalsPage() {
   const { user } = useAuth();
-  const [leaves, setLeaves] = React.useState(() => getLeavesForUser(user));
+  const [leaves, setLeaves] = React.useState<LeaveActivityItem[]>(() => getLeavesForUser(user));
   const [filter, setFilter] = React.useState<"All" | "Pending" | "Approved" | "Rejected">("Pending");
   const [toast, setToast] = React.useState("");
+  const [busyId, setBusyId] = React.useState<number | string | null>(null);
 
-  const refresh = () => setLeaves(getLeavesForUser(user));
+  const refresh = React.useCallback(() => setLeaves(getLeavesForUser(user)), [user]);
 
   React.useEffect(() => {
     const onUpdate = () => refresh();
+    void (async () => {
+      try {
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+      } catch {
+        // keep cached
+      }
+      refresh();
+    })();
     window.addEventListener("db_updated", onUpdate);
     window.addEventListener("storage", onUpdate);
     return () => {
       window.removeEventListener("db_updated", onUpdate);
       window.removeEventListener("storage", onUpdate);
     };
-  }, [user]);
+  }, [refresh]);
 
-  const updateStatus = (id: string, status: "Approved" | "Rejected") => {
-    const all = getCollection<LeaveActivityItem[]>("db_leaves", []);
-    const teamIds = new Set(leaves.map((l) => l.id));
-    const next = all.map((item) => {
-      if (item.id !== id || !teamIds.has(item.id)) return item;
-      return {
-        ...item,
-        status,
-        forwardedStatus: status,
-        comment:
+  const updateStatus = async (leave: LeaveActivityItem, status: "Approved" | "Rejected") => {
+    const key = leave.leaveId ?? leave.id;
+    setBusyId(key);
+    try {
+      if (leave.leaveId != null) {
+        const { decideLeave } = await import("@/src/lib/api/modules");
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await decideLeave(
+          leave.leaveId,
+          status,
           status === "Approved"
             ? `Approved by ${user?.name || "Manager"}`
-            : `Rejected by ${user?.name || "Manager"}`,
-      };
-    });
-    saveCollection("db_leaves", next);
-    refresh();
-    setToast(`Leave request ${status.toLowerCase()}.`);
-    setTimeout(() => setToast(""), 2500);
+            : `Rejected by ${user?.name || "Manager"}`
+        );
+        await syncCollectionsFromApi();
+        refresh();
+      }
+      setToast(`Leave request ${status.toLowerCase()}.`);
+      setTimeout(() => setToast(""), 2500);
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : "Could not update leave.");
+      setTimeout(() => setToast(""), 3000);
+    } finally {
+      setBusyId(null);
+    }
   };
 
-  const filtered =
-    filter === "All" ? leaves : leaves.filter((l) => l.status === filter);
+  const filtered = filter === "All" ? leaves : leaves.filter((l) => l.status === filter);
   const pendingCount = leaves.filter((l) => l.status === "Pending").length;
 
   return (
@@ -84,19 +99,19 @@ export default function ManagerLeaveApprovalsPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-3">
           <div className="rounded-2xl bg-[#28C2A9] p-5 text-white">
             <ClipboardCheck className="mb-2 h-5 w-5" />
             <p className="text-sm text-white/80">Pending</p>
             <p className="text-3xl font-bold">{pendingCount}</p>
           </div>
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <p className="text-sm text-slate-500">Approved</p>
             <p className="text-3xl font-bold text-slate-900">
               {leaves.filter((l) => l.status === "Approved").length}
             </p>
           </div>
-          <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="admin-panel p-5">
             <p className="text-sm text-slate-500">Rejected</p>
             <p className="text-3xl font-bold text-slate-900">
               {leaves.filter((l) => l.status === "Rejected").length}
@@ -104,11 +119,11 @@ export default function ManagerLeaveApprovalsPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#E4E4E1] bg-white overflow-hidden">
+        <div className="admin-panel p-0 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[860px] text-left bg-white">
               <thead>
-                <tr className="border-b border-[#E4E4E1] bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <tr className="border-b border-line bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-400">
                   <th className="px-5 py-3">Employee</th>
                   <th className="px-5 py-3">Type</th>
                   <th className="px-5 py-3">Period</th>
@@ -126,7 +141,7 @@ export default function ManagerLeaveApprovalsPage() {
                   </tr>
                 ) : (
                   filtered.map((leave) => (
-                    <tr key={leave.id} className="border-b border-slate-50">
+                    <tr key={leave.leaveId ?? `${leave.id}-${leave.startDate}`} className="border-b border-slate-50">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <img src={leave.avatar} alt="" className="h-9 w-9 rounded-full object-cover" />
@@ -162,7 +177,8 @@ export default function ManagerLeaveApprovalsPage() {
                             <Button
                               type="button"
                               className="h-9 gap-1 px-3 text-xs font-bold"
-                              onClick={() => updateStatus(leave.id, "Approved")}
+                              disabled={busyId === (leave.leaveId ?? leave.id)}
+                              onClick={() => void updateStatus(leave, "Approved")}
                             >
                               <Check className="h-3.5 w-3.5" /> Approve
                             </Button>
@@ -170,7 +186,8 @@ export default function ManagerLeaveApprovalsPage() {
                               type="button"
                               variant="outline"
                               className="h-9 gap-1 px-3 text-xs font-bold text-rose-600 border-rose-200 hover:bg-rose-50"
-                              onClick={() => updateStatus(leave.id, "Rejected")}
+                              disabled={busyId === (leave.leaveId ?? leave.id)}
+                              onClick={() => void updateStatus(leave, "Rejected")}
                             >
                               <X className="h-3.5 w-3.5" /> Reject
                             </Button>

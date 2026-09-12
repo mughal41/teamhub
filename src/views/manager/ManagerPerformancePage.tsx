@@ -2,37 +2,52 @@ import * as React from "react";
 import { AppLayout } from "@/src/components/layout/AppLayout";
 import { useAuth } from "@/src/context/AuthContext";
 import { getEmployeesForUser } from "@/src/lib/permissions";
-import { getCollection, saveCollection } from "@/src/lib/db";
+import { getCollection } from "@/src/lib/db";
 import { Button } from "@/src/components/ui/Button";
 import { Star, LineChart } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 
 interface TeamReview {
+  id?: number;
   employeeId: string;
   reliability: number;
   punctuality: number;
   taskCompletion: number;
   behavior: number;
   feedback: string;
-  updatedAt: string;
+  updatedAt?: string;
+  updated_at?: string;
   reviewerName: string;
+  average?: number;
+  period?: string;
 }
 
 const REVIEW_KEY = "db_manager_reviews";
 
 function avg(r: TeamReview) {
   return (
-    (r.reliability + r.punctuality + r.taskCompletion + r.behavior) / 4
+    (Number(r.reliability) + Number(r.punctuality) + Number(r.taskCompletion) + Number(r.behavior)) /
+    4
   ).toFixed(1);
+}
+
+function loadReviews(): TeamReview[] {
+  return getCollection<TeamReview[]>(REVIEW_KEY, []).map((r) => ({
+    ...r,
+    reliability: Number(r.reliability || 0),
+    punctuality: Number(r.punctuality || 0),
+    taskCompletion: Number(r.taskCompletion || 0),
+    behavior: Number(r.behavior || 0),
+    reviewerName: r.reviewerName || "",
+  }));
 }
 
 export default function ManagerPerformancePage() {
   const { user } = useAuth();
-  const team = React.useMemo(() => getEmployeesForUser(user), [user]);
-  const [reviews, setReviews] = React.useState<TeamReview[]>(() =>
-    getCollection<TeamReview[]>(REVIEW_KEY, [])
-  );
-  const [activeId, setActiveId] = React.useState(() => team[0]?.id || "");
+  const [teamTick, setTeamTick] = React.useState(0);
+  const team = React.useMemo(() => getEmployeesForUser(user), [user, teamTick]);
+  const [reviews, setReviews] = React.useState<TeamReview[]>(() => loadReviews());
+  const [activeId, setActiveId] = React.useState("");
   const [form, setForm] = React.useState({
     reliability: 4,
     punctuality: 4,
@@ -41,6 +56,30 @@ export default function ManagerPerformancePage() {
     feedback: "",
   });
   const [savedMsg, setSavedMsg] = React.useState("");
+  const [saving, setSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    void (async () => {
+      try {
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+      } catch {
+        // keep cached
+      }
+      setReviews(loadReviews());
+      setTeamTick((n) => n + 1);
+    })();
+    const onUpdate = () => {
+      setReviews(loadReviews());
+      setTeamTick((n) => n + 1);
+    };
+    window.addEventListener("db_updated", onUpdate);
+    return () => window.removeEventListener("db_updated", onUpdate);
+  }, []);
+
+  React.useEffect(() => {
+    if (!activeId && team[0]?.id) setActiveId(team[0].id);
+  }, [team, activeId]);
 
   const active = team.find((e) => e.id === activeId) || team[0];
 
@@ -53,7 +92,7 @@ export default function ManagerPerformancePage() {
         punctuality: existing.punctuality,
         taskCompletion: existing.taskCompletion,
         behavior: existing.behavior,
-        feedback: existing.feedback,
+        feedback: existing.feedback || "",
       });
     } else {
       setForm({
@@ -66,24 +105,34 @@ export default function ManagerPerformancePage() {
     }
   }, [activeId, reviews]);
 
-  const saveReview = (e: React.FormEvent) => {
+  const saveReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!active || !user) return;
-    const nextReview: TeamReview = {
-      employeeId: active.id,
-      ...form,
-      updatedAt: new Date().toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }),
-      reviewerName: user.name,
-    };
-    const next = [...reviews.filter((r) => r.employeeId !== active.id), nextReview];
-    setReviews(next);
-    saveCollection(REVIEW_KEY, next);
-    setSavedMsg(`Review saved for ${active.name}.`);
-    setTimeout(() => setSavedMsg(""), 2500);
+    setSaving(true);
+    try {
+      const { upsertPerformance } = await import("@/src/lib/api/modules");
+      const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+      const existing = reviews.find((r) => r.employeeId === active.id);
+      const payload = {
+        employeeCode: active.id,
+        reliability: Math.round(form.reliability),
+        punctuality: Math.round(form.punctuality),
+        taskCompletion: Math.round(form.taskCompletion),
+        behavior: Math.round(form.behavior),
+        feedback: form.feedback,
+        period: existing?.period || "Q3 2035",
+      };
+      await upsertPerformance(payload, existing?.id);
+      await syncCollectionsFromApi();
+      setReviews(loadReviews());
+      setSavedMsg(`Review saved for ${active.name}.`);
+      setTimeout(() => setSavedMsg(""), 2500);
+    } catch (err) {
+      setSavedMsg(err instanceof Error ? err.message : "Could not save review.");
+      setTimeout(() => setSavedMsg(""), 3000);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const ScoreField = ({
@@ -104,7 +153,7 @@ export default function ManagerPerformancePage() {
         type="range"
         min={1}
         max={5}
-        step={0.1}
+        step={1}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full accent-[#28C2A9]"
@@ -144,7 +193,7 @@ export default function ManagerPerformancePage() {
                     "flex w-full items-center gap-3 rounded-xl border p-3 text-left transition",
                     active?.id === emp.id
                       ? "border-[#28C2A9] bg-[#28C2A9]/5"
-                      : "border-[#E4E4E1] bg-white hover:border-slate-200"
+                      : "border-line bg-white hover:border-slate-200"
                   )}
                 >
                   <img src={emp.avatar} alt="" className="h-10 w-10 rounded-full object-cover" />
@@ -164,12 +213,12 @@ export default function ManagerPerformancePage() {
             })}
           </div>
 
-          <div className="lg:col-span-3 rounded-2xl border border-[#E4E4E1] bg-white p-6">
+          <div className="lg:col-span-3 admin-panel p-6">
             {!active ? (
               <p className="py-16 text-center text-sm text-slate-400">No team members to review.</p>
             ) : (
-              <form className="space-y-5" onSubmit={saveReview}>
-                <div className="flex items-center gap-4 border-b border-[#E4E4E1] pb-5">
+              <form className="space-y-5" onSubmit={(e) => void saveReview(e)}>
+                <div className="flex items-center gap-4 border-b border-line pb-5">
                   <img src={active.avatar} alt="" className="h-14 w-14 rounded-2xl object-cover" />
                   <div>
                     <h3 className="text-lg font-bold text-slate-900">{active.name}</h3>
@@ -224,8 +273,8 @@ export default function ManagerPerformancePage() {
                       ).toFixed(1)}
                     </span>
                   </p>
-                  <Button type="submit" className="font-bold">
-                    Save Review
+                  <Button type="submit" className="font-bold" disabled={saving}>
+                    {saving ? "Saving..." : "Save Review"}
                   </Button>
                 </div>
               </form>

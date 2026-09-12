@@ -26,6 +26,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
+import { getCollection } from "../lib/db";
 
 /**
  * @typedef {Object} CalendarEvent
@@ -44,7 +45,44 @@ import { cn } from "@/src/lib/utils";
  */
 
 export default function CalendarPage() {
-  const [events, setEvents] = React.useState<any[]>([]);
+  const [events, setEvents] = React.useState<any[]>(() => {
+    const rows = getCollection<any[]>("db_schedules", []);
+    return rows.map((ev) => {
+      const detailsColor = "bg-emerald-50 text-emerald-700 border-l-emerald-400";
+      return {
+        ...ev,
+        category: ev.category || ev.type || "Internal",
+        loc: ev.loc || ev.location || "HR Department HQ",
+        note: ev.note || ev.withWhom || "No notes provided.",
+        color: ev.color || detailsColor,
+      };
+    });
+  });
+  React.useEffect(() => {
+    const reload = () => {
+      const rows = getCollection<any[]>("db_schedules", []);
+      setEvents(
+        rows.map((ev) => ({
+          ...ev,
+          category: ev.category || ev.type || "Internal",
+          loc: ev.loc || ev.location || "HR Department HQ",
+          note: ev.note || ev.withWhom || "No notes provided.",
+          color: ev.color || "bg-emerald-50 text-emerald-700 border-l-emerald-400",
+        })),
+      );
+    };
+    void (async () => {
+      try {
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await syncCollectionsFromApi();
+      } catch {
+        // ignore
+      }
+      reload();
+    })();
+    window.addEventListener("db_updated", reload);
+    return () => window.removeEventListener("db_updated", reload);
+  }, []);
   const [selectedDay, setSelectedDay] = React.useState<number>(21);
   const [isNewAgendaOpen, setIsNewAgendaOpen] = React.useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = React.useState(false);
@@ -181,15 +219,42 @@ export default function CalendarPage() {
       color: color,
     };
 
-    setEvents((prev) => [...prev, newEvent]);
-    setSelectedDay(newDay);
-
-    // Reset Form
-    setNewTitle("");
-    setNewLocation("");
-    setNewNote("");
-    setNewTime("09:00 AM");
-    setIsNewAgendaOpen(false);
+    void (async () => {
+      try {
+        const { createCalendarEvent } = await import("@/src/lib/api/modules");
+        const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+        await createCalendarEvent({
+          title: newTitle,
+          type: newCategory,
+          day: newDay,
+          month: 6,
+          year: 2035,
+          time: newTime,
+          location: newLocation || "HR Department HQ",
+          withWhom: newNote || "",
+          visibility: "Company",
+        });
+        await syncCollectionsFromApi();
+        const rows = getCollection<any[]>("db_schedules", []);
+        setEvents(
+          rows.map((ev) => ({
+            ...ev,
+            category: ev.category || ev.type || "Internal",
+            loc: ev.loc || ev.location || "HR Department HQ",
+            note: ev.note || ev.withWhom || "No notes provided.",
+            color: ev.color || color,
+          })),
+        );
+      } catch {
+        setEvents((prev) => [...prev, newEvent]);
+      }
+      setSelectedDay(newDay);
+      setNewTitle("");
+      setNewLocation("");
+      setNewNote("");
+      setNewTime("09:00 AM");
+      setIsNewAgendaOpen(false);
+    })();
   };
 
   const handleOpenEditModal = (event: any) => {
@@ -211,33 +276,91 @@ export default function CalendarPage() {
     const details = getCategoryCardDetails(editCategory);
     const color = `${details.eventBg} ${details.borderClass}`;
 
-    setEvents((prev) =>
-      prev.map((evt) => {
-        if (evt.id === editingEvent.id) {
-          return {
-            ...evt,
-            title: editTitle,
-            category: editCategory,
-            time: editTime,
-            loc: editLocation || "HR Department HQ",
-            note: editNote || "No notes provided.",
-            day: editDay,
-            color: color,
-          };
+    void (async () => {
+      const payload = {
+        title: editTitle,
+        type: editCategory,
+        category: editCategory,
+        time: editTime,
+        location: editLocation || "HR Department HQ",
+        withWhom: editNote || "No notes provided.",
+        day: editDay,
+      };
+      if (typeof editingEvent.id === "number") {
+        try {
+          const { updateCalendarEvent } = await import("@/src/lib/api/modules");
+          const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+          await updateCalendarEvent(editingEvent.id, payload);
+          await syncCollectionsFromApi();
+          const rows = getCollection<any[]>("db_schedules", []);
+          setEvents(
+            rows.map((ev) => ({
+              ...ev,
+              category: ev.category || ev.type || "Internal",
+              loc: ev.loc || ev.location || "HR Department HQ",
+              note: ev.note || ev.withWhom || "No notes provided.",
+              color: ev.color || color,
+            })),
+          );
+          setIsEditAgendaOpen(false);
+          setEditingEvent(null);
+          return;
+        } catch {
+          // local
         }
-        return evt;
-      }),
-    );
-
-    setIsEditAgendaOpen(false);
-    setEditingEvent(null);
+      }
+      setEvents((prev) =>
+        prev.map((evt) => {
+          if (evt.id === editingEvent.id) {
+            return {
+              ...evt,
+              title: editTitle,
+              category: editCategory,
+              time: editTime,
+              loc: editLocation || "HR Department HQ",
+              note: editNote || "No notes provided.",
+              day: editDay,
+              color: color,
+            };
+          }
+          return evt;
+        }),
+      );
+      setIsEditAgendaOpen(false);
+      setEditingEvent(null);
+    })();
   };
 
   const handleDeleteAgenda = () => {
     if (!editingEvent) return;
-    setEvents((prev) => prev.filter((evt) => evt.id !== editingEvent.id));
-    setIsEditAgendaOpen(false);
-    setEditingEvent(null);
+    void (async () => {
+      if (typeof editingEvent.id === "number") {
+        try {
+          const { deleteCalendarEvent } = await import("@/src/lib/api/modules");
+          const { syncCollectionsFromApi } = await import("@/src/lib/api/auth");
+          await deleteCalendarEvent(editingEvent.id);
+          await syncCollectionsFromApi();
+          const rows = getCollection<any[]>("db_schedules", []);
+          setEvents(
+            rows.map((ev) => ({
+              ...ev,
+              category: ev.category || ev.type || "Internal",
+              loc: ev.loc || ev.location || "HR Department HQ",
+              note: ev.note || ev.withWhom || "No notes provided.",
+              color: ev.color || "bg-emerald-50 text-emerald-700 border-l-emerald-400",
+            })),
+          );
+          setIsEditAgendaOpen(false);
+          setEditingEvent(null);
+          return;
+        } catch {
+          // local
+        }
+      }
+      setEvents((prev) => prev.filter((evt) => evt.id !== editingEvent.id));
+      setIsEditAgendaOpen(false);
+      setEditingEvent(null);
+    })();
   };
 
   const selectedDayEvents = events.filter((e) => e.day === selectedDay);
@@ -251,8 +374,8 @@ export default function CalendarPage() {
         {/* Dynamic Modal Dialog */}
         {isNewAgendaOpen && (
           <div className="fixed inset-0 bg-[#203430]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md p-6 relative gap-4 flex flex-col shadow-2xl border border-[#E4E4E1] animate-slide-up">
-              <div className="flex items-center justify-between pb-3 border-b border-[#E4E4E1]">
+            <div className="bg-white rounded-2xl w-full max-w-md p-6 relative gap-4 flex flex-col shadow-2xl border border-line animate-slide-up">
+              <div className="flex items-center justify-between pb-3 border-b border-line">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="h-5 w-5 text-brand" />
                   <h3 className="text-base font-bold text-[#203430]">
@@ -302,7 +425,7 @@ export default function CalendarPage() {
 
                     {isDatePickerOpen && (
                       <div className="absolute top-12 left-0 z-50 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 w-[260px] animate-fade-in border-slate-200">
-                        <div className="flex items-center justify-between mb-2 pb-1 border-b border-[#E4E4E1]">
+                        <div className="flex items-center justify-between mb-2 pb-1 border-b border-line">
                           <span className="text-[11px] font-bold text-[#0E4D41]">
                             Select June 2035 Day
                           </span>
@@ -445,7 +568,7 @@ export default function CalendarPage() {
                   />
                 </div>
 
-                <div className="flex gap-3 justify-end pt-3 border-t border-[#E4E4E1]">
+                <div className="flex gap-3 justify-end pt-3 border-t border-line">
                   <button
                     type="button"
                     onClick={() => setIsNewAgendaOpen(false)}
@@ -468,8 +591,8 @@ export default function CalendarPage() {
         {/* Edit Agenda Modal Dialog */}
         {isEditAgendaOpen && editingEvent && (
           <div className="fixed inset-0 bg-[#203430]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-            <div className="bg-white rounded-2xl w-full max-w-md p-6 relative gap-4 flex flex-col shadow-2xl border border-[#E4E4E1] animate-slide-up">
-              <div className="flex items-center justify-between pb-3 border-b border-[#E4E4E1]">
+            <div className="bg-white rounded-2xl w-full max-w-md p-6 relative gap-4 flex flex-col shadow-2xl border border-line animate-slide-up">
+              <div className="flex items-center justify-between pb-3 border-b border-line">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="h-5 w-5 text-[#0E4D41]" />
                   <h3 className="text-base font-bold text-[#203430]">
@@ -528,7 +651,7 @@ export default function CalendarPage() {
 
                     {isEditDatePickerOpen && (
                       <div className="absolute top-12 left-0 z-50 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 w-[260px] animate-fade-in border-slate-200">
-                        <div className="flex items-center justify-between mb-2 pb-1 border-b border-[#E4E4E1]">
+                        <div className="flex items-center justify-between mb-2 pb-1 border-b border-line">
                           <span className="text-[11px] font-bold text-[#0E4D41]">
                             Select June 2035 Day
                           </span>
@@ -672,7 +795,7 @@ export default function CalendarPage() {
                   />
                 </div>
 
-                <div className="flex gap-2 justify-between pt-3 border-t border-[#E4E4E1]">
+                <div className="flex gap-2 justify-between pt-3 border-t border-line">
                   <button
                     type="button"
                     onClick={handleDeleteAgenda}
@@ -710,7 +833,7 @@ export default function CalendarPage() {
         {isCategoryModalOpen && (
           <div className="fixed inset-0 bg-[#203430]/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl w-full max-w-md p-6 relative gap-4 flex flex-col shadow-2xl border border-slate-150 animate-slide-up">
-              <div className="flex items-center justify-between pb-2 border-b border-[#E4E4E1]">
+              <div className="flex items-center justify-between pb-2 border-b border-line">
                 <div className="flex items-center gap-2">
                   <Layers className="h-5 w-5 text-[#0E4D41]" />
                   <h3 className="text-sm font-bold text-[#203430]">
@@ -736,7 +859,7 @@ export default function CalendarPage() {
               )}
 
               {/* Form to Add New Category */}
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-[#E4E4E1] space-y-3">
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-line space-y-3">
                 <p className="text-[11px] font-bold text-[#203430] uppercase tracking-wider text-left">
                   Create New Category
                 </p>
@@ -843,7 +966,7 @@ export default function CalendarPage() {
                   return (
                     <div
                       key={cat.id}
-                      className="flex items-center justify-between p-2.5 rounded-lg border border-[#E4E4E1] bg-white hover:bg-slate-50/50 transition-colors"
+                      className="flex items-center justify-between p-2.5 rounded-lg border border-line bg-white hover:bg-slate-50/50 transition-colors"
                     >
                       <div className="flex items-center gap-2">
                         <span
@@ -923,7 +1046,7 @@ export default function CalendarPage() {
                 })}
               </div>
 
-              <div className="flex justify-end pt-2 border-t border-[#E4E4E1]">
+              <div className="flex justify-end pt-2 border-t border-line">
                 <button
                   type="button"
                   onClick={() => {
@@ -1000,7 +1123,7 @@ export default function CalendarPage() {
 
         <div className="flex flex-col gap-6 lg:flex-row">
           {/* Filter Sidebar */}
-          <Card className="w-full shrink-0 border-r border-[#E4E4E1] lg:w-[200px] bg-white p-4">
+          <Card className="w-full shrink-0 border-r border-line lg:w-[200px] bg-white p-4">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-sm font-bold text-[#203430]">Filter</h3>
               <button className="text-slate-400 hover:text-slate-600">
@@ -1098,8 +1221,8 @@ export default function CalendarPage() {
               </div>
             </div>
 
-            <div className="border-t border-[#E4E4E1]">
-              <div className="grid grid-cols-7 border-b border-[#E4E4E1]">
+            <div className="border-t border-line">
+              <div className="grid grid-cols-7 border-b border-line">
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
                   (day) => (
                     <div
@@ -1192,7 +1315,7 @@ export default function CalendarPage() {
             <div className="space-y-4 flex-1 overflow-y-auto max-h-[500px] pr-1">
               {selectedDayEvents.length === 0 ? (
                 <div className="py-8 px-4 text-center rounded-lg border border-dashed border-slate-200 bg-slate-50/50 flex flex-col items-center justify-center space-y-2">
-                  <div className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center border border-[#E4E4E1] text-slate-300">
+                  <div className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center border border-line text-slate-300">
                     <Plus className="h-4 w-4" />
                   </div>
                   <p className="text-[10px] font-bold text-[#203430] mt-1">No Events Scheduled</p>
@@ -1241,7 +1364,7 @@ export default function CalendarPage() {
                         </button>
                       </div>
 
-                      <div className="space-y-1.5 border-t border-[#E4E4E1]/40 pt-2 text-left">
+                      <div className="space-y-1.5 border-t border-line/40 pt-2 text-left">
                         <div className="flex items-center justify-between text-[10px]">
                           <span className="text-[#63716E]">Time</span>
                           <span className="font-bold text-[#203430]">
@@ -1272,7 +1395,7 @@ export default function CalendarPage() {
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between pt-8 border-t border-[#E4E4E1] mb-8">
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between pt-8 border-t border-line mb-8">
           <div className="flex items-center gap-6">
             <p className="text-[11px] text-[#203430] font-bold">
               Copyright © 2025 Peterdraw

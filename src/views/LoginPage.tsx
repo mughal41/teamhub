@@ -106,7 +106,7 @@ export default function LoginPage() {
           </Link>
         </p>
 
-        <div className="rounded-xl border border-[#E4E4E1] bg-slate-50 px-4 py-3 text-left text-xs text-slate-500">
+        <div className="rounded-xl border border-line bg-slate-50 px-4 py-3 text-left text-xs text-slate-500">
           <p className="font-semibold text-slate-700">Static demo accounts</p>
           <p className="mt-1">Admin: davis.levin@teamhub.corp</p>
           <p>Manager: marcus.brody@teamhub.corp</p>
