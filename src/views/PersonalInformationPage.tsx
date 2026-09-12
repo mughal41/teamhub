@@ -1,635 +1,504 @@
-import * as React from "react"
-import { useState } from "react"
-import { AppLayout } from "../components/layout/AppLayout"
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Camera, 
-  Shield, 
-  ExternalLink, 
-  CheckCircle2, 
-  Calendar, 
-  Sparkles,
+import * as React from "react";
+import { AppLayout } from "../components/layout/AppLayout";
+import { useAuth } from "@/src/context/AuthContext";
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Camera,
+  Shield,
+  CheckCircle2,
   Loader2,
   Check,
   X,
   UploadCloud,
-  Info
-} from "lucide-react"
+  Info,
+} from "lucide-react";
+import { cn } from "@/src/lib/utils";
 
-/*
-Personal Information JSON Data Format Requirement:
---------------------------------------------------
-The Personal Information page expects a profile payload in the following JSON format.
-This payload is read from and written to localStorage under "db_personal_info" to maintain state.
+type PersonalExtras = {
+  dob: string;
+  gender: string;
+  phoneNumber: string;
+  alternatePhone: string;
+  residentialAddress: string;
+  status: string;
+  joinDate: string;
+};
 
-{
-  "firstName": "John",
-  "lastName": "Doe",
-  "dob": "1990-01-01",
-  "gender": "male" | "female" | "other" | "prefer_not_to_say",
-  "emailAddress": "john.doe@teamhub.com",
-  "phoneNumber": "+1 (555) 0123-4567",
-  "alternatePhone": "+1 (555) 9876-5432",
-  "residentialAddress": "123 Main Street, Suite 400, San Francisco, CA 94105",
-  "profileImage": "https://example.com/avatar.jpg",
-  "employeeId": "TH-0001",
-  "role": "Software Engineer",
-  "status": "Full-time",
-  "joinDate": "Joined Jan 2026"
+const DEFAULT_EXTRAS: PersonalExtras = {
+  dob: "1992-04-18",
+  gender: "prefer_not_to_say",
+  phoneNumber: "+1 (415) 555-0142",
+  alternatePhone: "",
+  residentialAddress: "120 Market Street, Suite 400, San Francisco, CA 94105",
+  status: "Full-time",
+  joinDate: "Joined Jan 2024",
+};
+
+function extrasKey(userId: string) {
+  return `db_personal_info:${userId}`;
 }
-*/
 
-interface PersonalInfoData {
-  firstName: string
-  lastName: string
-  dob: string
-  gender: string
-  emailAddress: string
-  phoneNumber: string
-  alternatePhone: string
-  residentialAddress: string
-  profileImage: string
-  employeeId: string
-  role: string
-  status: string
-  joinDate: string
+function loadExtras(userId: string): PersonalExtras {
+  const raw = localStorage.getItem(extrasKey(userId));
+  if (!raw) return { ...DEFAULT_EXTRAS };
+  try {
+    return { ...DEFAULT_EXTRAS, ...JSON.parse(raw) };
+  } catch {
+    return { ...DEFAULT_EXTRAS };
+  }
+}
+
+function saveExtras(userId: string, extras: PersonalExtras) {
+  localStorage.setItem(extrasKey(userId), JSON.stringify(extras));
+}
+
+function splitName(name: string) {
+  const parts = name.trim().split(/\s+/);
+  return {
+    firstName: parts[0] || "",
+    lastName: parts.slice(1).join(" ") || "",
+  };
 }
 
 export default function PersonalInformationPage() {
-  // Load from localStorage or use clear/empty state placeholders
-  const [personalInfo, setPersonalInfo] = useState<PersonalInfoData>(() => {
-    const saved = localStorage.getItem("db_personal_info")
-    if (saved) {
-      try {
-        return JSON.parse(saved)
-      } catch (err) {
-        // Fallback
-      }
+  const { user, updateProfile } = useAuth();
+  const [extras, setExtras] = React.useState<PersonalExtras>(() =>
+    user ? loadExtras(user.id) : { ...DEFAULT_EXTRAS }
+  );
+
+  const initialName = splitName(user?.name || "");
+  const [firstName, setFirstName] = React.useState(initialName.firstName);
+  const [lastName, setLastName] = React.useState(initialName.lastName);
+  const [dob, setDob] = React.useState(extras.dob);
+  const [gender, setGender] = React.useState(extras.gender);
+  const [phoneNumber, setPhoneNumber] = React.useState(extras.phoneNumber);
+  const [alternatePhone, setAlternatePhone] = React.useState(extras.alternatePhone);
+  const [residentialAddress, setResidentialAddress] = React.useState(extras.residentialAddress);
+
+  const [showPhotoModal, setShowPhotoModal] = React.useState(false);
+  const [dragActive, setDragActive] = React.useState(false);
+  const [uploadedFile, setUploadedFile] = React.useState<File | null>(null);
+  const [modalPreviewUrl, setModalPreviewUrl] = React.useState<string | null>(null);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [toast, setToast] = React.useState("");
+  const [privacyOpen, setPrivacyOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!user) return;
+    const nextExtras = loadExtras(user.id);
+    setExtras(nextExtras);
+    const names = splitName(user.name);
+    setFirstName(names.firstName);
+    setLastName(names.lastName);
+    setDob(nextExtras.dob);
+    setGender(nextExtras.gender);
+    setPhoneNumber(nextExtras.phoneNumber);
+    setAlternatePhone(nextExtras.alternatePhone);
+    setResidentialAddress(nextExtras.residentialAddress);
+  }, [user?.id]);
+
+  React.useEffect(() => {
+    return () => {
+      if (modalPreviewUrl) URL.revokeObjectURL(modalPreviewUrl);
+    };
+  }, [modalPreviewUrl]);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast(""), 2600);
+  };
+
+  const resetForm = () => {
+    if (!user) return;
+    const names = splitName(user.name);
+    const next = loadExtras(user.id);
+    setFirstName(names.firstName);
+    setLastName(names.lastName);
+    setDob(next.dob);
+    setGender(next.gender);
+    setPhoneNumber(next.phoneNumber);
+    setAlternatePhone(next.alternatePhone);
+    setResidentialAddress(next.residentialAddress);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setIsSaving(true);
+    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim() || user.name;
+    const nextExtras: PersonalExtras = {
+      dob,
+      gender,
+      phoneNumber,
+      alternatePhone,
+      residentialAddress,
+      status: extras.status || "Full-time",
+      joinDate: extras.joinDate || "Joined Jan 2024",
+    };
+    try {
+      await updateProfile({ name: fullName });
+      saveExtras(user.id, nextExtras);
+      setExtras(nextExtras);
+      showToast("Personal information saved.");
+    } catch (err: any) {
+      showToast(err?.message || "Could not save profile.");
+    } finally {
+      setIsSaving(false);
     }
-    return {
-      firstName: "",
-      lastName: "",
-      dob: "",
-      gender: "",
-      emailAddress: "",
-      phoneNumber: "",
-      alternatePhone: "",
-      residentialAddress: "",
-      profileImage: "", // Empty profile image state -> will render clean placeholder SVG avatar
-      employeeId: "", // Empty state
-      role: "", // Empty state
-      status: "", // Empty state
-      joinDate: "" // Empty state
+  };
+
+  const acceptFile = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      showToast("Please choose an image file.");
+      return;
     }
-  })
+    if (file.size > 2 * 1024 * 1024) {
+      showToast("Image must be under 2MB.");
+      return;
+    }
+    if (modalPreviewUrl) URL.revokeObjectURL(modalPreviewUrl);
+    setUploadedFile(file);
+    setModalPreviewUrl(URL.createObjectURL(file));
+  };
 
-  // Local form input states initialized to loaded or empty data
-  const [firstName, setFirstName] = useState(personalInfo.firstName)
-  const [lastName, setLastName] = useState(personalInfo.lastName)
-  const [dob, setDob] = useState(personalInfo.dob)
-  const [gender, setGender] = useState(personalInfo.gender)
-  const [emailAddress, setEmailAddress] = useState(personalInfo.emailAddress)
-  const [phoneNumber, setPhoneNumber] = useState(personalInfo.phoneNumber)
-  const [alternatePhone, setAlternatePhone] = useState(personalInfo.alternatePhone)
-  const [residentialAddress, setResidentialAddress] = useState(personalInfo.residentialAddress)
+  const handleUploadAvatar = async () => {
+    if (!user || !uploadedFile || !modalPreviewUrl) {
+      showToast("Select an image first.");
+      return;
+    }
+    setIsUploading(true);
+    await new Promise((r) => setTimeout(r, 700));
+    try {
+      await updateProfile({ avatar: modalPreviewUrl });
+      setShowPhotoModal(false);
+      setUploadedFile(null);
+      showToast("Profile photo updated.");
+    } catch (err: any) {
+      showToast(err?.message || "Upload failed.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
-  // Photo uploading states
-  const [showPhotoModal, setShowPhotoModal] = useState(false)
-  const [dragActive, setDragActive] = useState(false)
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
-  const [modalPreviewUrl, setModalPreviewUrl] = useState<string | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [showPhotoToast, setShowPhotoToast] = useState(false)
-
-  // Toast and Saving feedback
-  const [isSaving, setIsSaving] = useState(false)
-  const [isSaved, setIsSaved] = useState(false)
-
-  // Reset form inputs back to the saved state values (or empty if none saved)
-  const handleCancel = () => {
-    setFirstName(personalInfo.firstName)
-    setLastName(personalInfo.lastName)
-    setDob(personalInfo.dob)
-    setGender(personalInfo.gender)
-    setEmailAddress(personalInfo.emailAddress)
-    setPhoneNumber(personalInfo.phoneNumber)
-    setAlternatePhone(personalInfo.alternatePhone)
-    setResidentialAddress(personalInfo.residentialAddress)
-  }
-
-  // Handle saving personal info form
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSaving(true)
-    
-    // Simulate API pipeline delay
-    setTimeout(() => {
-      const updatedData: PersonalInfoData = {
-        ...personalInfo,
-        firstName,
-        lastName,
-        dob,
-        gender,
-        emailAddress,
-        phoneNumber,
-        alternatePhone,
-        residentialAddress,
-        // If not set, generate standard fallback placeholders on save
-        employeeId: personalInfo.employeeId || "TH-" + Math.floor(1000 + Math.random() * 9000),
-        role: personalInfo.role || "Team Member",
-        status: personalInfo.status || "Full-time",
-        joinDate: personalInfo.joinDate || "Joined " + new Date().toLocaleDateString('default', { month: 'short', year: 'numeric' })
-      }
-      
-      localStorage.setItem("db_personal_info", JSON.stringify(updatedData))
-      setPersonalInfo(updatedData)
-      
-      // Sync headers & updates globally
-      window.dispatchEvent(new Event("storage"))
-      window.dispatchEvent(new Event("db_updated"))
-
-      setIsSaving(false)
-      setIsSaved(true)
-      setTimeout(() => {
-        setIsSaved(false)
-      }, 2500)
-    }, 1000)
-  }
+  const displayName = user?.name || "TeamHub User";
+  const avatar = user?.avatar;
 
   return (
-    <AppLayout 
-      title="Personal Information" 
+    <AppLayout
+      title="Personal Information"
       breadcrumbs={[
-        { label: "Settings", href: "/settings/personal-info" }, 
-        { label: "Personal Information" }
+        { label: "Settings", href: "/settings/personal-info" },
+        { label: "Personal Information" },
       ]}
     >
-      <div className="mx-auto w-full max-w-7xl">
-        <div className="grid grid-cols-12 gap-6 lg:gap-8 items-start">
-          
-          {/* Left Column: Profile Card + Edit Form */}
-          <div className="col-span-12 lg:col-span-8 flex flex-col gap-6 lg:gap-8">
-            
-            {/* Profile Header Card */}
-            <section className="bg-white rounded-2xl border border-slate-100 p-6 flex flex-col sm:flex-row items-center gap-6 shadow-sm">
-              <div id="avatar-container" className="relative group shrink-0">
-                {personalInfo.profileImage ? (
-                  <img 
-                    src={personalInfo.profileImage} 
-                    alt="Profile Avatar" 
-                    className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl object-cover border-4 border-slate-50 shadow-md transition-all duration-300 group-hover:scale-[1.02]"
-                  />
-                ) : (
-                  <div className="w-28 h-28 sm:w-32 sm:h-32 bg-slate-50 border border-slate-100 rounded-2xl shadow-inner flex flex-col items-center justify-center text-slate-400 group-hover:bg-slate-100 transition-colors">
-                    <User className="h-12 w-12 stroke-[1.5]" />
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">No Avatar</span>
-                  </div>
-                )}
-                <button 
-                  type="button"
-                  id="change-photo-btn-p"
-                  onClick={() => { setShowPhotoModal(true); setUploadedFile(null); setModalPreviewUrl(null); }}
-                  className="absolute bottom-[-6px] right-[-6px] bg-brand-dark hover:bg-brand text-white p-2 rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                  title="Upload profile picture"
-                >
-                  <Camera className="h-4 w-4" />
-                </button>
-              </div>
-              
-              <div className="flex flex-col gap-1.5 text-center sm:text-left grow">
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-950">
-                  {personalInfo.firstName || personalInfo.lastName 
-                    ? `${personalInfo.firstName} ${personalInfo.lastName}`.trim() 
-                    : "No Profile Details Set"}
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-500 font-semibold uppercase tracking-wider">
-                  {personalInfo.role ? personalInfo.role : "Enter profile settings below"} 
-                  {personalInfo.employeeId && ` — Employee ID: ${personalInfo.employeeId}`}
-                </p>
-                
-                <div className="flex flex-wrap gap-2 mt-1 justify-center sm:justify-start">
-                  <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-emerald-100">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> 
-                    {personalInfo.status ? personalInfo.status : "Pending Setup"}
-                  </span>
-                  <span className="bg-slate-50 text-slate-500 px-3 py-1 rounded-full text-xs font-bold border border-slate-100/80">
-                    {personalInfo.joinDate ? personalInfo.joinDate : "Setup Not Finalized"}
-                  </span>
-                </div>
-              </div>
-              
-              <button 
-                type="button" 
-                id="edit-photo-trigger"
-                onClick={() => { setShowPhotoModal(true); setUploadedFile(null); setModalPreviewUrl(null); }}
-                className="shrink-0 border border-slate-200 hover:border-brand-dark text-slate-700 hover:text-brand-dark hover:bg-brand/5 px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors active:scale-95 cursor-pointer"
-              >
-                Change Photo
-              </button>
-            </section>
-
-            {/* Form Section */}
-            <form onSubmit={handleSave} className="bg-white rounded-2xl border border-slate-100 p-6 sm:p-8 flex flex-col gap-8 shadow-sm">
-              
-              {/* General Information Sub-form */}
-              <div id="general-info-section">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 rounded-lg bg-teal-50 text-brand-dark flex items-center justify-center">
-                    <User className="h-4 w-4" />
-                  </div>
-                  <h4 className="text-sm sm:text-base font-bold text-slate-800 font-sans">General Information</h4>
-                  <div className="h-px grow bg-slate-100"></div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">First Name</label>
-                    <input 
-                      type="text" 
-                      id="input-first-name"
-                      placeholder="e.g. John"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className="bg-slate-50 border border-slate-200/80 hover:border-brand-dark focus:border-brand rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all focus:ring-2 focus:ring-brand/10"
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Last Name</label>
-                    <input 
-                      type="text" 
-                      id="input-last-name"
-                      placeholder="e.g. Doe"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      className="bg-slate-50 border border-slate-200/80 hover:border-brand-dark focus:border-brand rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all focus:ring-2 focus:ring-brand/10"
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Date of Birth</label>
-                    <input 
-                      type="date" 
-                      id="input-dob"
-                      value={dob}
-                      onChange={(e) => setDob(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200/80 hover:border-brand-dark focus:border-brand rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all focus:ring-2 focus:ring-brand/10"
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Gender</label>
-                    <select 
-                      id="select-gender"
-                      value={gender}
-                      onChange={(e) => setGender(e.target.value)}
-                      className="bg-slate-50 border border-slate-200/80 hover:border-brand-dark focus:border-brand rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all focus:ring-2 focus:ring-brand/10 cursor-pointer"
-                      required
-                    >
-                      <option value="" disabled>Select Gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                      <option value="prefer_not_to_say">Prefer not to say</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact Details Sub-form */}
-              <div id="contact-details-section">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 rounded-lg bg-teal-50 text-brand-dark flex items-center justify-center">
-                    <Mail className="h-4 w-4" />
-                  </div>
-                  <h4 className="text-sm sm:text-base font-bold text-slate-800 font-sans">Contact Details</h4>
-                  <div className="h-px grow bg-slate-100"></div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-                  <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <input 
-                        type="email" 
-                        id="input-email"
-                        placeholder="john.doe@company.com"
-                        value={emailAddress}
-                        onChange={(e) => setEmailAddress(e.target.value)}
-                        className="pl-11 w-full bg-slate-50 border border-slate-200/80 hover:border-brand-dark focus:border-brand rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all focus:ring-2 focus:ring-brand/10"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phone Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <input 
-                        type="tel" 
-                        id="input-phone"
-                        placeholder="+1 (555) 000-0000"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        className="pl-11 w-full bg-slate-50 border border-slate-200/80 hover:border-brand-dark focus:border-brand rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all focus:ring-2 focus:ring-brand/10"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Alternate Phone (Optional)</label>
-                    <input 
-                      type="tel" 
-                      id="input-alt-phone"
-                      placeholder="Optional Alternate Phone"
-                      value={alternatePhone}
-                      onChange={(e) => setAlternatePhone(e.target.value)}
-                      className="bg-slate-50 border border-slate-200/80 hover:border-brand-dark focus:border-brand rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Residential Address</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <input 
-                        type="text" 
-                        id="input-address"
-                        placeholder="Street, Suite number, City, State ZIP"
-                        value={residentialAddress}
-                        onChange={(e) => setResidentialAddress(e.target.value)}
-                        className="pl-11 w-full bg-slate-50 border border-slate-200/80 hover:border-brand-dark focus:border-brand rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all focus:ring-2 focus:ring-brand/10"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action row buttons */}
-              <div className="flex items-center justify-end gap-4 pt-6 border-t border-slate-100">
-                <button 
-                  type="button"
-                  id="cancel-changes-btn"
-                  onClick={handleCancel}
-                  className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-50 active:scale-95 transition-all text-center"
-                >
-                  Cancel
-                </button>
-
-                <button 
-                  type="submit"
-                  id="save-changes-btn"
-                  disabled={isSaving || isSaved}
-                  className="relative flex items-center justify-center gap-2 bg-brand-dark hover:bg-brand text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-md hover:shadow-brand/10 transition-all active:scale-95 disabled:pointer-events-none min-w-[150px]"
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Saving...</span>
-                    </>
-                  ) : isSaved ? (
-                    <>
-                      <Check className="h-4 w-4 text-emerald-300" />
-                      <span>Saved!</span>
-                    </>
-                  ) : (
-                    <span>Save Changes</span>
-                  )}
-                </button>
-              </div>
-
-            </form>
+      <div className="w-full space-y-6">
+        {toast ? (
+          <div className="fixed right-6 top-24 z-[80] flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-medium text-emerald-800 shadow-lg">
+            <CheckCircle2 className="h-4 w-4" />
+            {toast}
           </div>
+        ) : null}
 
-          {/* Right Column: Info Panel & Security Status */}
-          <div className="col-span-12 lg:col-span-4 flex flex-col gap-6 lg:gap-8">
-            
-            {/* Privacy & Security Banner */}
-            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 flex flex-col gap-4 shadow-sm relative overflow-hidden">
-              <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 text-emerald-100 opacity-20 pointer-events-none">
-                <Shield className="h-40 w-40" />
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-emerald-600">
-                  <Shield className="h-5.5 w-5.5" />
-                </div>
-                <h4 className="text-sm font-bold text-emerald-950 font-sans">Privacy & Security</h4>
-              </div>
-              <p className="text-xs sm:text-sm text-emerald-850 leading-relaxed font-semibold opacity-90">
-                Your personal details are securely stored. All corporate personnel info is fully encrypted and only searchable under valid roles mapping permissions.
-              </p>
-              <a 
-                href="#privacy"
-                onClick={(e) => { e.preventDefault(); alert("Displaying active platform privacy policy.") }}
-                className="text-emerald-700 hover:text-emerald-950 font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-colors"
-              >
-                <span>Review Privacy Policy</span>
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </div>
-
-            {/* Account Status Card */}
-            <section className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col gap-4">
-              <h4 className="text-sm font-bold text-slate-800 font-sans uppercase tracking-wider">Verify Parameters Status</h4>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-2 border-b border-slate-50 text-slate-600 text-xs sm:text-sm">
-                  <span>Profile Syncing</span>
-                  {personalInfo.firstName ? (
-                    <span className="text-emerald-600 font-bold flex items-center gap-1.5">
-                      <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 fill-emerald-50" /> Completed
-                    </span>
-                  ) : (
-                    <span className="text-slate-400 font-semibold flex items-center gap-1.5">
-                      ● Pending Setup
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between py-2 border-b border-slate-50 text-slate-600 text-xs sm:text-sm">
-                  <span>Contact Accuracy</span>
-                  <span className="text-slate-800 font-bold">
-                    {phoneNumber && emailAddress ? "Valid Checked" : "Needs Update"}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-2 text-slate-600 text-xs sm:text-sm">
-                  <span>Encryption Level</span>
-                  <span className="text-slate-800 font-bold">AES-256 Enabled</span>
-                </div>
-              </div>
-            </section>
-
-          </div>
-
-        </div>
-      </div>
-
-      {/* Floating Success Toast Notification */}
-      {showPhotoToast && (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 bg-slate-950 text-white rounded-full px-6 py-3.5 flex items-center gap-3 shadow-2xl z-50 animate-bounce">
-          <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center">
-            <Check className="h-3.5 w-3.5" />
-          </div>
-          <p className="text-xs sm:text-sm font-bold tracking-wide">Avatar placeholder successfully applied!</p>
-        </div>
-      )}
-
-      {/* Change Photo Modal Overlay */}
-      {showPhotoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div 
-            className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs transition-opacity"
-            onClick={() => { if (!isUploading) setShowPhotoModal(false); }}
-          />
-
-          <div className="relative bg-white w-full max-w-[520px] rounded-2xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col font-sans z-10">
-            {/* Modal Header */}
-            <div className="px-6 py-4.5 border-b border-slate-100 flex justify-between items-center bg-white">
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 font-sans">Update Avatar</h3>
-              <button 
-                type="button"
-                id="close-avatar-modal"
-                disabled={isUploading}
-                onClick={() => setShowPhotoModal(false)}
-                className="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 space-y-6">
-              <div className="flex flex-col items-center">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 self-start">
-                  Current Layout Avatar
-                </p>
-                <div className="w-24 h-24 rounded-full overflow-hidden border border-slate-200 shadow-md mb-2 flex items-center justify-center bg-slate-50 text-slate-400">
-                  {modalPreviewUrl || personalInfo.profileImage ? (
-                    <img 
-                      src={modalPreviewUrl || personalInfo.profileImage} 
-                      alt="Avatar Preview" 
-                      className="w-full h-full object-cover" 
-                    />
-                  ) : (
-                    <User className="w-10 h-10 stroke-[1.5]" />
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 font-semibold font-sans">JPG, PNG or GIF. Max size 2MB.</p>
-              </div>
-
-              {/* Drag & Drop Area */}
-              <div 
-                onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-                onDragLeave={() => setDragActive(false)}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  setDragActive(false)
-                  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    const file = e.dataTransfer.files[0]
-                    setUploadedFile(file)
-                    setModalPreviewUrl(URL.createObjectURL(file))
-                  }
-                }}
-                onClick={() => {
-                  document.getElementById("photo-upload-input-p")?.click()
-                }}
-                className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all cursor-pointer group text-center ${
-                  dragActive 
-                    ? "border-brand bg-teal-50/25" 
-                    : "border-slate-200 bg-slate-50/50 hover:bg-teal-55 hover:bg-teal-50/10 hover:border-brand-dark"
-                }`}
-              >
-                <div className="w-12 h-12 rounded-full bg-teal-50 text-brand-dark flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <UploadCloud className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="font-bold text-xs sm:text-sm text-slate-800">
-                    {uploadedFile ? uploadedFile.name : "Drag and drop your photo here"}
-                  </p>
-                  <p className="text-xs text-slate-500 font-medium mt-1">
-                    {uploadedFile ? `${(uploadedFile.size / 1024).toFixed(1)} KB` : <>or <span className="text-brand-dark font-bold">browse files</span></>}
-                  </p>
-                </div>
-                <input 
-                  type="file" 
-                  id="photo-upload-input-p" 
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      const file = e.target.files[0]
-                      setUploadedFile(file)
-                      setModalPreviewUrl(URL.createObjectURL(file))
-                    }
-                  }}
-                  className="hidden" 
+        <div className="rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <div className="relative shrink-0">
+              {avatar ? (
+                <img
+                  src={avatar}
+                  alt={displayName}
+                  className="h-24 w-24 rounded-2xl object-cover ring-2 ring-[#E4E4E1]"
                 />
-              </div>
-
-              <div className="bg-slate-50 border border-slate-100 p-3.5 rounded-xl flex gap-3 text-slate-600">
-                <Info className="h-5 w-5 text-slate-400 shrink-0 mt-0.5" />
-                <p className="text-[11px] sm:text-xs font-semibold leading-relaxed">
-                  Photos must be less than 2MB in size. Headshots are visible globally to team members in the Directory view.
-                </p>
+              ) : (
+                <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-[#F3F3F0] text-[#0E4D41]">
+                  <User className="h-10 w-10" />
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowPhotoModal(true)}
+                className="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-xl bg-[#28C2A9] text-white shadow-sm transition hover:bg-[#209f8a]"
+              >
+                <Camera className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-xl font-bold text-slate-900">{displayName}</h2>
+              <p className="mt-1 text-sm font-medium text-[#28C2A9]">{user?.roleTitle || "Team member"}</p>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
+                <span className="rounded-lg border border-[#E4E4E1] bg-[#F3F3F0] px-2.5 py-1">
+                  {user?.employeeId || "—"}
+                </span>
+                <span className="rounded-lg border border-[#E4E4E1] bg-[#F3F3F0] px-2.5 py-1">
+                  {extras.status}
+                </span>
+                <span className="rounded-lg border border-[#E4E4E1] bg-[#F3F3F0] px-2.5 py-1">
+                  {extras.joinDate}
+                </span>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Modal Footer */}
-            <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-3 rounded-b-2xl">
-              <button 
+        <div className="grid gap-6 lg:grid-cols-3">
+          <form
+            onSubmit={handleSave}
+            className="space-y-5 rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)] lg:col-span-2"
+          >
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Contact details</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Keep your personal profile up to date for HR and team directories.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="First name">
+                <input
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className={fieldClass}
+                  required
+                />
+              </Field>
+              <Field label="Last name">
+                <input
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className={fieldClass}
+                />
+              </Field>
+              <Field label="Date of birth">
+                <input
+                  type="date"
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                  className={fieldClass}
+                />
+              </Field>
+              <Field label="Gender">
+                <select value={gender} onChange={(e) => setGender(e.target.value)} className={fieldClass}>
+                  <option value="female">Female</option>
+                  <option value="male">Male</option>
+                  <option value="other">Other</option>
+                  <option value="prefer_not_to_say">Prefer not to say</option>
+                </select>
+              </Field>
+              <Field label="Work email">
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={user?.email || ""}
+                    readOnly
+                    className={cn(fieldClass, "cursor-not-allowed bg-[#F3F3F0] pl-10 text-slate-500")}
+                  />
+                </div>
+              </Field>
+              <Field label="Phone">
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className={cn(fieldClass, "pl-10")}
+                  />
+                </div>
+              </Field>
+              <Field label="Alternate phone">
+                <input
+                  value={alternatePhone}
+                  onChange={(e) => setAlternatePhone(e.target.value)}
+                  className={fieldClass}
+                  placeholder="Optional"
+                />
+              </Field>
+              <Field label="Residential address" className="sm:col-span-2">
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                  <textarea
+                    value={residentialAddress}
+                    onChange={(e) => setResidentialAddress(e.target.value)}
+                    rows={3}
+                    className={cn(fieldClass, "min-h-[96px] resize-none pl-10 pt-2.5")}
+                  />
+                </div>
+              </Field>
+            </div>
+
+            <div className="flex flex-col-reverse gap-3 border-t border-[#E4E4E1] pt-5 sm:flex-row sm:justify-end">
+              <button
                 type="button"
-                disabled={isUploading}
-                onClick={() => setShowPhotoModal(false)}
-                className="px-5 py-2.5 rounded-xl font-bold text-slate-500 hover:text-slate-800 text-xs sm:text-sm hover:bg-slate-100 transition-colors cursor-pointer"
+                onClick={resetForm}
+                className="h-11 rounded-xl border border-[#E4E4E1] bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-[#F3F3F0]"
               >
                 Cancel
               </button>
-              <button 
-                type="button"
-                id="upload-avatar-btn-modal"
-                disabled={isUploading}
-                onClick={() => {
-                  setIsUploading(true)
-                  setTimeout(() => {
-                    setIsUploading(false)
-                    const finalPreview = modalPreviewUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120"
-                    
-                    const updatedData = {
-                      ...personalInfo,
-                      profileImage: finalPreview
-                    }
-                    localStorage.setItem("db_personal_info", JSON.stringify(updatedData))
-                    setPersonalInfo(updatedData)
-                    
-                    // Trigger global header redraw
-                    window.dispatchEvent(new Event("storage"))
-                    window.dispatchEvent(new Event("db_updated"))
-
-                    setShowPhotoModal(false)
-                    setShowPhotoToast(true)
-                    setTimeout(() => setShowPhotoToast(false), 3000)
-                  }, 1000)
-                }}
-                className="px-6 py-2.5 bg-[#006b5f] hover:bg-[#005047] text-white rounded-xl font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#28C2A9] px-5 text-sm font-bold text-white hover:bg-[#209f8a] disabled:opacity-60"
               >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Uploading...</span>
-                  </>
-                ) : (
-                  <span>Upload</span>
-                )}
+                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                Save changes
+              </button>
+            </div>
+          </form>
+
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#E4F2D3] text-[#0E4D41]">
+                <Shield className="h-5 w-5" />
+              </div>
+              <h4 className="font-bold text-slate-900">Privacy</h4>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                Your personal details are visible to HR and your manager. Teammates only see your
+                directory name and role.
+              </p>
+              <button
+                type="button"
+                onClick={() => setPrivacyOpen(true)}
+                className="mt-4 text-sm font-bold text-[#28C2A9] hover:text-[#209f8a]"
+              >
+                View privacy note
+              </button>
+            </div>
+
+            <div className="rounded-2xl border border-[#E4E4E1] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3F3F0] text-slate-600">
+                <Info className="h-5 w-5" />
+              </div>
+              <h4 className="font-bold text-slate-900">Profile checklist</h4>
+              <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                {[
+                  "Photo uploaded",
+                  "Phone number on file",
+                  "Address completed",
+                  "Work email verified",
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-[#28C2A9]" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showPhotoModal ? (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900">Update photo</h3>
+              <button
+                type="button"
+                onClick={() => setShowPhotoModal(false)}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-[#F3F3F0] hover:text-slate-700"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <label
+              onDragEnter={(e) => {
+                e.preventDefault();
+                setDragActive(true);
+              }}
+              onDragOver={(e) => e.preventDefault()}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragActive(false);
+                acceptFile(e.dataTransfer.files?.[0] || null);
+              }}
+              className={cn(
+                "flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed p-8 text-center transition",
+                dragActive ? "border-[#28C2A9] bg-[#E4F2D3]/40" : "border-[#E4E4E1] bg-[#F3F3F0]"
+              )}
+            >
+              {modalPreviewUrl ? (
+                <img src={modalPreviewUrl} alt="Preview" className="mb-3 h-24 w-24 rounded-2xl object-cover" />
+              ) : (
+                <UploadCloud className="mb-3 h-8 w-8 text-[#28C2A9]" />
+              )}
+              <p className="text-sm font-semibold text-slate-800">Drop an image or click to browse</p>
+              <p className="mt-1 text-xs text-slate-500">JPG or PNG · max 2MB</p>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => acceptFile(e.target.files?.[0] || null)}
+              />
+            </label>
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPhotoModal(false)}
+                className="h-10 rounded-xl border border-[#E4E4E1] px-4 text-sm font-semibold text-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isUploading || !uploadedFile}
+                onClick={handleUploadAvatar}
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#28C2A9] px-4 text-sm font-bold text-white disabled:opacity-50"
+              >
+                {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Save photo
               </button>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
+      {privacyOpen ? (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-[#E4E4E1] bg-white p-6 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900">Privacy note</h3>
+              <button type="button" onClick={() => setPrivacyOpen(false)} className="rounded-lg p-1.5 hover:bg-[#F3F3F0]">
+                <X className="h-4 w-4 text-slate-400" />
+              </button>
+            </div>
+            <p className="text-sm leading-relaxed text-slate-600">
+              TeamHub stores your personal profile for employment operations. Contact details are used for
+              payroll, leave, and emergency communication. You can request corrections anytime from HR.
+            </p>
+            <button
+              type="button"
+              onClick={() => setPrivacyOpen(false)}
+              className="mt-5 h-10 rounded-xl bg-[#28C2A9] px-4 text-sm font-bold text-white"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      ) : null}
     </AppLayout>
-  )
+  );
 }
+
+function Field({
+  label,
+  children,
+  className,
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <label className={cn("block space-y-1.5", className)}>
+      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+const fieldClass =
+  "h-11 w-full rounded-xl border border-[#E4E4E1] bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-[#28C2A9] focus:ring-1 focus:ring-[#28C2A9]";

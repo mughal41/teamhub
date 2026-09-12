@@ -2,7 +2,6 @@ import * as React from "react";
 import { AppLayout } from "../components/layout/AppLayout";
 import { getCollection, saveCollection } from "../lib/db";
 import { Card, Badge } from "../components/ui/LayoutAddons";
-import { getDashboardStatsApi } from "../lib/api/employees";
 import {
   Users,
   Calendar as CalendarIcon,
@@ -229,17 +228,6 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     const loadDashboard = () => {
-      getDashboardStatsApi()
-        .then((stats) => {
-          setEmployeesCount(stats.total_employees);
-          setOverallAttendanceVal(stats.overall_attendance_pct);
-          setLeaveRequestsCount(stats.pending_leaves_count);
-          if (stats.total_applicants_count !== undefined) {
-            setApplicantsCount(stats.total_applicants_count);
-          }
-        })
-        .catch((err) => console.error("Error fetching live dashboard stats:", err));
-
       const emps = getCollection<any[]>("db_employees", []);
       const atts = getCollection<any[]>("db_attendance", []);
       const pay = getCollection<any[]>("db_payroll", []);
@@ -252,7 +240,16 @@ export default function DashboardPage() {
       const approvedReviewsCount = Number(localStorage.getItem("db_approved_reviews_count") || "0");
       const applicantsFromDb = getCollection<any[]>("db_applicants", []);
       
+      setEmployeesCount(emps.length);
       setAttendance(atts);
+      
+      const onTimeOrLate = atts.filter(a => a.status === "On-Time" || a.status === "Late").length;
+      const attVal = atts.length ? Math.round((onTimeOrLate / atts.length) * 100) : 0;
+      setOverallAttendanceVal(attVal);
+
+      const pendingLeaves = leaves.filter(l => l.status === "Pending");
+      setLeaveRequestsCount(pendingLeaves.length);
+
       setApplicantsCount(applicantsFromDb.length);
       
       const pendingPay = pay.filter(p => p.status === "Pending");
@@ -621,7 +618,7 @@ export default function DashboardPage() {
   return (
     <AppLayout title="Dashboard" breadcrumbs={[]}>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-[#E4E4E1] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           <div>
             <p className="text-[14px] text-[#63716E]">Hello Davis!</p>
             <h1 className="text-[20px] font-semibold text-[#203430]">
@@ -759,7 +756,7 @@ export default function DashboardPage() {
             <Card
               key={stat.label}
               className={cn(
-                "p-4 border-none rounded-[16px] shadow-sm flex flex-col justify-between",
+                "p-4 border-none rounded-[16px] flex flex-col justify-between",
                 stat.bgColor,
               )}
             >
@@ -784,7 +781,7 @@ export default function DashboardPage() {
                           className="fixed inset-0 z-[199]"
                           onClick={() => setActiveStatMenu(null)}
                         />
-                        <div className="absolute right-0 top-7 z-[200] w-52 bg-white rounded-xl shadow-lg border border-[#E5E6E6] py-1.5 text-left animate-in fade-in duration-100">
+                        <div className="absolute right-0 top-7 z-[200] w-52 bg-white rounded-xl shadow-lg border border-[#E4E4E1] py-1.5 text-left animate-in fade-in duration-100">
                           {stat.actions.map((act, i) => (
                             <button
                               key={i}
@@ -838,7 +835,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           {/* Column 1: Calendar & Schedules (3/12) */}
           <div className="lg:col-span-3 space-y-5">
-            <Card className="p-4 border-none rounded-[16px] bg-white shadow-sm hover:border-slate-200 transition-all">
+            <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white hover:border-slate-200 transition-all">
               <div className="flex items-center justify-between mb-6">
                 <div 
                   onClick={() => navigate("/calendar")} 
@@ -886,7 +883,7 @@ export default function DashboardPage() {
                               ? "bg-brand text-white"
                               : isPublic
                                 ? "bg-[#E4F2D3] text-[#0E4D41]"
-                                : "text-[#203430] hover:bg-[#F7F7F7]",
+                                : "text-[#203430] hover:bg-[#F3F3F0]",
                         )}
                       >
                         {day}
@@ -897,7 +894,7 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="p-4 border-none rounded-[16px] bg-white shadow-sm flex flex-col animate-in fade-in duration-150">
+            <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col animate-in fade-in duration-150">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[16px] font-bold text-[#203430]">
                   Schedules
@@ -920,7 +917,7 @@ export default function DashboardPage() {
               {showAddEvent && (
                 <form
                   onSubmit={handleAddScheduleEvent}
-                  className="bg-[#F7F7F7] p-3 rounded-xl mb-4 border border-[#E5E6E6] space-y-2.5 text-left animate-in slide-in-from-top-2 duration-150"
+                  className="bg-white p-3 rounded-xl mb-4 border border-[#E4E4E1] space-y-2.5 text-left animate-in slide-in-from-top-2 duration-150"
                 >
                   <p className="text-[9px] font-black uppercase text-[#63716E]">
                     Schedule New Event
@@ -930,7 +927,7 @@ export default function DashboardPage() {
                     placeholder="Event/Interview Title"
                     value={newEventTitle}
                     onChange={(e) => setNewEventTitle(e.target.value)}
-                    className="w-full text-xs font-semibold p-2 bg-white rounded-lg border border-[#E5E6E6] outline-none focus:border-brand"
+                    className="w-full text-xs font-semibold p-2 bg-white rounded-lg border border-[#E4E4E1] outline-none focus:border-brand"
                     required
                   />
                   <div className="flex gap-2">
@@ -939,21 +936,21 @@ export default function DashboardPage() {
                       placeholder="Time (e.g. 11:00 AM)"
                       value={newEventTime}
                       onChange={(e) => setNewEventTime(e.target.value)}
-                      className="w-1/2 text-xs font-semibold p-2 bg-white rounded-lg border border-[#E5E6E6] outline-none"
+                      className="w-1/2 text-xs font-semibold p-2 bg-white rounded-lg border border-[#E4E4E1] outline-none"
                     />
                     <input
                       type="text"
                       placeholder="Location"
                       value={newEventLocation}
                       onChange={(e) => setNewEventLocation(e.target.value)}
-                      className="w-1/2 text-xs font-semibold p-2 bg-white rounded-lg border border-[#E5E6E6] outline-none"
+                      className="w-1/2 text-xs font-semibold p-2 bg-white rounded-lg border border-[#E4E4E1] outline-none"
                     />
                   </div>
                   <div className="flex items-center justify-between pt-1">
                     <select
                       value={newEventCategory}
                       onChange={(e) => setNewEventCategory(e.target.value)}
-                      className="text-[10px] bg-white border border-[#E5E6E6] p-1 rounded font-bold"
+                      className="text-[10px] bg-white border border-[#E4E4E1] p-1 rounded font-bold"
                     >
                       <option value="Employee Development">Development</option>
                       <option value="Talent Acquisition">Recruiting</option>
@@ -988,7 +985,7 @@ export default function DashboardPage() {
 
                   if (daySchedules.length === 0) {
                     return (
-                      <div className="py-6 px-4 text-center border border-dashed border-[#E5E6E6] rounded-xl flex flex-col items-center justify-center space-y-2 bg-[#F7F7F7]/10">
+                      <div className="py-6 px-4 text-center border border-dashed border-[#E4E4E1] rounded-xl flex flex-col items-center justify-center space-y-2 bg-white/10">
                         <CalendarIcon className="h-6 w-6 text-[#A4ACAB]" />
                         <p className="text-[12px] font-bold text-[#63716E]">
                           Empty Schedule Slot
@@ -1061,7 +1058,7 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       {idx !== daySchedules.length - 1 && (
-                        <div className="h-px bg-[#E5E6E6] mt-4" />
+                        <div className="h-px bg-[#F3F3F0] mt-4" />
                       )}
                     </div>
                   ));
@@ -1070,7 +1067,7 @@ export default function DashboardPage() {
             </Card>
 
             {/* Performance Reviews Pending & Approved Tracker */}
-            <Card className="p-4 border-none rounded-[16px] bg-white shadow-sm flex flex-col">
+            <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col">
               <div className="flex items-center justify-between mb-4 relative">
                 <div>
                   <h3 className="text-[16px] font-bold text-[#203430]">
@@ -1094,7 +1091,7 @@ export default function DashboardPage() {
                         className="fixed inset-0 z-[199]"
                         onClick={() => setPerfMenuOpen(false)}
                       />
-                      <div className="absolute right-0 top-7 z-[200] w-48 bg-white rounded-xl shadow-lg border border-[#E5E6E6] py-1.5 animate-in fade-in duration-100">
+                      <div className="absolute right-0 top-7 z-[200] w-48 bg-white rounded-xl shadow-lg border border-[#E4E4E1] py-1.5 animate-in fade-in duration-100">
                         <button
                           onClick={() => {
                             setPerfMenuOpen(false);
@@ -1135,7 +1132,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 mb-4 bg-[#F7F7F7] p-2.5 rounded-[12px]">
+              <div className="grid grid-cols-3 gap-2 mb-4 bg-white border border-[#E6E6E4] p-2.5 rounded-[12px]">
                 <div className="text-center">
                   <p className="text-[10px] text-[#63716E] font-medium leading-none">
                     Assigned
@@ -1144,7 +1141,7 @@ export default function DashboardPage() {
                     {reviewStats.assigned}
                   </p>
                 </div>
-                <div className="text-center border-x border-[#E5E6E6]">
+                <div className="text-center border-x border-[#E4E4E1]">
                   <p className="text-[10px] text-amber-600 font-medium leading-none">
                     Pending
                   </p>
@@ -1168,7 +1165,7 @@ export default function DashboardPage() {
                 </p>
 
                 {pendingReviews.length === 0 ? (
-                  <div className="py-6 text-center border border-dashed border-[#E5E6E6] rounded-xl flex flex-col items-center justify-center space-y-1 bg-[#F7F7F7]/25">
+                  <div className="py-6 text-center border border-dashed border-[#E4E4E1] rounded-xl flex flex-col items-center justify-center space-y-1 bg-white/25">
                     <CheckCircle2 className="h-6 w-6 text-[#35BFA3]" />
                     <p className="text-xs font-bold text-[#63716E]">
                       All caught up!
@@ -1220,7 +1217,7 @@ export default function DashboardPage() {
           {/* Column 2: Charts & Large Stats & List (6/12) */}
           <div className="lg:col-span-6 space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Card className="p-4 border-none rounded-[16px] bg-white shadow-sm overflow-visible hover:border-slate-200 transition-all">
+              <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white overflow-visible hover:border-slate-200 transition-all">
                 <div className="flex items-center justify-between mb-4">
                   <h3 
                     onClick={() => navigate("/attendance")}
@@ -1230,7 +1227,7 @@ export default function DashboardPage() {
                   </h3>
                   <button 
                     onClick={() => navigate("/attendance")}
-                    className="flex items-center gap-1.5 bg-[#F7F7F7] hover:bg-slate-100 px-2.5 py-1.5 rounded-[10px] text-[11px] font-medium text-[#006b5f] transition-all border-none cursor-pointer"
+                    className="flex items-center gap-1.5 bg-white hover:bg-slate-100 px-2.5 py-1.5 rounded-[10px] text-[11px] font-medium text-[#006b5f] transition-all border-none cursor-pointer"
                   >
                     Timesheets →
                   </button>
@@ -1249,7 +1246,7 @@ export default function DashboardPage() {
                   )}
                 </div>
                 {attendance.length === 0 ? (
-                  <div className="h-[140px] w-full mt-2 flex flex-col items-center justify-center text-center space-y-2 bg-[#F7F7F7]/25 border border-dashed border-[#E5E6E6] rounded-[12px] p-3">
+                  <div className="h-[140px] w-full mt-2 flex flex-col items-center justify-center text-center space-y-2 bg-white/25 border border-dashed border-[#E4E4E1] rounded-[12px] p-3">
                     <AlertCircle className="h-6 w-6 text-[#A4ACAB]" />
                     <p className="text-[11px] font-bold text-[#63716E]">
                       No active logs recorded
@@ -1295,7 +1292,7 @@ export default function DashboardPage() {
                 )}
               </Card>
 
-              <Card className="p-4 border-none rounded-[16px] bg-white shadow-sm flex flex-col hover:border-slate-200 transition-all">
+              <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col hover:border-slate-200 transition-all">
                 <div className="flex justify-between items-center mb-2">
                   <h3 
                     onClick={() => navigate("/performance")}
@@ -1319,7 +1316,7 @@ export default function DashboardPage() {
                           className="fixed inset-0 z-[199]"
                           onClick={() => setSatisfactionMenuOpen(false)}
                         />
-                        <div className="absolute right-0 top-7 z-[200] w-56 bg-white rounded-xl shadow-lg border border-[#E5E6E6] py-1.5 text-left animate-in fade-in duration-100">
+                        <div className="absolute right-0 top-7 z-[200] w-56 bg-white rounded-xl shadow-lg border border-[#E4E4E1] py-1.5 text-left animate-in fade-in duration-100">
                           {[
                             {
                               label: "Open Performance Directory",
@@ -1341,7 +1338,7 @@ export default function DashboardPage() {
                                 element.act();
                                 setSatisfactionMenuOpen(false);
                               }}
-                              className="w-full text-left px-4 py-2 text-[11px] text-[#203430] hover:bg-[#F7F7F7] font-semibold transition-colors cursor-pointer border-none bg-transparent"
+                              className="w-full text-left px-4 py-2 text-[11px] text-[#203430] hover:bg-[#F3F3F0] font-semibold transition-colors cursor-pointer border-none bg-transparent"
                             >
                               {element.label}
                             </button>
@@ -1352,7 +1349,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 {satisfactionPercent === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-2 bg-[#F7F7F7]/25 border border-dashed border-[#E5E6E6] rounded-[12px] my-3">
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-2 bg-white/25 border border-dashed border-[#E4E4E1] rounded-[12px] my-3">
                     <Star className="h-6 w-6 text-[#A4ACAB]" />
                     <p className="text-[11px] font-bold text-[#63716E]">
                       No survey responses
@@ -1457,10 +1454,10 @@ export default function DashboardPage() {
               </Card>
             </div>
 
-            <Card className="p-0 border-none rounded-[16px] bg-white shadow-sm overflow-hidden flex flex-col hover:border-slate-200 transition-all">
+            <Card className="p-0 border border-[#E6E6E4] rounded-[16px] bg-white overflow-hidden flex flex-col hover:border-slate-200 transition-all">
               <div 
                 onClick={() => navigate("/attendance")}
-                className="p-4 flex items-center justify-between border-b border-[#E5E6E6] cursor-pointer hover:bg-slate-50 transition-colors"
+                className="p-4 flex items-center justify-between border-b border-[#E4E4E1] cursor-pointer hover:bg-slate-50 transition-colors"
               >
                 <h3 className="text-[16px] font-bold text-[#203430] hover:text-[#006b5f]">
                   Employee Attendance
@@ -1496,8 +1493,8 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-[#F7F7F7]">
+                <table className="w-full text-left bg-white">
+                  <thead className="bg-[#F3F3F0]">
                     <tr className="text-[10px] font-black text-[#63716E] uppercase">
                       <th className="px-4 py-2">Name</th>
                       <th className="px-4 py-2">Job Title</th>
@@ -1525,7 +1522,7 @@ export default function DashboardPage() {
                       attendance.map((a, i) => (
                         <tr
                           key={i}
-                          className="hover:bg-[#F7F7F7]/50 transition-colors h-[54px]"
+                          className="hover:bg-[#F3F3F0]/50 transition-colors h-[54px]"
                         >
                           <td className="px-4 py-2">
                             <div className="flex items-center gap-2">
@@ -1571,7 +1568,7 @@ export default function DashboardPage() {
                                   : a.status === "Late"
                                     ? "bg-[#FFEFEF] text-[#E63D4B]"
                                     : a.status === "On Leave"
-                                      ? "bg-[#F7F7F7] text-[#63716E]"
+                                      ? "bg-[#F3F3F0] text-[#63716E]"
                                       : "bg-[#203430] text-white",
                               )}
                             >
@@ -1587,8 +1584,8 @@ export default function DashboardPage() {
             </Card>
 
             {/* Employee Payroll Approvals Pending Cases */}
-            <Card className="p-0 border-none rounded-[16px] bg-white shadow-sm overflow-hidden flex flex-col mb-5">
-              <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E5E6E6]">
+            <Card className="p-0 border border-[#E6E6E4] rounded-[16px] bg-white overflow-hidden flex flex-col mb-5">
+              <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E4E4E1]">
                 <div>
                   <h3 className="text-[16px] font-bold text-[#203430]">
                     Payroll Approvals Queue
@@ -1616,7 +1613,7 @@ export default function DashboardPage() {
                           className="fixed inset-0 z-[199]"
                           onClick={() => setPayrollMenuOpen(false)}
                         />
-                        <div className="absolute right-0 top-7 z-[200] w-48 bg-white rounded-xl shadow-lg border border-[#E5E6E6] py-1.5 text-left animate-in fade-in duration-100">
+                        <div className="absolute right-0 top-7 z-[200] w-48 bg-white rounded-xl shadow-lg border border-[#E4E4E1] py-1.5 text-left animate-in fade-in duration-100">
                           <button
                             type="button"
                             onClick={() => {
@@ -1661,7 +1658,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="p-4 bg-[#F7F7F7]/50 flex flex-wrap gap-4 items-center justify-between border-b border-[#E5E6E6]">
+              <div className="p-4 bg-[#F3F3F0]/50 flex flex-wrap gap-4 items-center justify-between border-b border-[#E4E4E1]">
                 <div className="flex gap-6">
                   <div className="flex items-baseline gap-1">
                     <span className="text-[20px] font-bold text-[#203430]">
@@ -1671,7 +1668,7 @@ export default function DashboardPage() {
                       Cases Required
                     </span>
                   </div>
-                  <div className="flex items-baseline gap-1 border-l border-[#E5E6E6] pl-6">
+                  <div className="flex items-baseline gap-1 border-l border-[#E4E4E1] pl-6">
                     <span className="text-[20px] font-bold text-[#35BFA3]">
                       {approvedCount}
                     </span>
@@ -1702,7 +1699,7 @@ export default function DashboardPage() {
                   pendingPayrolls.map((payroll) => (
                     <div
                       key={payroll.id}
-                      className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#F7F7F7]/20 transition-colors"
+                      className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#F3F3F0]/20 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <img
@@ -1746,7 +1743,7 @@ export default function DashboardPage() {
                           onClick={() =>
                             handleApprovePayroll(payroll.id, payroll.name)
                           }
-                          className="bg-[#006b5f] hover:bg-[#005047] text-white font-black text-[11px] px-3.5 py-2 rounded-[8px] transition-all shadow-sm active:scale-95 cursor-pointer h-9 flex items-center justify-center whitespace-nowrap"
+                          className="bg-[#006b5f] hover:bg-[#005047] text-white font-black text-[11px] px-3.5 py-2 rounded-[8px] transition-all active:scale-95 cursor-pointer h-9 flex items-center justify-center whitespace-nowrap"
                         >
                           Approve Instance
                         </button>
@@ -1759,7 +1756,7 @@ export default function DashboardPage() {
 
           {/* Column 3: Performance, Resources & Activities (3/12) */}
           <div className="lg:col-span-3 space-y-5">
-            <Card className="p-4 border-none rounded-[16px] bg-white shadow-sm flex flex-col hover:border-slate-200 transition-all">
+            <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col hover:border-slate-200 transition-all">
               <div className="flex items-center justify-between mb-4">
                 <h3 
                   onClick={() => navigate("/performance")}
@@ -1769,13 +1766,13 @@ export default function DashboardPage() {
                 </h3>
                 <button 
                   onClick={() => navigate("/performance")}
-                  className="flex items-center gap-1 bg-[#F7F7F7] hover:bg-slate-100 px-2.5 py-1.5 rounded-[8px] text-[11px] font-bold text-[#006b5f] transition-all border-none cursor-pointer"
+                  className="flex items-center gap-1 bg-white hover:bg-slate-100 px-2.5 py-1.5 rounded-[8px] text-[11px] font-bold text-[#006b5f] transition-all border-none cursor-pointer"
                 >
                   Details →
                 </button>
               </div>
               {employeesCount === 0 ? (
-                <div className="h-[180px] w-full flex flex-col items-center justify-center text-center space-y-2 bg-[#F7F7F7]/25 border border-dashed border-[#E5E6E6] rounded-[12px] p-3">
+                <div className="h-[180px] w-full flex flex-col items-center justify-center text-center space-y-2 bg-white/25 border border-dashed border-[#E4E4E1] rounded-[12px] p-3">
                   <TrendingUp className="h-6 w-6 text-[#A4ACAB]" />
                   <p className="text-[11px] font-bold text-[#63716E]">
                     No tracking data
@@ -1834,7 +1831,7 @@ export default function DashboardPage() {
                       </AreaChart>
                     </ResponsiveContainer>
                     {/* Tooltip Overlay */}
-                    <div className="absolute right-4 top-2 bg-white px-2 py-1 rounded-[6px] shadow-lg border border-[#E5E6E6] flex flex-col items-center">
+                    <div className="absolute right-4 top-2 bg-white px-2 py-1 rounded-[6px] shadow-lg border border-[#E4E4E1] flex flex-col items-center">
                       <span className="text-[8px] text-[#63716E]">May 2035</span>
                       <span className="text-[11px] font-bold text-[#203430]">
                         95.2%
@@ -1853,7 +1850,7 @@ export default function DashboardPage() {
               )}
             </Card>
 
-            <Card className="p-4 border-none rounded-[16px] bg-white shadow-sm hover:border-slate-200 transition-all">
+            <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white hover:border-slate-200 transition-all">
               <div className="flex items-center justify-between mb-4">
                 <h3 
                   onClick={() => navigate("/employees")}
@@ -1873,7 +1870,7 @@ export default function DashboardPage() {
                 const totalEmps = emps.length;
                 if (totalEmps === 0) {
                   return (
-                    <div className="py-8 text-center border border-dashed border-[#E5E6E6] rounded-xl flex flex-col items-center justify-center space-y-1.5">
+                    <div className="py-8 text-center border border-dashed border-[#E4E4E1] rounded-xl flex flex-col items-center justify-center space-y-1.5">
                       <Users className="h-6 w-6 text-brand" />
                       <span className="text-xs font-bold text-[#63716E]">Empty employee roster</span>
                       <span className="text-[9px] text-[#A4ACAB]">Add new hires to categorize contract models.</span>
@@ -1902,7 +1899,7 @@ export default function DashboardPage() {
                       </span>
                       <span className="text-[11px] text-[#63716E]">Employees</span>
                     </div>
-                    <div className="h-2.5 w-full flex bg-[#F7F7F7] rounded-full overflow-hidden">
+                    <div className="h-2.5 w-full flex bg-white border border-[#E6E6E4] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-[#0E4D41]"
                         style={{ width: `${ftPct}%` }}
@@ -1916,7 +1913,7 @@ export default function DashboardPage() {
                         style={{ width: `${flPct}%` }}
                       />
                       <div
-                        className="h-full bg-[#E5E6E6]"
+                        className="h-full bg-[#F3F3F0]"
                         style={{ width: `${inPct}%` }}
                       />
                     </div>
@@ -1944,7 +1941,7 @@ export default function DashboardPage() {
                           label: "Internship",
                           val: `${inPct}%`,
                           emp: `${inCount} ${inCount === 1 ? 'Employee' : 'Employees'}`,
-                          color: "bg-[#E5E6E6]",
+                          color: "bg-[#F3F3F0]",
                         },
                       ].map((item) => (
                         <div key={item.label} className="space-y-1">
@@ -1968,7 +1965,7 @@ export default function DashboardPage() {
               })()}
             </Card>
 
-            <Card className="p-4 border-none rounded-[16px] bg-white shadow-sm animate-in fade-in duration-150">
+            <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white animate-in fade-in duration-150">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[14px] font-bold text-[#203430]">Tasks</h3>
                 <div className="flex items-center gap-1.5 animate-in fade-in">
@@ -1995,21 +1992,21 @@ export default function DashboardPage() {
               {showAddTask && (
                 <form
                   onSubmit={handleAddTask}
-                  className="bg-[#F7F7F7] p-2.5 rounded-xl mb-4 border border-[#E5E6E6] space-y-2 text-left animate-in slide-in-from-top-2 duration-150"
+                  className="bg-white p-2.5 rounded-xl mb-4 border border-[#E4E4E1] space-y-2 text-left animate-in slide-in-from-top-2 duration-150"
                 >
                   <input
                     type="text"
                     placeholder="Task Description..."
                     value={newTaskTitle}
                     onChange={(e) => setNewTaskTitle(e.target.value)}
-                    className="w-full text-xs font-semibold p-2 bg-white rounded-lg border border-[#E5E6E6] outline-none"
+                    className="w-full text-xs font-semibold p-2 bg-white rounded-lg border border-[#E4E4E1] outline-none"
                     required
                   />
                   <div className="flex items-center justify-between">
                     <select
                       value={newTaskCategory}
                       onChange={(e) => setNewTaskCategory(e.target.value)}
-                      className="text-[9px] bg-white border border-[#E5E6E6] p-1 rounded font-bold outline-none"
+                      className="text-[9px] bg-white border border-[#E4E4E1] p-1 rounded font-bold outline-none"
                     >
                       <option value="Employee Development">Development</option>
                       <option value="Talent Acquisition">Recruiting</option>
@@ -2036,7 +2033,7 @@ export default function DashboardPage() {
 
               <div className="space-y-4">
                 {tasks.length === 0 ? (
-                  <div className="py-6 text-center border border-dashed border-[#E5E6E6] rounded-xl flex flex-col items-center justify-center space-y-1 bg-[#F7F7F7]/25">
+                  <div className="py-6 text-center border border-dashed border-[#E4E4E1] rounded-xl flex flex-col items-center justify-center space-y-1 bg-white/25">
                     <CheckSquare className="h-6 w-6 text-brand" />
                     <p className="text-xs font-bold text-[#63716E]">
                       All caught up!
@@ -2085,7 +2082,7 @@ export default function DashboardPage() {
                                 task.category === "Employee Development"
                                   ? "bg-[#FFEFEF] text-[#E63D4B]"
                                   : task.category === "Workplace Engagement"
-                                    ? "bg-[#F7F7F7] text-[#63716E]"
+                                    ? "bg-[#F3F3F0] text-[#63716E]"
                                     : "bg-[#E4F2D3] text-[#0E4D41]",
                               )}
                             >
@@ -2116,7 +2113,7 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="p-4 border-none rounded-[16px] bg-white shadow-sm">
+            <Card className="p-4 border border-[#E6E6E4] rounded-[16px] bg-white">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[14px] font-bold text-[#203430]">
                   Recent Activities
@@ -2138,7 +2135,7 @@ export default function DashboardPage() {
               </div>
               <div className="space-y-6">
                 {activities.length === 0 ? (
-                  <div className="py-8 text-center border border-dashed border-[#E5E6E6] rounded-xl flex flex-col items-center justify-center space-y-1">
+                  <div className="py-8 text-center border border-dashed border-[#E4E4E1] rounded-xl flex flex-col items-center justify-center space-y-1">
                     <p className="text-xs font-bold text-[#63716E]">
                       No recent activity
                     </p>
@@ -2189,7 +2186,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <footer className="mt-10 py-8 border-t border-[#E5E6E6] flex items-center justify-between">
+      <footer className="mt-10 py-8 border-t border-[#E4E4E1] flex items-center justify-between">
         <p className="text-[12px] font-bold text-[#203430]">
           Copyright © 2025 Peterdraw
         </p>

@@ -105,6 +105,14 @@ export default function LoginPage() {
             Register now
           </Link>
         </p>
+
+        <div className="rounded-xl border border-[#E4E4E1] bg-slate-50 px-4 py-3 text-left text-xs text-slate-500">
+          <p className="font-semibold text-slate-700">Static demo accounts</p>
+          <p className="mt-1">Admin: davis.levin@teamhub.corp</p>
+          <p>Manager: marcus.brody@teamhub.corp</p>
+          <p>Employee: olivia.chen@teamhub.corp</p>
+          <p className="mt-1">Password: <span className="font-medium text-slate-700">TeamHub@123</span></p>
+        </div>
       </form>
     </AuthLayout>
   );

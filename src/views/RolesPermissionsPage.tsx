@@ -368,7 +368,7 @@ export default function RolesPermissionsPage() {
           </div>
           <button 
             onClick={() => setIsCreateModalOpen(true)}
-            className="px-5 py-2.5 bg-[#006b5f] hover:bg-[#005047] text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer shadow-md shadow-teal-700/10 transition-all shrink-0 active:scale-95"
+            className="px-5 py-2.5 bg-[#006b5f] hover:bg-[#005047] text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer shadow-teal-700/10 transition-all shrink-0 active:scale-95"
           >
             <Plus className="h-4.5 w-4.5" />
             Create New Role
@@ -379,8 +379,8 @@ export default function RolesPermissionsPage() {
         <div className="grid grid-cols-1 gap-6 max-w-xs">
           
           {/* Stats Card: Active Roles */}
-          <div className="bg-white p-5 rounded-2xl flex items-center gap-4.5 border border-slate-100 shadow-xs">
-            <div className="w-12 h-12 bg-[#f3f4f5] border border-slate-100 rounded-xl flex items-center justify-center shrink-0 shadow-3xs text-slate-500">
+          <div className="bg-white p-5 rounded-2xl flex items-center gap-4.5 border border-[#E4E4E1] shadow-xs">
+            <div className="w-12 h-12 bg-[#F3F3F0] border border-[#E4E4E1] rounded-xl flex items-center justify-center shrink-0 shadow-3xs text-slate-500">
               <ShieldAlert className="h-5.5 w-5.5" />
             </div>
             <div>
@@ -392,10 +392,10 @@ export default function RolesPermissionsPage() {
         </div>
 
         {/* Roles Table Container Card (Pristine layout with search and filter parameters) */}
-        <section className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+        <section className="bg-white rounded-2xl border border-[#E4E4E1] overflow-hidden flex flex-col">
           
           {/* Header row of list */}
-          <div className="p-6 border-b border-slate-55 border-slate-100/85 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4.5 bg-slate-50/10">
+          <div className="p-6 border-b border-slate-55 border-[#E4E4E1]/85 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4.5 bg-slate-50/10">
             <div className="flex items-center gap-3">
               <h3 className="text-base font-bold text-slate-900">Role Definitions</h3>
               <span className="px-2.5 py-0.5 bg-slate-100 border border-slate-200 text-slate-500 text-[10px] font-extrabold rounded-full uppercase tracking-wider">
@@ -423,7 +423,7 @@ export default function RolesPermissionsPage() {
           </div>
 
           {/* Quick Realtime Search input */}
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-4">
+          <div className="px-6 py-4 border-b border-[#E4E4E1] flex items-center gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
               <input 
@@ -460,7 +460,7 @@ export default function RolesPermissionsPage() {
 
           {/* Dynamic slider filter panel */}
           {isFilterPopoverOpen && (
-            <div className="p-6 bg-slate-50 border-b border-slate-100 flex flex-col md:flex-row gap-6 items-start animate-fade-in duration-200">
+            <div className="p-6 bg-slate-50 border-b border-[#E4E4E1] flex flex-col md:flex-row gap-6 items-start animate-fade-in duration-200">
               <div className="flex-1 space-y-2">
                 <div className="flex justify-between items-center text-xs font-bold text-slate-500">
                   <span>Minimum Assigned Members in Role</span>
@@ -488,7 +488,7 @@ export default function RolesPermissionsPage() {
                 </button>
                 <button 
                   onClick={() => setIsFilterPopoverOpen(false)}
-                  className="px-3.5 py-2 bg-[#006b5f] text-white rounded-xl text-xs font-bold hover:bg-[#005047] shadow-md"
+                  className="px-3.5 py-2 bg-[#006b5f] text-white rounded-xl text-xs font-bold hover:bg-[#005047]"
                 >
                   Apply
                 </button>
@@ -498,9 +498,9 @@ export default function RolesPermissionsPage() {
 
           {/* Interactive Core Table Grid */}
           <div className="overflow-x-auto whitespace-nowrap">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse bg-white">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100 font-extrabold uppercase tracking-wider text-[10px] text-slate-400">
+                <tr className="bg-slate-50 border-b border-[#E4E4E1] font-extrabold uppercase tracking-wider text-[10px] text-slate-400">
                   <th className="px-6 py-3.5">Role Name</th>
                   <th className="px-6 py-3.5">Description</th>
                   <th className="px-6 py-3.5">Users Assigned</th>
@@ -543,14 +543,14 @@ export default function RolesPermissionsPage() {
                       <td className="px-6 py-4.5" onClick={(e) => e.stopPropagation()}>
                         {role.count === 1224 ? (
                           <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-[#d4e7d8] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#57685d] shadow-sm font-sans shrink-0">
+                            <div className="w-7 h-7 rounded-full bg-[#d4e7d8] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#57685d] font-sans shrink-0">
                               1K+
                             </div>
                             <span className="text-xs text-slate-500 font-bold font-mono">1,224 members</span>
                           </div>
                         ) : role.count === 42 ? (
                           <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-[#d4e7d8] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#57685d] shadow-sm font-sans shrink-0">
+                            <div className="w-7 h-7 rounded-full bg-[#d4e7d8] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#57685d] font-sans shrink-0">
                               42
                             </div>
                             <span className="text-xs text-slate-500 font-bold font-mono">42 members</span>
@@ -635,7 +635,7 @@ export default function RolesPermissionsPage() {
           </div>
 
           {/* Simple Pagination Footer from mockup */}
-          <div className="p-4 bg-slate-50 flex items-center justify-between border-t border-slate-100 text-xs">
+          <div className="p-4 bg-slate-50 flex items-center justify-between border-t border-[#E4E4E1] text-xs">
             <span className="text-slate-400 font-bold font-sans">Showing 5 of {roles.length} roles</span>
             <div className="flex gap-1">
               <button className="p-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-450 rounded-lg cursor-pointer">
@@ -690,7 +690,7 @@ export default function RolesPermissionsPage() {
                   <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">Dashboard Access</h4>
                 </div>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3.5 bg-white border border-slate-100 rounded-lg shadow-3xs">
+                  <div className="flex items-center justify-between p-3.5 bg-white border border-[#E4E4E1] rounded-lg shadow-3xs">
                     <span className="text-xs font-bold text-slate-700">View Analytics</span>
                     <button 
                       onClick={() => setTempPermissions({ ...tempPermissions, viewAnalytics: !tempPermissions.viewAnalytics })}
@@ -699,7 +699,7 @@ export default function RolesPermissionsPage() {
                       <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${tempPermissions.viewAnalytics ? "translate-x-5" : ""}`} />
                     </button>
                   </div>
-                  <div className="flex items-center justify-between p-3.5 bg-white border border-slate-100 rounded-lg shadow-3xs">
+                  <div className="flex items-center justify-between p-3.5 bg-white border border-[#E4E4E1] rounded-lg shadow-3xs">
                     <span className="text-xs font-bold text-slate-700">Export Reports</span>
                     <button 
                       onClick={() => setTempPermissions({ ...tempPermissions, exportReports: !tempPermissions.exportReports })}
@@ -718,7 +718,7 @@ export default function RolesPermissionsPage() {
                   <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">Employee Records</h4>
                 </div>
                 <div className="grid grid-cols-2 gap-3.5">
-                  <label className="p-3.5 bg-white border border-slate-100 rounded-xl flex items-center gap-2.5 shadow-3xs cursor-pointer">
+                  <label className="p-3.5 bg-white border border-[#E4E4E1] rounded-xl flex items-center gap-2.5 shadow-3xs cursor-pointer">
                     <input 
                       type="checkbox" 
                       checked={tempPermissions.viewEmp}
@@ -727,7 +727,7 @@ export default function RolesPermissionsPage() {
                     />
                     <span className="text-xs font-bold text-slate-600">View Details</span>
                   </label>
-                  <label className="p-3.5 bg-white border border-slate-100 rounded-xl flex items-center gap-2.5 shadow-3xs cursor-pointer">
+                  <label className="p-3.5 bg-white border border-[#E4E4E1] rounded-xl flex items-center gap-2.5 shadow-3xs cursor-pointer">
                     <input 
                       type="checkbox" 
                       checked={tempPermissions.editEmp}
@@ -746,7 +746,7 @@ export default function RolesPermissionsPage() {
                   <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">Financial & Payroll</h4>
                 </div>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3.5 bg-white border border-slate-100 rounded-lg shadow-3xs">
+                  <div className="flex items-center justify-between p-3.5 bg-white border border-[#E4E4E1] rounded-lg shadow-3xs">
                     <div className="leading-snug">
                       <span className="text-xs font-bold text-slate-700">Salary Access</span>
                       <p className="text-[10px] text-slate-400 font-medium">View and modify salary levels</p>
@@ -758,7 +758,7 @@ export default function RolesPermissionsPage() {
                       <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${tempPermissions.salaryAccess ? "translate-x-5" : ""}`} />
                     </button>
                   </div>
-                  <div className="flex items-center justify-between p-3.5 bg-white border border-slate-100 rounded-lg shadow-3xs">
+                  <div className="flex items-center justify-between p-3.5 bg-white border border-[#E4E4E1] rounded-lg shadow-3xs">
                     <div className="leading-snug">
                       <span className="text-xs font-bold text-slate-700">Bank Details</span>
                       <p className="text-[10px] text-slate-400 font-medium">View sensitive corporate banking info</p>
@@ -780,7 +780,7 @@ export default function RolesPermissionsPage() {
                   <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">System Configuration</h4>
                 </div>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3.5 bg-white border border-slate-100 rounded-lg shadow-3xs">
+                  <div className="flex items-center justify-between p-3.5 bg-white border border-[#E4E4E1] rounded-lg shadow-3xs">
                     <span className="text-xs font-bold text-slate-700">Security Policies</span>
                     <button 
                       onClick={() => setTempPermissions({ ...tempPermissions, securityPolicies: !tempPermissions.securityPolicies })}
@@ -789,7 +789,7 @@ export default function RolesPermissionsPage() {
                       <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${tempPermissions.securityPolicies ? "translate-x-5" : ""}`} />
                     </button>
                   </div>
-                  <div className="flex items-center justify-between p-3.5 bg-white border border-slate-100 rounded-lg shadow-3xs">
+                  <div className="flex items-center justify-between p-3.5 bg-white border border-[#E4E4E1] rounded-lg shadow-3xs">
                     <span className="text-xs font-bold text-slate-700">Global Settings</span>
                     <button 
                       onClick={() => setTempPermissions({ ...tempPermissions, globalSettings: !tempPermissions.globalSettings })}
@@ -890,7 +890,7 @@ export default function RolesPermissionsPage() {
                   
                   {/* Category 1: EMPLOYEE MANAGEMENT */}
                   <div className="border border-slate-200 rounded-lg overflow-hidden flex flex-col shadow-3xs">
-                    <div className="bg-[#f3f4f5] px-4 py-1.5 text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                    <div className="bg-[#F3F3F0] px-4 py-1.5 text-[10px] font-black text-slate-500 uppercase tracking-wider">
                       Employee Management
                     </div>
                     <div className="divide-y divide-slate-100">
@@ -928,7 +928,7 @@ export default function RolesPermissionsPage() {
 
                   {/* Category 2: FINANCE & PAYROLL */}
                   <div className="border border-slate-200 rounded-lg overflow-hidden flex flex-col shadow-3xs">
-                    <div className="bg-[#f3f4f5] px-4 py-1.5 text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                    <div className="bg-[#F3F3F0] px-4 py-1.5 text-[10px] font-black text-slate-500 uppercase tracking-wider">
                       Finance & Payroll
                     </div>
                     <div className="divide-y divide-slate-100">
@@ -966,7 +966,7 @@ export default function RolesPermissionsPage() {
 
                   {/* Category 3: SCHEDULE MANAGEMENT */}
                   <div className="border border-slate-200 rounded-lg overflow-hidden flex flex-col shadow-3xs">
-                    <div className="bg-[#f3f4f5] px-4 py-1.5 text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                    <div className="bg-[#F3F3F0] px-4 py-1.5 text-[10px] font-black text-slate-500 uppercase tracking-wider">
                       Schedule Management
                     </div>
                     <div className="divide-y divide-slate-100">
@@ -1002,7 +1002,7 @@ export default function RolesPermissionsPage() {
                 </button>
                 <button 
                   type="submit"
-                  className="px-5 h-10 bg-[#006b5f] text-white hover:bg-[#005047] font-bold rounded-lg text-xs shadow-sm transition-colors cursor-pointer"
+                  className="px-5 h-10 bg-[#006b5f] text-white hover:bg-[#005047] font-bold rounded-lg text-xs transition-colors cursor-pointer"
                 >
                   Create Role
                 </button>
@@ -1022,7 +1022,7 @@ export default function RolesPermissionsPage() {
             className="fixed inset-0 bg-slate-950/45 backdrop-blur-xs transition-opacity"
           />
 
-          <div className="relative bg-white w-full max-w-lg rounded-2xl border border-slate-100 shadow-2xl overflow-hidden animate-scale-up z-10 flex flex-col">
+          <div className="relative bg-white w-full max-w-lg rounded-2xl border border-[#E4E4E1] shadow-2xl overflow-hidden animate-scale-up z-10 flex flex-col">
             
             {/* Header */}
             <div className="px-6 py-4.5 border-b border-rose-50 flex justify-between items-center bg-rose-50/20">
@@ -1058,7 +1058,7 @@ export default function RolesPermissionsPage() {
               {roleToDelete.count > 0 && roleToDelete.members.length > 0 && (
                 <div className="space-y-2.5">
                   <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assigned Members ({roleToDelete.count})</h4>
-                  <div className="max-h-32 overflow-y-auto border border-slate-150-variant border-slate-100 bg-slate-50/50 p-3 rounded-xl divide-y divide-slate-100">
+                  <div className="max-h-32 overflow-y-auto border border-slate-150-variant border-[#E4E4E1] bg-slate-50/50 p-3 rounded-xl divide-y divide-slate-100">
                     {roleToDelete.members.map((member, i) => (
                       <div key={i} className="py-2 flex items-center gap-2 text-xs font-semibold text-slate-700">
                         <div className="w-5.5 h-5.5 rounded-full bg-[#d4e7d8] flex items-center justify-center text-[8px] font-extrabold text-[#57685d]">
@@ -1093,7 +1093,7 @@ export default function RolesPermissionsPage() {
               )}
 
               {/* Footers controls */}
-              <div className="flex items-center justify-end gap-3 pt-5 border-t border-slate-100 bg-slate-50 -mx-6 -mb-6 px-6 py-4 rounded-b-2xl">
+              <div className="flex items-center justify-end gap-3 pt-5 border-t border-[#E4E4E1] bg-slate-50 -mx-6 -mb-6 px-6 py-4 rounded-b-2xl">
                 <button 
                   type="button" 
                   onClick={() => setRoleToDelete(null)}
@@ -1104,7 +1104,7 @@ export default function RolesPermissionsPage() {
                 <button 
                   type="button"
                   onClick={handleDeleteConfirm}
-                  className="px-6 h-10 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md cursor-pointer transition-all flex items-center justify-center"
+                  className="px-6 h-10 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center justify-center"
                 >
                   Confirm Deletion
                 </button>

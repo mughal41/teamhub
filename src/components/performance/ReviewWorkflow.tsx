@@ -148,7 +148,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
           <button 
             type="button"
             onClick={onCancel}
-            className="bg-white border border-[#E5E6E6] text-[#203430] px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-55 transition-all cursor-pointer h-11 flex items-center justify-center gap-1.5 shadow-sm"
+            className="bg-white border border-[#E4E4E1] text-[#203430] px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-55 transition-all cursor-pointer h-11 flex items-center justify-center gap-1.5 shadow-sm"
           >
             ← Back to List
           </button>
@@ -185,7 +185,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
       </div>
 
       {/* 1. Workflow Progress Tracker Card */}
-      <section className="bg-white border border-[#E5E6E6] p-6 rounded-2xl shadow-sm">
+      <section className="bg-white border border-[#E4E4E1] p-6 rounded-2xl shadow-sm">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 relative">
           {/* Main Progress Line Underlay */}
           <div className="absolute left-[18px] right-[18px] top-[18px] h-1 bg-slate-100 -z-0 hidden sm:block" />
@@ -265,11 +265,11 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
         <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
           
           {/* Header Banner */}
-          <section className="bg-white rounded-2xl p-6 border border-[#E5E6E6] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
+          <section className="bg-white rounded-2xl p-6 border border-[#E4E4E1] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
             <div className="flex items-center gap-4">
               <img 
                 alt={employee.name} 
-                className="w-16 h-16 rounded-xl object-cover border-2 border-slate-100 shrink-0 bg-brand" 
+                className="w-16 h-16 rounded-xl object-cover border-2 border-[#E4E4E1] shrink-0 bg-brand" 
                 src={employee.avatar} 
               />
               <div>
@@ -296,7 +296,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
               </div>
 
               {/* KPI 1: Technical Execution */}
-              <div className="bg-white border border-[#E5E6E6] rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-white border border-[#E4E4E1] rounded-2xl overflow-hidden shadow-sm">
                 <div className="p-6 flex flex-col gap-4">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
@@ -310,7 +310,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
                     </div>
 
                     {/* Score Buttons */}
-                    <div className="flex items-center self-start gap-1 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                    <div className="flex items-center self-start gap-1 bg-slate-50 p-1.5 rounded-xl border border-[#E4E4E1]">
                       {[1, 2, 3, 4, 5].map((val) => (
                         <button
                           key={val}
@@ -339,7 +339,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
               </div>
 
               {/* KPI 2: Collaboration */}
-              <div className="bg-white border border-[#E5E6E6] rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-white border border-[#E4E4E1] rounded-2xl overflow-hidden shadow-sm">
                 <div className="p-6 flex flex-col gap-4">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
@@ -353,7 +353,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
                     </div>
 
                     {/* Score Buttons */}
-                    <div className="flex items-center self-start gap-1 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                    <div className="flex items-center self-start gap-1 bg-slate-50 p-1.5 rounded-xl border border-[#E4E4E1]">
                       {[1, 2, 3, 4, 5].map((val) => (
                         <button
                           key={val}
@@ -382,7 +382,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
               </div>
 
               {/* KPI 3: Timeliness */}
-              <div className="bg-white border border-[#E5E6E6] rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-white border border-[#E4E4E1] rounded-2xl overflow-hidden shadow-sm">
                 <div className="p-6 flex flex-col gap-4">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
@@ -396,7 +396,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
                     </div>
 
                     {/* Score Buttons */}
-                    <div className="flex items-center self-start gap-1 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                    <div className="flex items-center self-start gap-1 bg-slate-50 p-1.5 rounded-xl border border-[#E4E4E1]">
                       {[1, 2, 3, 4, 5].map((val) => (
                         <button
                           key={val}
@@ -446,11 +446,11 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
                 
                 <div className="px-6 pb-6 text-sm text-[#203430] border-t border-[#E4F2D3]/45 pt-4 space-y-4 bg-slate-50/50">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-4 bg-white rounded-xl border border-slate-100">
+                    <div className="p-4 bg-white rounded-xl border border-[#E4E4E1]">
                       <p className="text-[10px] text-[#63716E] font-black uppercase tracking-wider mb-1">Observed Strengths</p>
                       <p className="text-xs text-[#203430] leading-relaxed font-medium">Consistently crafts top quality UI blueprints. Exceptional digital execution speed.</p>
                     </div>
-                    <div className="p-4 bg-white rounded-xl border border-slate-100">
+                    <div className="p-4 bg-white rounded-xl border border-[#E4E4E1]">
                       <p className="text-[10px] text-[#63716E] font-black uppercase tracking-wider mb-1">Growth Actions</p>
                       <p className="text-xs text-[#203430] leading-relaxed font-medium">Could coordinate core framework handoffs earlier to expedite final deliverables verification.</p>
                     </div>
@@ -467,7 +467,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
               </div>
 
               {/* KPI 1: Strategic Leadership */}
-              <div className="bg-white border border-[#E5E6E6] rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-white border border-[#E4E4E1] rounded-2xl overflow-hidden shadow-sm">
                 <div className="p-6 flex flex-col gap-4">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
@@ -480,7 +480,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
                       </div>
                     </div>
 
-                    <div className="flex items-center self-start gap-1 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                    <div className="flex items-center self-start gap-1 bg-slate-50 p-1.5 rounded-xl border border-[#E4E4E1]">
                       {[1, 2, 3, 4, 5].map((val) => (
                         <button
                           key={val}
@@ -506,7 +506,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
               </div>
 
               {/* KPI 2: Stakeholder Management */}
-              <div className="bg-white border border-[#E5E6E6] rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-white border border-[#E4E4E1] rounded-2xl overflow-hidden shadow-sm">
                 <div className="p-6 flex flex-col gap-4">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
@@ -519,7 +519,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
                       </div>
                     </div>
 
-                    <div className="flex items-center self-start gap-1 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                    <div className="flex items-center self-start gap-1 bg-slate-50 p-1.5 rounded-xl border border-[#E4E4E1]">
                       {[1, 2, 3, 4, 5].map((val) => (
                         <button
                           key={val}
@@ -545,7 +545,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
               </div>
 
               {/* KPI 3: Budget Adherence */}
-              <div className="bg-white border border-[#E5E6E6] rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-white border border-[#E4E4E1] rounded-2xl overflow-hidden shadow-sm">
                 <div className="p-6 flex flex-col gap-4">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
@@ -558,7 +558,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
                       </div>
                     </div>
 
-                    <div className="flex items-center self-start gap-1 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                    <div className="flex items-center self-start gap-1 bg-slate-50 p-1.5 rounded-xl border border-[#E4E4E1]">
                       {[1, 2, 3, 4, 5].map((val) => (
                         <button
                           key={val}
@@ -615,14 +615,14 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
               </div>
 
               {/* HR KPI 1: Org Alignment */}
-              <div className="bg-white border border-[#E5E6E6] rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+              <div className="bg-white border border-[#E4E4E1] rounded-2xl p-6 shadow-sm flex flex-col gap-4">
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                   <div>
                     <h4 className="font-bold text-sm text-[#203430]">Organizational Alignment</h4>
                     <p className="text-xs text-[#63716E] font-medium leading-relaxed mt-0.5">Adherence to corporate culture values, team mentoring acts, and long-term targets.</p>
                   </div>
 
-                  <div className="flex gap-1 bg-slate-50 p-1.5 rounded-xl border border-slate-100 shrink-0">
+                  <div className="flex gap-1 bg-slate-50 p-1.5 rounded-xl border border-[#E4E4E1] shrink-0">
                     {[1, 2, 3, 4, 5].map((val) => (
                       <button
                         key={val}
@@ -647,14 +647,14 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
               </div>
 
               {/* HR KPI 2: Ethics Assessment */}
-              <div className="bg-white border border-[#E5E6E6] rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+              <div className="bg-white border border-[#E4E4E1] rounded-2xl p-6 shadow-sm flex flex-col gap-4">
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                   <div>
                     <h4 className="font-bold text-sm text-[#203430]">Compliance & Ethical Adherence</h4>
                     <p className="text-xs text-[#63716E] font-medium leading-relaxed mt-0.5">Prompt completion of state certifications, standard compliance checks, and team safety rules.</p>
                   </div>
 
-                  <div className="flex gap-1 bg-slate-50 p-1.5 rounded-xl border border-slate-100 shrink-0">
+                  <div className="flex gap-1 bg-slate-50 p-1.5 rounded-xl border border-[#E4E4E1] shrink-0">
                     {[1, 2, 3, 4, 5].map((val) => (
                       <button
                         key={val}
@@ -679,7 +679,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
               </div>
 
               {/* Professional Development Panel */}
-              <div className="bg-white border border-[#E5E6E6] rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="bg-white border border-[#E4E4E1] rounded-2xl p-6 shadow-sm space-y-4">
                 <div>
                   <h4 className="font-bold text-sm text-[#203430]">Compliance Development Checkpoints</h4>
                   <p className="text-xs text-[#63716E] mt-0.5">Review verified upskilling paths and certification logs.</p>
@@ -709,12 +709,12 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
               </div>
 
               {/* Overall Rating Selection Dropdown */}
-              <div className="bg-white border border-[#E5E6E6] rounded-2xl p-6 shadow-sm">
+              <div className="bg-white border border-[#E4E4E1] rounded-2xl p-6 shadow-sm">
                 <label className="text-xs font-black text-[#203430] uppercase tracking-wider block mb-2">Final Overall performance Rating</label>
                 <select 
                   value={finalRatingDropdown} 
                   onChange={(e) => setFinalRatingDropdown(e.target.value)}
-                  className="w-full max-w-sm border border-slate-300 rounded-xl px-4 py-3 text-sm font-bold text-[#203430] bg-[#F7F7F7] focus:ring-1 focus:ring-[#006b5f]"
+                  className="w-full max-w-sm border border-slate-300 rounded-xl px-4 py-3 text-sm font-bold text-[#203430] bg-[#F3F3F0] focus:ring-1 focus:ring-[#006b5f]"
                 >
                   <option value="Exceptional Performance">Exceptional Performance</option>
                   <option value="Exceeds Expectations">Exceeds Expectations</option>
@@ -758,8 +758,8 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
           )}
 
           {activePhase === 2 && (
-            <div className="bg-white border border-[#E5E6E6] rounded-2xl overflow-hidden shadow-sm">
-              <div className="bg-[#DFF2E3] p-5 border-b border-[#E5E6E6]">
+            <div className="bg-white border border-[#E4E4E1] rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-[#DFF2E3] p-5 border-b border-[#E4E4E1]">
                 <h4 className="text-xs font-black uppercase tracking-wider text-[#0E4D41] flex items-center gap-2">
                   <Info className="h-4.5 w-4.5" />
                   Scoring Real-time Summary
@@ -777,7 +777,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
                   </div>
                 </div>
 
-                <hr className="border-slate-100" />
+                <hr className="border-[#E4E4E1]" />
 
                 <div className="flex justify-between items-center">
                   <div>
@@ -858,7 +858,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
           )}
 
           {/* Review Stakeholders Card Tracker */}
-          <div className="bg-white border border-[#E5E6E6] rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="bg-white border border-[#E4E4E1] rounded-2xl p-5 shadow-sm space-y-4">
             <h4 className="text-xs font-black text-[#203430] uppercase tracking-wider">Assessment Stakeholders</h4>
             
             <div className="space-y-4">
@@ -881,7 +881,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
               {/* Manager */}
               <div className="flex items-center justify-between border-b border-slate-50 pb-3 last:border-b-0 last:pb-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#E5E6E6] text-[#203430] font-black text-xs flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-[#F3F3F0] text-[#203430] font-black text-xs flex items-center justify-center">
                     AC
                   </div>
                   <div>
@@ -944,7 +944,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
       </div>
 
       {/* Sticky footer actions with save/draft confirmations */}
-      <footer className="mt-8 bg-white border border-[#E5E6E6] rounded-2xl p-5 flex justify-between items-center shadow-sm">
+      <footer className="mt-8 bg-white border border-[#E4E4E1] rounded-2xl p-5 flex justify-between items-center shadow-sm">
         <span className="text-xs text-[#63716E] flex items-center gap-1.5 font-semibold">
           <Check className="h-4 w-4 text-[#006b5f]" />
           Review progress saved locally
@@ -953,7 +953,7 @@ export function ReviewWorkflow({ employee, selectedPeriod, onCancel, onPublishSu
           <button 
             type="button" 
             onClick={handleSaveDraft}
-            className="border border-[#E5E6E6] hover:bg-slate-50 text-[#203430] font-bold text-xs px-5 py-2.5 rounded-xl cursor-pointer"
+            className="border border-[#E4E4E1] hover:bg-slate-50 text-[#203430] font-bold text-xs px-5 py-2.5 rounded-xl cursor-pointer"
           >
             Save Draft
           </button>

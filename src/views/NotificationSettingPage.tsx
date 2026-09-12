@@ -185,7 +185,7 @@ export default function NotificationSettingPage() {
           <div className="md:col-span-4 space-y-6">
             
             {/* Frequency Selector Box */}
-            <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm flex flex-col gap-6">
+            <div className="bg-white border border-[#E4E4E1] p-6 rounded-2xl flex flex-col gap-6">
               <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2 border-b border-slate-50 pb-3">
                 <Clock className="h-4 w-4 text-brand" />
                 <span>Frequency</span>
@@ -198,7 +198,7 @@ export default function NotificationSettingPage() {
                   className={`flex items-center gap-3.5 p-4 rounded-xl border transition-all cursor-pointer select-none ${
                     frequency === "immediate" 
                       ? "border-brand bg-[#d4e7d8]/10" 
-                      : "border-slate-100 hover:border-slate-200"
+                      : "border-[#E4E4E1] hover:border-slate-200"
                   }`}
                 >
                   <input 
@@ -220,7 +220,7 @@ export default function NotificationSettingPage() {
                   className={`flex items-center gap-3.5 p-4 rounded-xl border transition-all cursor-pointer select-none ${
                     frequency === "daily" 
                       ? "border-brand bg-[#d4e7d8]/10" 
-                      : "border-slate-100 hover:border-slate-200"
+                      : "border-[#E4E4E1] hover:border-slate-200"
                   }`}
                 >
                   <input 
@@ -242,7 +242,7 @@ export default function NotificationSettingPage() {
                   className={`flex items-center gap-3.5 p-4 rounded-xl border transition-all cursor-pointer select-none ${
                     frequency === "weekly" 
                       ? "border-brand bg-[#d4e7d8]/10" 
-                      : "border-slate-100 hover:border-slate-200"
+                      : "border-[#E4E4E1] hover:border-slate-200"
                   }`}
                 >
                   <input 
@@ -261,7 +261,7 @@ export default function NotificationSettingPage() {
             </div>
 
             {/* Visual focus Mode Teaser card */}
-            <div className="relative h-48 rounded-2xl overflow-hidden shadow-sm group border border-slate-100 bg-teal-900 select-none">
+            <div className="relative h-48 rounded-2xl overflow-hidden group border border-[#E4E4E1] bg-teal-900 select-none">
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent z-10" />
               <img 
                 src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=600" 
@@ -285,8 +285,8 @@ export default function NotificationSettingPage() {
           <div className="md:col-span-8 space-y-6">
             
             {/* Email Notifications Segment */}
-            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-              <div className="bg-slate-50/50 px-6 py-4.5 border-b border-slate-100 flex items-center gap-3">
+            <section className="bg-white border border-[#E4E4E1] rounded-2xl overflow-hidden flex flex-col">
+              <div className="bg-slate-50/50 px-6 py-4.5 border-b border-[#E4E4E1] flex items-center gap-3">
                 <div className="w-9 h-9 bg-teal-50 text-brand rounded-xl flex items-center justify-center shrink-0">
                   <Mail className="h-4.5 w-4.5" />
                 </div>
@@ -309,7 +309,7 @@ export default function NotificationSettingPage() {
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${emailPayroll ? "bg-brand" : "bg-slate-200"}`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${emailPayroll ? "translate-x-5" : "translate-x-0"}`}
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${emailPayroll ? "translate-x-5" : "translate-x-0"}`}
                     />
                   </button>
                 </div>
@@ -326,7 +326,7 @@ export default function NotificationSettingPage() {
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${emailLeave ? "bg-brand" : "bg-slate-200"}`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${emailLeave ? "translate-x-5" : "translate-x-0"}`}
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${emailLeave ? "translate-x-5" : "translate-x-0"}`}
                     />
                   </button>
                 </div>
@@ -343,7 +343,7 @@ export default function NotificationSettingPage() {
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${emailDocuments ? "bg-brand" : "bg-slate-200"}`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${emailDocuments ? "translate-x-5" : "translate-x-0"}`}
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${emailDocuments ? "translate-x-5" : "translate-x-0"}`}
                     />
                   </button>
                 </div>
@@ -360,7 +360,7 @@ export default function NotificationSettingPage() {
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${emailAnnouncements ? "bg-brand" : "bg-slate-200"}`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${emailAnnouncements ? "translate-x-5" : "translate-x-0"}`}
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${emailAnnouncements ? "translate-x-5" : "translate-x-0"}`}
                     />
                   </button>
                 </div>
@@ -368,8 +368,8 @@ export default function NotificationSettingPage() {
             </section>
 
             {/* Push Notifications Segment */}
-            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-              <div className="bg-slate-50/50 px-6 py-4.5 border-b border-slate-100 flex items-center gap-3">
+            <section className="bg-white border border-[#E4E4E1] rounded-2xl overflow-hidden flex flex-col">
+              <div className="bg-slate-50/50 px-6 py-4.5 border-b border-[#E4E4E1] flex items-center gap-3">
                 <div className="w-9 h-9 bg-teal-50 text-brand rounded-xl flex items-center justify-center shrink-0">
                   <BellRing className="h-4.5 w-4.5" />
                 </div>
@@ -392,7 +392,7 @@ export default function NotificationSettingPage() {
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${pushAttendance ? "bg-brand" : "bg-slate-200"}`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${pushAttendance ? "translate-x-5" : "translate-x-0"}`}
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${pushAttendance ? "translate-x-5" : "translate-x-0"}`}
                     />
                   </button>
                 </div>
@@ -409,7 +409,7 @@ export default function NotificationSettingPage() {
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${pushMessages ? "bg-brand" : "bg-slate-200"}`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${pushMessages ? "translate-x-5" : "translate-x-0"}`}
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${pushMessages ? "translate-x-5" : "translate-x-0"}`}
                     />
                   </button>
                 </div>
@@ -426,7 +426,7 @@ export default function NotificationSettingPage() {
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${pushDeadlines ? "bg-brand" : "bg-slate-200"}`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${pushDeadlines ? "translate-x-5" : "translate-x-0"}`}
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${pushDeadlines ? "translate-x-5" : "translate-x-0"}`}
                     />
                   </button>
                 </div>
@@ -438,7 +438,7 @@ export default function NotificationSettingPage() {
         </div>
 
         {/* Floating Footer Action panel */}
-        <footer className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white/95 backdrop-blur-md border-t border-slate-100 p-4.5 flex justify-end gap-3.5 z-40 shadow-xl">
+        <footer className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white/95 backdrop-blur-md border-t border-[#E4E4E1] p-4.5 flex justify-end gap-3.5 z-40 shadow-xl">
           <button 
             type="button"
             onClick={handleDiscard}

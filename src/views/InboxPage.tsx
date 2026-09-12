@@ -397,7 +397,7 @@ export default function InboxPage() {
              onClick={() => {
                setIsComposeOpen(true);
              }}
-             className="w-full bg-brand h-[44px] rounded-[12px] flex items-center justify-center gap-2 text-white font-semibold hover:bg-[#005047] transition-colors shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
+             className="w-full bg-brand h-[44px] rounded-[12px] flex items-center justify-center gap-2 text-white font-semibold hover:bg-[#005047] transition-colors hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
            >
               <Plus className="h-5 w-5" /> New Message
            </button>
@@ -414,13 +414,13 @@ export default function InboxPage() {
                      }}
                      className={cn(
                        "w-full h-11 flex items-center px-3.5 gap-2.5 rounded-[12px] transition-all group text-left",
-                       isActive ? "bg-white text-[#203430] shadow-sm font-bold" : "text-[#63716E] hover:bg-white/50"
+                       isActive ? "bg-white text-[#203430] font-bold" : "text-[#63716E] hover:bg-white/50"
                      )}
                     >
                        <cat.icon className={cn("h-5 w-5 transition-colors shrink-0", isActive ? "text-[#203430]" : "text-[#63716E] group-hover:text-[#203430]")} />
                        <span className="text-[14px] font-medium flex-1 truncate">{cat.label}</span>
                        {!!cat.count && (
-                         <div className={cn("h-6 w-6 rounded-full flex items-center justify-center", isActive ? "bg-brand" : "bg-white border border-[#E5E6E6]")}>
+                         <div className={cn("h-6 w-6 rounded-full flex items-center justify-center", isActive ? "bg-brand" : "bg-white border border-[#E4E4E1]")}>
                             <span className={cn("text-[11px] font-bold", isActive ? "text-white" : "text-[#63716E]")}>{cat.count}</span>
                          </div>
                        )}
@@ -442,7 +442,7 @@ export default function InboxPage() {
                          }}
                          className={cn(
                            "w-full h-11 flex items-center px-3.5 gap-2.5 rounded-[12px] hover:bg-white/50 group transition-all text-left",
-                           isActive ? "bg-white text-[#203430] font-bold shadow-sm" : ""
+                           isActive ? "bg-white text-[#203430] font-bold" : ""
                          )}
                        >
                           <Tag className={cn("h-5 w-5 fill-current shrink-0", l.color.replace('bg-', 'text-'))} />
@@ -455,7 +455,7 @@ export default function InboxPage() {
         </div>
 
         {/* Email List Column */}
-        <Card className="flex-1 w-[385px] border-none rounded-[16px] bg-white shadow-sm flex flex-col p-4 gap-4 min-w-[320px]">
+        <Card className="flex-1 w-[385px] border border-[#E6E6E4] rounded-[16px] bg-white flex flex-col p-4 gap-4 min-w-[320px]">
            <div className="flex gap-2.5">
               <div className="relative flex-1">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[#203430]" />
@@ -464,7 +464,7 @@ export default function InboxPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search email" 
-                  className="w-full h-10 pl-10 pr-4 bg-[#F7F7F7] rounded-[10px] outline-none text-[14px] text-[#63716E]"
+                  className="w-full h-10 pl-10 pr-4 bg-[#F3F3F0] rounded-[10px] outline-none text-[14px] text-[#63716E]"
                  />
               </div>
               <button 
@@ -483,7 +483,7 @@ export default function InboxPage() {
            <div className="flex-1 overflow-y-auto space-y-0.5 pr-2 custom-scrollbar">
               {filteredEmails.length === 0 ? (
                 <div className="py-12 px-4 text-center flex flex-col items-center justify-center h-full gap-3">
-                  <div className="h-12 w-12 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
+                  <div className="h-12 w-12 rounded-full bg-slate-50 border border-[#E4E4E1] flex items-center justify-center text-slate-400">
                     <InboxIcon className="h-6 w-6" />
                   </div>
                   <div>
@@ -510,7 +510,7 @@ export default function InboxPage() {
                     }}
                     className={cn(
                       "w-full p-4 flex gap-4 rounded-[8px] transition-all text-left relative",
-                      e.id === activeEmailId ? "bg-[#F8FCF3]" : "bg-white border-b border-[#E5E6E6] last:border-none",
+                      e.id === activeEmailId ? "bg-white" : "bg-white border-b border-[#E4E4E1] last:border border-[#E6E6E4]",
                       e.unread && "border-l-[3px] border-l-[#0E4D41]"
                     )}
                    >
@@ -557,7 +557,7 @@ export default function InboxPage() {
         </Card>
 
         {/* Email Detail View Column */}
-        <div className="flex-[1.5] w-[543px] border-l border-[#E5E6E6] bg-white rounded-r-[16px] lg:rounded-[16px] shadow-sm flex flex-col p-4 min-w-0">
+        <div className="flex-[1.5] w-[543px] border-l border-[#E4E4E1] bg-white rounded-r-[16px] lg:rounded-[16px] flex flex-col p-4 min-w-0">
            {!activeEmail ? (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-slate-50/40 border border-dashed border-slate-200 rounded-[12px]">
                  <FileText className="h-10 w-10 text-slate-300 mb-3" />
@@ -569,7 +569,7 @@ export default function InboxPage() {
            ) : (
              <>
                {/* Detail Header */}
-               <div className="bg-[#F7F7F7] rounded-[10px] p-2 flex items-center justify-between mb-4">
+               <div className="bg-white border border-[#E6E6E4] rounded-[10px] p-2 flex items-center justify-between mb-4">
                   <div className="flex gap-2">
                      {[ArrowLeft, Archive, Trash2, Printer, MoreHorizontal].map((Icon, i) => (
                         <button 
@@ -597,7 +597,7 @@ export default function InboxPage() {
                          const prevIndex = filteredEmails.indexOf(activeEmail) - 1;
                          if (prevIndex >= 0) setActiveEmailId(filteredEmails[prevIndex].id);
                        }}
-                       className="h-7 w-7 flex items-center justify-center bg-white rounded-[8px] border border-[#E5E6E6] hover:bg-[#F7F7F7] disabled:opacity-50"
+                       className="h-7 w-7 flex items-center justify-center bg-white rounded-[8px] border border-[#E4E4E1] hover:bg-white disabled:opacity-50"
                      >
                         <ChevronLeft className="h-4 w-4" />
                      </button>
@@ -607,7 +607,7 @@ export default function InboxPage() {
                          const nextIndex = filteredEmails.indexOf(activeEmail) + 1;
                          if (nextIndex < filteredEmails.length) setActiveEmailId(filteredEmails[nextIndex].id);
                        }}
-                       className="h-7 w-7 flex items-center justify-center bg-white rounded-[8px] border border-[#E5E6E6] hover:bg-[#F7F7F7] disabled:opacity-50"
+                       className="h-7 w-7 flex items-center justify-center bg-white rounded-[8px] border border-[#E4E4E1] hover:bg-white disabled:opacity-50"
                      >
                         <ChevronRight className="h-4 w-4" />
                      </button>
@@ -631,11 +631,11 @@ export default function InboxPage() {
                      <div className="flex flex-col items-end gap-2">
                         <span className="text-[11px] text-[#777779] font-medium">{activeEmail.date || "Today"} – {activeEmail.time}</span>
                         <div className="flex gap-2">
-                           <button className="flex items-center gap-1.5 bg-[#F7F7F7] h-6 px-2 rounded-[8px] group hover:bg-[#203430] transition-all">
+                           <button className="flex items-center gap-1.5 bg-white border border-[#E6E6E4] h-6 px-2 rounded-[8px] group hover:bg-[#203430] transition-all">
                               <Reply className="h-3 w-3 text-[#203430] group-hover:text-white" />
                               <span className="text-[11px] font-bold text-[#203430] group-hover:text-white">Reply</span>
                            </button>
-                           <button className="flex items-center gap-1.5 bg-[#F7F7F7] h-6 px-2 rounded-[8px] group hover:bg-[#203430] transition-all">
+                           <button className="flex items-center gap-1.5 bg-white border border-[#E6E6E4] h-6 px-2 rounded-[8px] group hover:bg-[#203430] transition-all">
                               <Forward className="h-3 w-3 text-[#203430] group-hover:text-white" />
                               <span className="text-[11px] font-bold text-[#203430] group-hover:text-white">Forward</span>
                            </button>
@@ -643,7 +643,7 @@ export default function InboxPage() {
                      </div>
                   </div>
 
-                  <div className="h-px bg-[#E5E6E6] mb-5" />
+                  <div className="h-px bg-[#F3F3F0] mb-5" />
 
                   <h2 className="text-[16px] sm:text-[18px] font-bold text-[#1E1E20] mb-5">{activeEmail.title}</h2>
                   
@@ -665,12 +665,12 @@ export default function InboxPage() {
                </div>
 
                {/* Composition/Reply Section */}
-               <div className="mt-4 border border-[#E5E6E6] rounded-[16px] overflow-hidden flex flex-col min-h-[298px]">
+               <div className="mt-4 border border-[#E4E4E1] rounded-[16px] overflow-hidden flex flex-col min-h-[298px]">
                   <div className="p-4 flex-1 flex flex-col gap-4">
                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                            <span className="text-[14px] text-[#63716E]">To:</span>
-                           <div className="bg-[#F7F7F7] rounded-[4px] px-1.5 py-1 flex items-center gap-2">
+                           <div className="bg-white border border-[#E6E6E4] rounded-[4px] px-1.5 py-1 flex items-center gap-2">
                               <span className="text-[14px] font-bold text-[#203430]">{activeEmail.sender}</span>
                               <X 
                                 onClick={() => setActiveEmailId(null)}
@@ -686,29 +686,29 @@ export default function InboxPage() {
                      </div>
 
                      {/* Format Bar */}
-                     <div className="bg-[#F7F7F7] h-[38px] rounded-[8px] flex items-center px-3 gap-3 overflow-x-auto min-w-0">
+                     <div className="bg-[#F3F3F0] h-[38px] rounded-[8px] flex items-center px-3 gap-3 overflow-x-auto min-w-0">
                         <RotateCcw className="h-4 w-4 text-[#A4ACAB] cursor-pointer shrink-0" />
                         <RotateCw className="h-4 w-4 text-[#A4ACAB] cursor-pointer shrink-0" />
-                        <div className="w-px h-5 bg-[#E5E6E6] shrink-0" />
+                        <div className="w-px h-5 bg-[#F3F3F0] shrink-0" />
                         <div className="flex items-center gap-1.5 cursor-pointer shrink-0">
                            <span className="text-[12px] font-bold">Sans Serif</span>
                            <ChevronDown className="h-3 w-3" />
                         </div>
-                        <div className="w-px h-5 bg-[#E5E6E6] shrink-0" />
+                        <div className="w-px h-5 bg-[#F3F3F0] shrink-0" />
                         <div className="flex items-center gap-1.5 cursor-pointer shrink-0">
                            <Type className="h-4 w-4" />
                            <ChevronDown className="h-3 w-3" />
                         </div>
-                        <div className="w-px h-5 bg-[#E5E6E6] shrink-0" />
+                        <div className="w-px h-5 bg-[#F3F3F0] shrink-0" />
                         <div className="flex items-center gap-3 shrink-0">
                            <Bold className="h-4 w-4 text-[#203430] cursor-pointer" />
                            <Italic className="h-4 w-4 text-[#203430] cursor-pointer" />
                            <Underline className="h-4 w-4 text-[#203430] cursor-pointer" />
                         </div>
-                        <div className="w-px h-5 bg-[#E5E6E6] shrink-0" />
+                        <div className="w-px h-5 bg-[#F3F3F0] shrink-0" />
                         <AlignLeft className="h-4 w-4 text-[#203430] cursor-pointer shrink-0" />
                         <ListOrdered className="h-4 w-4 text-[#203430] cursor-pointer shrink-0" />
-                        <div className="w-px h-5 bg-[#E5E6E6] shrink-0" />
+                        <div className="w-px h-5 bg-[#F3F3F0] shrink-0" />
                         <ChevronDown className="h-4 w-4 text-[#203430] cursor-pointer shrink-0" />
                      </div>
 
@@ -721,7 +721,7 @@ export default function InboxPage() {
                   </div>
 
                   {/* Bottom Send Bar */}
-                  <div className="bg-[#F7F7F7] p-4 flex items-center justify-between border-t border-[#E5E6E6]">
+                  <div className="bg-[#F3F3F0] p-4 flex items-center justify-between border-t border-[#E4E4E1]">
                      <div className="flex gap-4 items-center">
                         <div className="flex overflow-hidden rounded-[8px] shrink-0">
                            <button 
@@ -755,7 +755,7 @@ export default function InboxPage() {
         </div>
       </div>
 
-      <footer className="mt-10 py-8 border-t border-[#E5E6E6] flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
+      <footer className="mt-10 py-8 border-t border-[#E4E4E1] flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
          <div className="flex flex-col sm:flex-row items-center gap-6 lg:gap-16 font-sans">
             <p className="text-[12px] font-bold text-[#203430]">Copyright © 2025 Peterdraw</p>
             <div className="flex gap-6">
@@ -808,7 +808,7 @@ export default function InboxPage() {
                     setIsComposeOpen(false);
                     showToast("Draft minimized. Click New Message to resume.");
                   }}
-                  className="text-[#3d4946] hover:bg-[#e7e8e9] hover:text-[#191c1d] h-10 w-10 rounded-xl transition-all flex items-center justify-center border-none bg-transparent" 
+                  className="text-[#3d4946] hover:bg-[#F3F3F0] hover:text-[#191c1d] h-10 w-10 rounded-xl transition-all flex items-center justify-center border-none bg-transparent" 
                   title="Minimize"
                   type="button"
                 >
@@ -851,7 +851,7 @@ export default function InboxPage() {
                         "group flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all select-none",
                         rec.type === "department" 
                           ? "bg-[#006b5f]/5 border border-[#006b5f]/20 text-[#006b5f]" 
-                          : "bg-[#e7e8e9] text-[#191c1d]"
+                          : "bg-[#F3F3F0] text-[#191c1d]"
                       )}
                     >
                       {rec.type === "department" ? (
@@ -971,14 +971,14 @@ export default function InboxPage() {
               {/* Advanced Editor Window with Custom Rich Formatting Bar */}
               <div id="compose-editor-box" className="border border-[#bbc9c5]/50 rounded-xl overflow-hidden flex flex-col bg-white ring-1 ring-black/5 shadow-inner">
                 {/* Formatting Bar */}
-                <div className="flex items-center flex-wrap gap-1 p-1.5 border-b border-[#edeeef] bg-[#f3f4f5]">
+                <div className="flex items-center flex-wrap gap-1 p-1.5 border-b border-[#edeeef] bg-[#F3F3F0]">
                   <div className="flex items-center gap-0.5 px-1 border-r border-[#bbc9c5]/40 mr-1 shrink-0">
                     <button 
                       id="compose-fmt-bold"
                       onClick={() => setIsBold(!isBold)}
                       className={cn(
                         "h-8 w-8 rounded-lg flex items-center justify-center transition-colors shrink-0 border-none bg-transparent",
-                        isBold ? "bg-slate-200 text-[#006b5f]" : "hover:bg-[#e7e8e9] text-[#3d4946]"
+                        isBold ? "bg-slate-200 text-[#006b5f]" : "hover:bg-[#F3F3F0] text-[#3d4946]"
                       )}
                       title="Bold"
                       type="button"
@@ -990,7 +990,7 @@ export default function InboxPage() {
                       onClick={() => setIsItalic(!isItalic)}
                       className={cn(
                         "h-8 w-8 rounded-lg flex items-center justify-center transition-colors shrink-0 border-none bg-transparent",
-                        isItalic ? "bg-slate-200 text-[#006b5f]" : "hover:bg-[#e7e8e9] text-[#3d4946]"
+                        isItalic ? "bg-slate-200 text-[#006b5f]" : "hover:bg-[#F3F3F0] text-[#3d4946]"
                       )}
                       title="Italic"
                       type="button"
@@ -1002,7 +1002,7 @@ export default function InboxPage() {
                       onClick={() => setIsUnderline(!isUnderline)}
                       className={cn(
                         "h-8 w-8 rounded-lg flex items-center justify-center transition-colors shrink-0 border-none bg-transparent",
-                        isUnderline ? "bg-slate-200 text-[#006b5f]" : "hover:bg-[#e7e8e9] text-[#3d4946]"
+                        isUnderline ? "bg-slate-200 text-[#006b5f]" : "hover:bg-[#F3F3F0] text-[#3d4946]"
                       )}
                       title="Underline"
                       type="button"
@@ -1018,7 +1018,7 @@ export default function InboxPage() {
                         setComposeBody(prev => prev + "\n• ");
                         showToast("Added bullet point");
                       }}
-                      className="h-8 w-8 hover:bg-[#e7e8e9] rounded-lg text-[#3d4946] flex items-center justify-center transition-colors shrink-0 border-none bg-transparent" 
+                      className="h-8 w-8 hover:bg-[#F3F3F0] rounded-lg text-[#3d4946] flex items-center justify-center transition-colors shrink-0 border-none bg-transparent" 
                       title="Bullet List"
                       type="button"
                     >
@@ -1030,7 +1030,7 @@ export default function InboxPage() {
                         setComposeBody(prev => prev + "\n1. ");
                         showToast("Added numbered line");
                       }}
-                      className="h-8 w-8 hover:bg-[#e7e8e9] rounded-lg text-[#3d4946] flex items-center justify-center transition-colors shrink-0 border-none bg-transparent" 
+                      className="h-8 w-8 hover:bg-[#F3F3F0] rounded-lg text-[#3d4946] flex items-center justify-center transition-colors shrink-0 border-none bg-transparent" 
                       title="Numbered List"
                       type="button"
                     >
@@ -1045,7 +1045,7 @@ export default function InboxPage() {
                         setComposeBody(prev => prev + "\n`code` ");
                         showToast("Code block template added");
                       }}
-                      className="h-8 w-8 hover:bg-[#e7e8e9] rounded-lg text-[#3d4946] flex items-center justify-center transition-colors shrink-0 border-none bg-transparent" 
+                      className="h-8 w-8 hover:bg-[#F3F3F0] rounded-lg text-[#3d4946] flex items-center justify-center transition-colors shrink-0 border-none bg-transparent" 
                       title="Code Block"
                       type="button"
                     >
@@ -1057,7 +1057,7 @@ export default function InboxPage() {
                         setComposeBody(prev => prev + "\n> ");
                         showToast("Blockquote added");
                       }}
-                      className="h-8 w-8 hover:bg-[#e7e8e9] rounded-lg text-[#3d4946] flex items-center justify-center transition-colors shrink-0 border-none bg-transparent" 
+                      className="h-8 w-8 hover:bg-[#F3F3F0] rounded-lg text-[#3d4946] flex items-center justify-center transition-colors shrink-0 border-none bg-transparent" 
                       title="Quote"
                       type="button"
                     >
@@ -1075,7 +1075,7 @@ export default function InboxPage() {
                           showToast("Markdown link inserted");
                         }
                       }}
-                      className="h-8 w-8 hover:bg-[#e7e8e9] rounded-lg text-[#3d4946] flex items-center justify-center transition-colors shrink-0 border-none bg-transparent" 
+                      className="h-8 w-8 hover:bg-[#F3F3F0] rounded-lg text-[#3d4946] flex items-center justify-center transition-colors shrink-0 border-none bg-transparent" 
                       title="Insert Link"
                       type="button"
                     >
@@ -1084,7 +1084,7 @@ export default function InboxPage() {
                     <button 
                       id="compose-fmt-image"
                       onClick={() => composeFileInputRef.current?.click()}
-                      className="h-8 w-8 hover:bg-[#e7e8e9] rounded-lg text-[#3d4946] flex items-center justify-center transition-colors shrink-0 border-none bg-transparent" 
+                      className="h-8 w-8 hover:bg-[#F3F3F0] rounded-lg text-[#3d4946] flex items-center justify-center transition-colors shrink-0 border-none bg-transparent" 
                       title="Add Image"
                       type="button"
                     >
@@ -1101,7 +1101,7 @@ export default function InboxPage() {
                       onClick={() => setShowColorPicker(!showColorPicker)}
                       className={cn(
                         "h-8 w-8 rounded-lg flex items-center justify-center transition-colors shrink-0 border-none bg-transparent",
-                        selectedTextColor !== "#203430" ? "bg-emerald-100 text-emerald-800" : "text-[#3d4946] hover:bg-[#e7e8e9]"
+                        selectedTextColor !== "#203430" ? "bg-emerald-100 text-emerald-800" : "text-[#3d4946] hover:bg-[#F3F3F0]"
                       )}
                       title="Text Formatting Colors"
                       type="button"
@@ -1126,7 +1126,7 @@ export default function InboxPage() {
                                   setShowColorPicker(false);
                                   showToast(`Aesthetic font color changed!`);
                                 }}
-                                className="h-5 w-5 rounded-full border border-slate-100 shrink-0 cursor-pointer hover:scale-110 duration-75"
+                                className="h-5 w-5 rounded-full border border-[#E4E4E1] shrink-0 cursor-pointer hover:scale-110 duration-75"
                                 style={{ backgroundColor: colorHex }}
                                 type="button"
                               />
@@ -1149,7 +1149,7 @@ export default function InboxPage() {
                     textDecoration: isUnderline ? "underline" : "none",
                     color: selectedTextColor
                   }}
-                  className="w-full h-36 md:h-44 p-4 bg-white text-xs leading-relaxed border-none focus:ring-0 resize-none placeholder:text-[#bbc9c5] font-sans tracking-wide leading-relaxed outline-none" 
+                  className="w-full h-36 md:h-44 p-4 bg-white text-xs leading-relaxed border border-[#E6E6E4] focus:ring-0 resize-none placeholder:text-[#bbc9c5] font-sans tracking-wide leading-relaxed outline-none" 
                   placeholder="Write your message here..."
                 />
               </div>
@@ -1215,7 +1215,7 @@ export default function InboxPage() {
                 <button 
                   id="compose-attach-bottom"
                   onClick={() => composeFileInputRef.current?.click()}
-                  className="size-10 hover:bg-[#e7e8e9] hover:text-[#191c1d] rounded-xl text-[#3d4946] flex items-center justify-center transition-all border-none bg-transparent shrink-0" 
+                  className="size-10 hover:bg-[#F3F3F0] hover:text-[#191c1d] rounded-xl text-[#3d4946] flex items-center justify-center transition-all border-none bg-transparent shrink-0" 
                   title="Attach Files"
                   type="button"
                 >
@@ -1224,7 +1224,7 @@ export default function InboxPage() {
                 <button 
                   id="compose-emoji-bottom"
                   onClick={() => showToast("Emoji panel toggled")}
-                  className="size-10 hover:bg-[#e7e8e9] hover:text-[#191c1d] rounded-xl text-[#3d4946] flex items-center justify-center transition-all border-none bg-transparent shrink-0" 
+                  className="size-10 hover:bg-[#F3F3F0] hover:text-[#191c1d] rounded-xl text-[#3d4946] flex items-center justify-center transition-all border-none bg-transparent shrink-0" 
                   title="Insert Emoji"
                   type="button"
                 >
@@ -1233,7 +1233,7 @@ export default function InboxPage() {
                 <button 
                   id="compose-options-bottom"
                   onClick={() => showToast("Draft saved internally.")}
-                  className="size-10 hover:bg-[#e7e8e9] hover:text-[#191c1d] rounded-xl text-[#3d4946] flex items-center justify-center transition-all border-none bg-transparent shrink-0" 
+                  className="size-10 hover:bg-[#F3F3F0] hover:text-[#191c1d] rounded-xl text-[#3d4946] flex items-center justify-center transition-all border-none bg-transparent shrink-0" 
                   title="More Options"
                   type="button"
                 >
@@ -1260,7 +1260,7 @@ export default function InboxPage() {
                     Discard
                   </button>
 
-                  <div className="flex items-stretch shadow-md rounded-xl overflow-hidden relative bg-[#006b5f]">
+                  <div className="flex items-stretch rounded-xl overflow-hidden relative bg-[#006b5f]">
                     <button 
                       id="compose-action-send"
                       onClick={handleComposeSend}
@@ -1329,7 +1329,7 @@ export default function InboxPage() {
                                 setShowScheduleMenu(false);
                                 showToast(`Message scheduled for ${item.label} (${item.time})`);
                               }}
-                              className="w-full flex items-center justify-between px-3.5 py-2 text-xs text-slate-700 hover:bg-[#F8FCF3] hover:text-[#006b5f] transition-all text-left border-none bg-transparent"
+                              className="w-full flex items-center justify-between px-3.5 py-2 text-xs text-slate-700 hover:bg-white hover:text-[#006b5f] transition-all text-left border-none bg-transparent"
                             >
                               <span>{item.label}</span>
                               <span className="text-[9px] text-[#3d4946] font-semibold">{item.time}</span>

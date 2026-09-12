@@ -1,18 +1,25 @@
 import * as React from "react";
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useMemo, useCallback } from "react";
 import {
-  UserProfile,
-  loginApi,
-  registerApi,
-  getMeApi,
-  logoutApi,
-} from "../lib/api/auth";
+  type AccessRole,
+  type PublicAuthUser,
+  authenticate,
+  registerUser,
+  loadSession,
+  saveSession,
+  clearSession,
+  updateUserProfile,
+  changeUserPassword,
+} from "../lib/auth";
+
+export type { AccessRole };
 
 interface AuthContextType {
-  user: UserProfile | null;
-  accessToken: string | null;
+  user: PublicAuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  accessRole: AccessRole | null;
+  hasRole: (...roles: AccessRole[]) => boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (
     email: string,
@@ -22,50 +29,25 @@ interface AuthContextType {
     organizationName: string
   ) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (
+    patch: Partial<Pick<PublicAuthUser, "name" | "avatar" | "roleTitle">>
+  ) => Promise<void>;
+  changePassword: (currentPassword: string, nextPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(
-    localStorage.getItem("teamhub_access_token")
-  );
-  const [refreshToken, setRefreshToken] = useState<string | null>(
-    localStorage.getItem("teamhub_refresh_token")
-  );
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // Restore authenticated session on initial load
-  useEffect(() => {
-    async function restoreSession() {
-      const storedAccess = localStorage.getItem("teamhub_access_token");
-      if (storedAccess) {
-        try {
-          const profile = await getMeApi(storedAccess);
-          setUser(profile);
-          setAccessToken(storedAccess);
-        } catch (err) {
-          // Token expired or invalid
-          localStorage.removeItem("teamhub_access_token");
-          localStorage.removeItem("teamhub_refresh_token");
-          setAccessToken(null);
-          setRefreshToken(null);
-          setUser(null);
-        }
-      }
-      setIsLoading(false);
-    }
-    restoreSession();
-  }, []);
+  const [user, setUser] = useState<PublicAuthUser | null>(() => loadSession());
+  const [isLoading] = useState(false);
 
   const login = async (email: string, password: string) => {
-    const res = await loginApi(email, password);
-    setAccessToken(res.access);
-    setRefreshToken(res.refresh);
-    setUser(res.user);
-    localStorage.setItem("teamhub_access_token", res.access);
-    localStorage.setItem("teamhub_refresh_token", res.refresh);
+    const next = authenticate(email, password);
+    if (!next) {
+      throw new Error("Invalid credentials. Please try again.");
+    }
+    saveSession(next);
+    setUser(next);
   };
 
   const register = async (
@@ -75,46 +57,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastName: string,
     organizationName: string
   ) => {
-    const res = await registerApi(
+    const result = registerUser({
       email,
       password,
       firstName,
       lastName,
-      organizationName
-    );
-    setAccessToken(res.tokens.access);
-    setRefreshToken(res.tokens.refresh);
-    setUser(res.user);
-    localStorage.setItem("teamhub_access_token", res.tokens.access);
-    localStorage.setItem("teamhub_refresh_token", res.tokens.refresh);
+      organizationName,
+    });
+    if ("error" in result) {
+      throw new Error(result.error);
+    }
+    saveSession(result.user);
+    setUser(result.user);
   };
 
   const logout = async () => {
-    if (accessToken && refreshToken) {
-      await logoutApi(accessToken, refreshToken);
-    }
+    clearSession();
     setUser(null);
-    setAccessToken(null);
-    setRefreshToken(null);
-    localStorage.removeItem("teamhub_access_token");
-    localStorage.removeItem("teamhub_refresh_token");
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        accessToken,
-        isAuthenticated: !!user && !!accessToken,
-        isLoading,
-        login,
-        register,
-        logout,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const updateProfile = async (
+    patch: Partial<Pick<PublicAuthUser, "name" | "avatar" | "roleTitle">>
+  ) => {
+    if (!user) throw new Error("Not signed in.");
+    const next = updateUserProfile(user.id, patch);
+    if (!next) throw new Error("Could not update profile.");
+    setUser(next);
+  };
+
+  const changePassword = async (currentPassword: string, nextPassword: string) => {
+    if (!user) throw new Error("Not signed in.");
+    const result = changeUserPassword(user.id, currentPassword, nextPassword);
+    if ("error" in result) throw new Error(result.error);
+  };
+
+  const accessRole = user?.accessRole ?? null;
+
+  const hasRole = useCallback(
+    (...roles: AccessRole[]) => {
+      if (!accessRole) return false;
+      return roles.includes(accessRole);
+    },
+    [accessRole]
   );
+
+  const value = useMemo(
+    () => ({
+      user,
+      isAuthenticated: !!user,
+      isLoading,
+      accessRole,
+      hasRole,
+      login,
+      register,
+      logout,
+      updateProfile,
+      changePassword,
+    }),
+    [user, isLoading, accessRole, hasRole]
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

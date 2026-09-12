@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
-import { createEmployeeApi } from "../lib/api/employees";
 
 // List of Supported Countries for Phone Number Inputs
 const COUNTRIES = [
@@ -290,7 +289,7 @@ export default function AddEmployeePage() {
     showToast(target ? "All benefits selected" : "All benefits deselected");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep(step)) {
       return;
@@ -298,25 +297,107 @@ export default function AddEmployeePage() {
     if (step < 3) {
       handleNext();
     } else {
-      try {
-        const cleanSalary = parseFloat(empSalary.replace(/[^0-9.]/g, "")) || 75000;
-        await createEmployeeApi({
-          name: empName,
-          role_title: empRole,
-          sub_role: empDept,
-          employment_type: empType,
-          work_model: empModel,
-          status: empActive ? "Active" : "On Leave",
-          base_salary: cleanSalary,
-        });
+      // Formally append newly registered personnel or update existing draft!
+      const currentList = getCollection<any[]>("db_employees", []);
+      
+      const targetId = draftId || `EMP-${Math.floor(1000 + Math.random() * 9000)}`;
+      const isUpdating = currentList.some(e => e.id === targetId);
 
-        showToast("Employee registered successfully to backend!");
-        setTimeout(() => {
-          navigate('/employees');
-        }, 1200);
-      } catch (err: any) {
-        showToast(err.message || "Failed to register employee.");
+      const resolvedAvatar = isUpdating 
+        ? (currentList.find(e => e.id === targetId)?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80")
+        : (Math.random() > 0.5 
+            ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80"
+            : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80");
+
+      const newEmp = {
+        id: targetId,
+        name: empName,
+        birthDate: empBirthDate,
+        gender: empGender,
+        email: empEmail,
+        phone: empPhone,
+        address: empAddress,
+        emergencyName: empEmergencyName,
+        emergencyPhone: empEmergencyPhone,
+        phoneCountry: empPhoneCountry,
+        emergencyPhoneCountry: empEmergencyPhoneCountry,
+        
+        joinDate: empJoinDate,
+        role: empRole,
+        dept: empDept,
+        type: empType,
+        model: empModel,
+        status: empActive ? "Active" : "Suspended",
+        avatar: resolvedAvatar,
+        salary: empSalary,
+        bankName: empBankName,
+        bankAccount: empBankAccount,
+        taxId: empTaxId,
+        
+        allowanceTrans,
+        allowanceMeal,
+        allowanceInternet,
+        
+        benefitHealth,
+        benefitLife,
+        benefitDevice,
+        benefitTraining,
+        benefitTuition,
+        benefitFitness,
+        benefitMental,
+        
+        uploadedDocs,
+        empActive,
+        empSendEmail
+      };
+
+      let updatedList;
+      const index = currentList.findIndex(e => e.id === targetId);
+      if (index !== -1) {
+        updatedList = [...currentList];
+        updatedList[index] = newEmp;
+      } else {
+        updatedList = [...currentList, newEmp];
       }
+
+      saveCollection("db_employees", updatedList);
+
+      // Automatically append starting payroll master-card as well!
+      const currentPayroll = getCollection<any[]>("db_payroll", []);
+      const newPayroll = {
+        id: targetId,
+        name: empName,
+        role: empRole,
+        subRole: empRole,
+        date: "28 Jun 35",
+        salary: empSalary,
+        allowance: `$${(allowanceTrans ? 100 : 0) + (allowanceMeal ? 50 : 0) + (allowanceInternet ? 50 : 0)}`,
+        overtime: "$0",
+        incen: "$0",
+        deduct: "$0",
+        total: empSalary,
+        status: "Pending",
+        avatar: newEmp.avatar
+      };
+
+      const payrollIndex = currentPayroll.findIndex(p => p.id === targetId);
+      let updatedPayroll;
+      if (payrollIndex !== -1) {
+        updatedPayroll = [...currentPayroll];
+        updatedPayroll[payrollIndex] = newPayroll;
+      } else {
+        updatedPayroll = [...currentPayroll, newPayroll];
+      }
+      saveCollection("db_payroll", updatedPayroll);
+
+      // Trigger global tab/view notifications or updates
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("db_updated"));
+
+      showToast("Employee added successfully!");
+      setTimeout(() => {
+        navigate('/employees');
+      }, 1500);
     }
   };
 
@@ -326,10 +407,10 @@ export default function AddEmployeePage() {
       breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Employees", href: "/employees" }, { label: "Add New Employee" }]}
     >
       {/* Main Multi-step Form Container */}
-      <Card className="flex flex-col lg:flex-row border-none shadow-sm rounded-[16px] overflow-hidden min-h-[850px] bg-white">
+      <Card className="flex flex-col lg:flex-row border border-[#E6E6E4] rounded-[16px] overflow-hidden min-h-[850px] bg-white">
         
         {/* Left Progress Steps Sidebar */}
-        <div className="w-full lg:w-[272px] p-8 shrink-0 border-r border-[#E5E6E6]">
+        <div className="w-full lg:w-[272px] p-8 shrink-0 border-r border-[#E4E4E1]">
            <h2 className="text-[18px] font-bold text-[#203430]">Register New Employee</h2>
            <p className="text-[11px] text-[#63716E] mt-2 mb-10 leading-relaxed font-medium">
              Enter all required employment details to formally add a new member to your organization.
@@ -342,7 +423,7 @@ export default function AddEmployeePage() {
                   {idx < steps.length - 1 && (
                     <div className={cn(
                       "absolute left-[9px] top-6 w-[1px] h-[calc(100%)]",
-                      step > s.id ? "bg-brand" : "bg-[#E5E6E6]"
+                      step > s.id ? "bg-brand" : "bg-[#F3F3F0]"
                     )} />
                   )}
 
@@ -351,7 +432,7 @@ export default function AddEmployeePage() {
                     <div className={cn(
                       "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition-all z-10",
                       step === s.id ? "border-brand bg-white" : 
-                      step > s.id ? "border-brand bg-brand" : "border-[#E5E6E6] bg-white"
+                      step > s.id ? "border-brand bg-brand" : "border-[#E4E4E1] bg-white"
                     )}>
                       {step > s.id ? (
                         <Check className="h-3 w-3 text-white" strokeWidth={3} />
@@ -384,7 +465,7 @@ export default function AddEmployeePage() {
               <p className="text-[12px] text-[#63716E] mt-1 font-medium">Enter the employee's personal details and primary contact information to initiate their HR record</p>
             </div>
 
-            <div className="h-[1px] bg-[#E5E6E6] w-full mb-8" />
+            <div className="h-[1px] bg-[#F3F3F0] w-full mb-8" />
 
             <AnimatePresence mode="wait">
               <motion.div
@@ -418,7 +499,7 @@ export default function AddEmployeePage() {
                             }} 
                             placeholder="Niko Pradana" 
                             className={cn(
-                              "w-full h-[38px] px-3 bg-[#F7F7F7] border rounded-[8px] text-[12px] text-[#203430] outline-none transition-all",
+                              "w-full h-[38px] px-3 bg-[#F3F3F0] border rounded-[8px] text-[12px] text-[#203430] outline-none transition-all",
                               errorsZone.empName ? "border-red-500 bg-red-50/20" : "border-transparent focus:border-brand"
                             )} 
                             required 
@@ -445,7 +526,7 @@ export default function AddEmployeePage() {
                               }} 
                               placeholder="12 August 1995" 
                               className={cn(
-                                "w-full h-[38px] px-3 bg-[#F7F7F7] border rounded-[8px] text-[12px] text-[#203430] outline-none transition-all pr-10",
+                                "w-full h-[38px] px-3 bg-[#F3F3F0] border rounded-[8px] text-[12px] text-[#203430] outline-none transition-all pr-10",
                                 errorsZone.empBirthDate ? "border-red-500 bg-red-50/20" : "border-transparent focus:border-brand"
                               )} 
                               required 
@@ -466,13 +547,13 @@ export default function AddEmployeePage() {
                               onClick={() => setEmpGender(g)}
                               className={cn(
                                 "flex-1 flex items-center justify-between h-[38px] px-4 rounded-[8px] cursor-pointer transition-all border",
-                                g === empGender ? "bg-[#F8FCF3] border-brand" : "bg-[#F7F7F7] border-transparent hover:bg-slate-50"
+                                g === empGender ? "bg-white border-brand" : "bg-[#F3F3F0] border-transparent hover:bg-slate-50"
                               )}
                             >
                               <span className="text-[12px] text-[#203430]">{g}</span>
                               <div className={cn(
                                 "h-4 w-4 rounded-full border flex items-center justify-center",
-                                g === empGender ? "border-brand" : "border-[#E5E6E6]"
+                                g === empGender ? "border-brand" : "border-[#E4E4E1]"
                               )}>
                                 {g === empGender && <div className="h-2 w-2 rounded-full bg-brand" />}
                               </div>
@@ -503,7 +584,7 @@ export default function AddEmployeePage() {
                             }} 
                             placeholder="niko.pradana@company.com" 
                             className={cn(
-                              "w-full h-[38px] px-3 bg-[#F7F7F7] border rounded-[8px] text-[12px] text-[#203430] outline-none transition-all",
+                              "w-full h-[38px] px-3 bg-[#F3F3F0] border rounded-[8px] text-[12px] text-[#203430] outline-none transition-all",
                               errorsZone.empEmail ? "border-red-500 bg-red-50/20" : "border-transparent focus:border-brand"
                             )} 
                             required 
@@ -515,12 +596,12 @@ export default function AddEmployeePage() {
                         <div className="space-y-1.5">
                           <label className="text-[11px] font-bold text-[#63716E]">Phone Number <span className="text-red-500">*</span></label>
                           <div className={cn(
-                            "relative flex items-center h-[38px] bg-[#F7F7F7] rounded-[8px] px-3 gap-2 border transition-all",
+                            "relative flex items-center h-[38px] bg-[#F3F3F0] rounded-[8px] px-3 gap-2 border transition-all",
                             errorsZone.empPhone ? "border-red-500 bg-red-50/10 focus-within:ring-1 focus-within:ring-red-500" : "border-transparent focus-within:border-brand"
                           )}>
                              <div 
                                onClick={() => setShowPhoneDropdown(!showPhoneDropdown)}
-                               className="flex items-center gap-1 border-r border-[#E5E6E6] pr-2 shrink-0 cursor-pointer select-none"
+                               className="flex items-center gap-1 border-r border-[#E4E4E1] pr-2 shrink-0 cursor-pointer select-none"
                              >
                                <span className="text-[16px] leading-none" role="img" aria-label="flag">
                                  {COUNTRIES.find(c => c.code === empPhoneCountry)?.flagEmoji || "🇮🇩"}
@@ -550,7 +631,7 @@ export default function AddEmployeePage() {
                              {showPhoneDropdown && (
                                <>
                                  <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setShowPhoneDropdown(false)} />
-                                 <div className="absolute left-0 top-[40px] z-50 w-[240px] max-h-[200px] overflow-y-auto bg-white border border-[#E5E6E6] rounded-xl shadow-xl py-1.5">
+                                 <div className="absolute left-0 top-[40px] z-50 w-[240px] max-h-[200px] overflow-y-auto bg-white border border-[#E4E4E1] rounded-xl shadow-xl py-1.5">
                                    {COUNTRIES.map(c => (
                                      <button
                                        key={c.code}
@@ -560,7 +641,7 @@ export default function AddEmployeePage() {
                                          setShowPhoneDropdown(false);
                                          showToast(`Selected: ${c.name} (${c.code})`);
                                        }}
-                                       className="w-full flex items-center justify-between px-3 py-2 text-[12px] text-left hover:bg-[#F8FCF3] hover:text-brand transition-colors cursor-pointer"
+                                       className="w-full flex items-center justify-between px-3 py-2 text-[12px] text-left hover:bg-white hover:text-brand transition-colors cursor-pointer"
                                      >
                                        <div className="flex items-center gap-2">
                                          <span className="text-[16px]">{c.flagEmoji}</span>
@@ -596,7 +677,7 @@ export default function AddEmployeePage() {
                           placeholder="e.g. 221B Baker Street, London, NW1 6XE" 
                           className={cn(
                             "w-full h-[38px] px-3 rounded-[8px] text-[12px] text-[#203430] outline-none transition-all border",
-                            errorsZone.empAddress ? "border-red-500 bg-red-50/20" : "border-transparent focus:border-brand bg-[#F7F7F7]"
+                            errorsZone.empAddress ? "border-red-500 bg-red-50/20" : "border-transparent focus:border-brand bg-[#F3F3F0]"
                           )} 
                           required 
                         />
@@ -628,7 +709,7 @@ export default function AddEmployeePage() {
                             placeholder="e.g. Sarah Thompson" 
                             className={cn(
                               "w-full h-[38px] px-3 rounded-[8px] text-[12px] text-[#203430] outline-none transition-all border",
-                              errorsZone.empEmergencyName ? "border-red-500 bg-red-50/20" : "border-transparent focus:border-brand bg-[#F7F7F7]"
+                              errorsZone.empEmergencyName ? "border-red-500 bg-red-50/20" : "border-transparent focus:border-brand bg-[#F3F3F0]"
                             )} 
                           />
                           {errorsZone.empEmergencyName && (
@@ -638,12 +719,12 @@ export default function AddEmployeePage() {
                         <div className="space-y-1.5">
                           <label className="text-[11px] font-bold text-[#63716E]">Phone Number <span className="text-slate-400 font-normal">(Optional)</span></label>
                           <div className={cn(
-                            "relative flex items-center h-[38px] bg-[#F7F7F7] rounded-[8px] px-3 gap-2 border transition-all",
+                            "relative flex items-center h-[38px] bg-[#F3F3F0] rounded-[8px] px-3 gap-2 border transition-all",
                             errorsZone.empEmergencyPhone ? "border-red-500 bg-red-50/10 focus-within:ring-1 focus-within:ring-red-500" : "border-transparent focus-within:border-brand"
                           )}>
                              <div 
                                onClick={() => setShowEmergencyDropdown(!showEmergencyDropdown)}
-                               className="flex items-center gap-1 border-r border-[#E5E6E6] pr-2 shrink-0 cursor-pointer select-none"
+                               className="flex items-center gap-1 border-r border-[#E4E4E1] pr-2 shrink-0 cursor-pointer select-none"
                              >
                                <span className="text-[16px] leading-none" role="img" aria-label="flag">
                                  {COUNTRIES.find(c => c.code === empEmergencyPhoneCountry)?.flagEmoji || "🇮🇩"}
@@ -672,7 +753,7 @@ export default function AddEmployeePage() {
                              {showEmergencyDropdown && (
                                <>
                                  <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setShowEmergencyDropdown(false)} />
-                                 <div className="absolute left-0 top-[40px] z-50 w-[240px] max-h-[200px] overflow-y-auto bg-white border border-[#E5E6E6] rounded-xl shadow-xl py-1.5">
+                                 <div className="absolute left-0 top-[40px] z-50 w-[240px] max-h-[200px] overflow-y-auto bg-white border border-[#E4E4E1] rounded-xl shadow-xl py-1.5">
                                    {COUNTRIES.map(c => (
                                      <button
                                        key={c.code}
@@ -682,7 +763,7 @@ export default function AddEmployeePage() {
                                          setShowEmergencyDropdown(false);
                                          showToast(`Selected: ${c.name} (${c.code})`);
                                        }}
-                                       className="w-full flex items-center justify-between px-3 py-2 text-[12px] text-left hover:bg-[#F8FCF3] hover:text-brand transition-colors cursor-pointer"
+                                       className="w-full flex items-center justify-between px-3 py-2 text-[12px] text-left hover:bg-white hover:text-brand transition-colors cursor-pointer"
                                      >
                                        <div className="flex items-center gap-2">
                                          <span className="text-[16px]">{c.flagEmoji}</span>
@@ -712,7 +793,7 @@ export default function AddEmployeePage() {
                         <div className="space-y-1.5">
                           <label className="text-[11px] font-bold text-[#63716E]">Employee ID</label>
                           <div className="relative">
-                            <input type="text" value="EMP-0371" disabled className="w-full h-[38px] px-3 bg-[#E5E6E6] rounded-[8px] text-[12px] font-bold text-[#203430] outline-none" />
+                            <input type="text" value="EMP-0371" disabled className="w-full h-[38px] px-3 bg-[#F3F3F0] rounded-[8px] text-[12px] font-bold text-[#203430] outline-none" />
                             <span className="absolute -bottom-5 left-0 text-[9px] font-medium text-[#63716E]">*Auto-generated</span>
                           </div>
                         </div>
@@ -733,7 +814,7 @@ export default function AddEmployeePage() {
                                 }
                               }} 
                               className={cn(
-                                "w-full h-[38px] px-3 bg-[#F7F7F7] border rounded-[8px] text-[12px] text-[#203430] outline-none shadow-sm pr-10 transition-all",
+                                "w-full h-[38px] px-3 bg-[#F3F3F0] border rounded-[8px] text-[12px] text-[#203430] outline-none pr-10 transition-all",
                                 errorsZone.empJoinDate ? "border-red-500 bg-red-50/20" : "border-transparent focus:border-brand"
                               )} 
                             />
@@ -752,7 +833,7 @@ export default function AddEmployeePage() {
                             <select 
                               value={empRole}
                               onChange={e => setEmpRole(e.target.value)} 
-                              className="appearance-none w-full h-[38px] px-3 bg-[#F7F7F7] border border-transparent focus:border-brand rounded-[8px] text-[12px] text-[#203430] outline-none pr-8"
+                              className="appearance-none w-full h-[38px] px-3 bg-[#F3F3F0] border border-transparent focus:border-brand rounded-[8px] text-[12px] text-[#203430] outline-none pr-8"
                             >
                               <option>IT Support Specialist</option>
                               <option>Software Engineer</option>
@@ -771,7 +852,7 @@ export default function AddEmployeePage() {
                             <select 
                               value={empDept}
                               onChange={e => setEmpDept(e.target.value)}
-                              className="appearance-none w-full h-[38px] px-3 bg-[#F7F7F7] border border-transparent focus:border-brand rounded-[8px] text-[12px] text-[#203430] outline-none pr-8"
+                              className="appearance-none w-full h-[38px] px-3 bg-[#F3F3F0] border border-transparent focus:border-brand rounded-[8px] text-[12px] text-[#203430] outline-none pr-8"
                             >
                               <option>Operations</option>
                               <option>Marketing</option>
@@ -790,7 +871,7 @@ export default function AddEmployeePage() {
                             <select 
                               value={empType}
                               onChange={e => setEmpType(e.target.value)}
-                              className="appearance-none w-full h-[38px] px-3 bg-[#F7F7F7] border border-transparent focus:border-brand rounded-[8px] text-[12px] text-[#203430] outline-none pr-8"
+                              className="appearance-none w-full h-[38px] px-3 bg-[#F3F3F0] border border-transparent focus:border-brand rounded-[8px] text-[12px] text-[#203430] outline-none pr-8"
                             >
                               <option>Full-Time</option>
                               <option>Part-Time</option>
@@ -811,13 +892,13 @@ export default function AddEmployeePage() {
                               onClick={() => setEmpModel(m)}
                               className={cn(
                                 "flex-1 flex items-center justify-between h-[38px] px-4 rounded-[8px] cursor-pointer transition-all border",
-                                m === empModel ? "bg-[#F8FCF3] border-brand" : "bg-[#F7F7F7] border-transparent hover:bg-slate-50"
+                                m === empModel ? "bg-white border-brand" : "bg-[#F3F3F0] border-transparent hover:bg-slate-50"
                               )}
                             >
                               <span className="text-[12px] text-[#203430]">{m}</span>
                               <div className={cn(
                                 "h-4 w-4 rounded-full border flex items-center justify-center",
-                                m === empModel ? "border-brand" : "border-[#E5E6E6]"
+                                m === empModel ? "border-brand" : "border-[#E4E4E1]"
                               )}>
                                 {m === empModel && <div className="h-2 w-2 rounded-full bg-brand" />}
                               </div>
@@ -847,7 +928,7 @@ export default function AddEmployeePage() {
                               }}
                               placeholder="$2,800" 
                               className={cn(
-                                "w-full h-[38px] px-3 bg-[#F7F7F7] border rounded-[8px] text-[12px] text-[#203430] outline-none pr-16 transition-all",
+                                "w-full h-[38px] px-3 bg-[#F3F3F0] border rounded-[8px] text-[12px] text-[#203430] outline-none pr-16 transition-all",
                                 errorsZone.empSalary ? "border-red-500 bg-red-50/20" : "border-transparent focus:border-brand"
                               )} 
                             />
@@ -875,7 +956,7 @@ export default function AddEmployeePage() {
                             }}
                             placeholder="e.g. Barclays UK" 
                             className={cn(
-                              "w-full h-[38px] px-3 bg-[#F7F7F7] border rounded-[8px] text-[12px] text-[#203430] outline-none transition-all",
+                              "w-full h-[38px] px-3 bg-[#F3F3F0] border rounded-[8px] text-[12px] text-[#203430] outline-none transition-all",
                               errorsZone.empBankName ? "border-red-500 bg-red-50/20" : "border-transparent focus:border-brand"
                             )} 
                           />
@@ -900,7 +981,7 @@ export default function AddEmployeePage() {
                             }}
                             placeholder="e.g. 12345678" 
                             className={cn(
-                              "w-full h-[38px] px-3 bg-[#F7F7F7] border rounded-[8px] text-[12px] text-[#203430] outline-none transition-all",
+                              "w-full h-[38px] px-3 bg-[#F3F3F0] border rounded-[8px] text-[12px] text-[#203430] outline-none transition-all",
                               errorsZone.empBankAccount ? "border-red-500 bg-red-50/20" : "border-transparent focus:border-brand"
                             )} 
                           />
@@ -926,7 +1007,7 @@ export default function AddEmployeePage() {
                             }}
                             placeholder="e.g. AB123456C" 
                             className={cn(
-                              "w-full h-[38px] px-3 bg-[#F7F7F7] border rounded-[8px] text-[12px] text-[#203430] outline-none transition-all",
+                              "w-full h-[38px] px-3 bg-[#F3F3F0] border rounded-[8px] text-[12px] text-[#203430] outline-none transition-all",
                               errorsZone.empTaxId ? "border-red-500 bg-red-50/20" : "border-transparent focus:border-brand"
                             )} 
                           />
@@ -949,7 +1030,7 @@ export default function AddEmployeePage() {
                           { l: 'Internet (Remote & Hybrid only)', active: allowanceInternet, act: () => setAllowanceInternet(!allowanceInternet) },
                         ].map(a => (
                           <div key={a.l} onClick={a.act} className="flex items-center gap-3 cursor-pointer select-none">
-                            <div className={cn("h-4 w-4 rounded-[4px] border flex items-center justify-center transition-all", a.active ? "bg-brand border-brand" : "bg-[#F7F7F7] border-[#E5E6E6]")}>
+                            <div className={cn("h-4 w-4 rounded-[4px] border flex items-center justify-center transition-all", a.active ? "bg-brand border-brand" : "bg-white border-[#E4E4E1]")}>
                               {a.active && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                             </div>
                             <span className="text-[12px] text-[#203430] font-medium">{a.l}</span>
@@ -964,7 +1045,7 @@ export default function AddEmployeePage() {
                       <div onClick={handleSelectAllBenefits} className="flex items-center gap-3 mb-6 cursor-pointer select-none group">
                         <div className={cn(
                           "h-4 w-4 rounded-[4px] border flex items-center justify-center transition-all",
-                          allBenefitsSelected ? "bg-brand border-brand" : "border-[#E5E6E6] bg-white group-hover:border-brand"
+                          allBenefitsSelected ? "bg-brand border-brand" : "border-[#E4E4E1] bg-white group-hover:border-brand"
                         )}>
                           {allBenefitsSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                         </div>
@@ -983,7 +1064,7 @@ export default function AddEmployeePage() {
                                 <div key={item.l} onClick={item.act} className="flex items-center gap-3 cursor-pointer select-none">
                                   <div className={cn(
                                     "h-4 w-4 rounded-[4px] border flex items-center justify-center transition-all",
-                                    item.active ? "bg-brand border-brand" : "bg-white border-[#E5E6E6]"
+                                    item.active ? "bg-brand border-brand" : "bg-white border-[#E4E4E1]"
                                   )}>
                                     {item.active && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                                   </div>
@@ -999,7 +1080,7 @@ export default function AddEmployeePage() {
                               <div onClick={() => setBenefitDevice(!benefitDevice)} className="flex items-center gap-3 cursor-pointer select-none">
                                 <div className={cn(
                                   "h-4 w-4 rounded-[4px] border flex items-center justify-center transition-all",
-                                  benefitDevice ? "bg-brand border-brand" : "bg-white border-[#E5E6E6]"
+                                  benefitDevice ? "bg-brand border-brand" : "bg-white border-[#E4E4E1]"
                                 )}>
                                   {benefitDevice && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                                 </div>
@@ -1018,7 +1099,7 @@ export default function AddEmployeePage() {
                                 { l: 'Mental Health Support', active: benefitMental, act: () => setBenefitMental(!benefitMental) }
                               ].map(item => (
                                 <div key={item.l} onClick={item.act} className="flex items-center gap-3 cursor-pointer select-none">
-                                  <div className={cn("h-4 w-4 rounded-[4px] border flex items-center justify-center transition-all", item.active ? "bg-brand border-brand" : "bg-white border-[#E5E6E6]")}>
+                                  <div className={cn("h-4 w-4 rounded-[4px] border flex items-center justify-center transition-all", item.active ? "bg-brand border-brand" : "bg-white border-[#E4E4E1]")}>
                                     {item.active && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                                   </div>
                                   <span className="text-[12px] text-[#203430] font-medium">{item.l}</span>
@@ -1063,14 +1144,14 @@ export default function AddEmployeePage() {
                                   className={cn(
                                     "flex-1 min-h-[61px] border border-dashed rounded-[10px] flex items-center justify-between p-4 cursor-pointer transition-all",
                                     hasFile 
-                                      ? "border-[#006b5f]/40 bg-[#F8FCF3]" 
+                                      ? "border-[#006b5f]/40 bg-white" 
                                       : hasDocError
                                         ? "border-red-500 bg-red-5/40 hover:bg-red-50/20"
-                                        : "border-[#E5E6E6] bg-[#F7F7F7] hover:bg-[#F8FCF3] hover:border-brand"
+                                        : "border-[#E4E4E1] bg-[#F3F3F0] hover:bg-white hover:border-brand"
                                   )}
                                 >
                                   <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-white rounded-full text-brand shadow-sm">
+                                    <div className="p-2 bg-white rounded-full text-brand">
                                       {hasFile ? (
                                         <Check className="h-4 w-4 text-[#006b5f]" strokeWidth={3} />
                                       ) : (
@@ -1118,10 +1199,10 @@ export default function AddEmployeePage() {
                            >
                               <div className={cn(
                                 "absolute inset-0 rounded-full transition-colors", 
-                                empActive ? "bg-brand" : "bg-[#E5E6E6]"
+                                empActive ? "bg-brand" : "bg-[#F3F3F0]"
                               )} />
                               <div className={cn(
-                                "absolute top-[2px] h-[14px] w-[14px] bg-white rounded-full shadow-sm transition-all",
+                                "absolute top-[2px] h-[14px] w-[14px] bg-white rounded-full transition-all",
                                 empActive ? "left-[18px]" : "left-[2px]"
                               )} />
                            </div>
@@ -1134,10 +1215,10 @@ export default function AddEmployeePage() {
                            >
                               <div className={cn(
                                 "absolute inset-0 rounded-full transition-colors", 
-                                empSendEmail ? "bg-brand" : "bg-[#E5E6E6]"
+                                empSendEmail ? "bg-brand" : "bg-[#F3F3F0]"
                               )} />
                               <div className={cn(
-                                "absolute top-[2px] h-[14px] w-[14px] bg-white rounded-full shadow-sm transition-all",
+                                "absolute top-[2px] h-[14px] w-[14px] bg-white rounded-full transition-all",
                                 empSendEmail ? "left-[18px]" : "left-[2px]"
                               )} />
                            </div>
@@ -1235,14 +1316,14 @@ export default function AddEmployeePage() {
                     <button 
                       type="button" 
                       onClick={handlePrev}
-                      className="px-6 h-[34px] bg-[#E4F2D3] text-[#203430] text-[12px] font-bold rounded-[8px] hover:opacity-80 shadow-sm"
+                      className="px-6 h-[34px] bg-[#E4F2D3] text-[#203430] text-[12px] font-bold rounded-[8px] hover:opacity-80"
                     >
                       Previous
                     </button>
                   )}
                   <button 
                     type="submit"
-                    className="px-6 h-[34px] bg-brand text-white text-[12px] font-bold rounded-[8px] hover:opacity-90 shadow-sm"
+                    className="px-6 h-[34px] bg-brand text-white text-[12px] font-bold rounded-[8px] hover:opacity-90"
                   >
                     {step === 3 ? "Submit" : "Next"}
                   </button>
@@ -1267,7 +1348,7 @@ export default function AddEmployeePage() {
         )}
       </AnimatePresence>
 
-      <footer className="mt-20 py-8 border-t border-[#E5E6E6] flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
+      <footer className="mt-20 py-8 border-t border-[#E4E4E1] flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
          <div className="flex flex-col sm:flex-row items-center gap-6 lg:gap-16">
             <p className="text-[12px] font-bold text-[#203430]">Copyright © 2025 Peterdraw</p>
             <div className="flex gap-6">

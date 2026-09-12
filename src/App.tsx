@@ -1,6 +1,7 @@
 import * as React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { GuestRoute, ProtectedRoute } from "./components/auth/ProtectedRoute";
 import DashboardPage from "./views/DashboardPage";
 import RecruitmentPage from "./views/RecruitmentPage";
 import EmployeeListPage from "./views/EmployeeListPage";
@@ -12,6 +13,7 @@ import PerformancePage from "./views/PerformancePage";
 import InboxPage from "./views/InboxPage";
 import CalendarPage from "./views/CalendarPage";
 import AddEmployeePage from "./views/AddEmployeePage";
+import DepartmentsPage from "./views/DepartmentsPage";
 import LoginPage from "./views/LoginPage";
 import SignupPage from "./views/SignupPage";
 import PersonalInformationPage from "./views/PersonalInformationPage";
@@ -22,32 +24,86 @@ import PersonalDocumentsPage from "./views/PersonalDocumentsPage";
 import RolesPermissionsPage from "./views/RolesPermissionsPage";
 import OrganizationProfilePage from "./views/OrganizationProfilePage";
 import BillingPage from "./views/BillingPage";
+import ApiIntegrationsPage from "./views/ApiIntegrationsPage";
+import ManagerDashboardPage from "./views/manager/ManagerDashboardPage";
+import MyTeamPage from "./views/manager/MyTeamPage";
+import ManagerAttendancePage from "./views/manager/ManagerAttendancePage";
+import ManagerLeaveApprovalsPage from "./views/manager/ManagerLeaveApprovalsPage";
+import ManagerPerformancePage from "./views/manager/ManagerPerformancePage";
+import ManagerCalendarPage from "./views/manager/ManagerCalendarPage";
+import ManagerInboxPage from "./views/manager/ManagerInboxPage";
+import EmployeeDashboardPage from "./views/employee/EmployeeDashboardPage";
+import EmployeeAttendancePage from "./views/employee/EmployeeAttendancePage";
+import EmployeeLeavePage from "./views/employee/EmployeeLeavePage";
+import EmployeePerformancePage from "./views/employee/EmployeePerformancePage";
+import EmployeePayslipPage from "./views/employee/EmployeePayslipPage";
+import EmployeeCalendarPage from "./views/employee/EmployeeCalendarPage";
+import EmployeeInboxPage from "./views/employee/EmployeeInboxPage";
 import { initDB } from "./lib/db";
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+function HomePage() {
+  const { accessRole } = useAuth();
+  if (accessRole === "admin") return <DashboardPage />;
+  if (accessRole === "manager") return <ManagerDashboardPage />;
+  if (accessRole === "employee") return <EmployeeDashboardPage />;
+  return <Navigate to="/login" replace />;
+}
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#28C2A9] border-t-transparent" />
-          <p className="text-sm font-semibold text-slate-500">Authenticating session...</p>
-        </div>
-      </div>
-    );
-  }
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  return <ProtectedRoute roles={["admin"]}>{children}</ProtectedRoute>;
+}
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+function ManagerRoute({ children }: { children: React.ReactNode }) {
+  return <ProtectedRoute roles={["manager"]}>{children}</ProtectedRoute>;
+}
 
-  return <>{children}</>;
+function StaffRoute({ children }: { children: React.ReactNode }) {
+  return <ProtectedRoute roles={["admin", "manager", "employee"]}>{children}</ProtectedRoute>;
+}
+
+function AttendanceByRole() {
+  const { accessRole } = useAuth();
+  if (accessRole === "manager") return <ManagerAttendancePage />;
+  if (accessRole === "employee") return <EmployeeAttendancePage />;
+  return <AttendancePage />;
+}
+
+function PerformanceByRole() {
+  const { accessRole } = useAuth();
+  if (accessRole === "manager") return <ManagerPerformancePage />;
+  if (accessRole === "employee") return <EmployeePerformancePage />;
+  return <PerformancePage />;
+}
+
+function LeaveByRole() {
+  const { accessRole } = useAuth();
+  if (accessRole === "manager") return <ManagerLeaveApprovalsPage />;
+  if (accessRole === "employee") return <EmployeeLeavePage />;
+  return <LeaveManagementPage />;
+}
+
+function CalendarByRole() {
+  const { accessRole } = useAuth();
+  if (accessRole === "manager") return <ManagerCalendarPage />;
+  if (accessRole === "employee") return <EmployeeCalendarPage />;
+  return <CalendarPage />;
+}
+
+function InboxByRole() {
+  const { accessRole } = useAuth();
+  if (accessRole === "manager") return <ManagerInboxPage />;
+  if (accessRole === "employee") return <EmployeeInboxPage />;
+  return <InboxPage />;
+}
+
+function PayrollByRole() {
+  const { accessRole } = useAuth();
+  if (accessRole === "employee") return <EmployeePayslipPage />;
+  return <PayrollPage />;
 }
 
 export default function App() {
   React.useEffect(() => {
-    // Standard simulation database tables initialization
     initDB();
   }, []);
 
@@ -55,163 +111,66 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Auth Routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
+          <Route
+            path="/login"
+            element={
+              <GuestRoute>
+                <LoginPage />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <GuestRoute>
+                <SignupPage />
+              </GuestRoute>
+            }
+          />
 
-          {/* Protected Operational Routes */}
           <Route
             path="/"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <HomePage />
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/inbox"
-            element={
-              <ProtectedRoute>
-                <InboxPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/calendar"
-            element={
-              <ProtectedRoute>
-                <CalendarPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/employees"
-            element={
-              <ProtectedRoute>
-                <EmployeeListPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/employees/new"
-            element={
-              <ProtectedRoute>
-                <AddEmployeePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/employees/:id"
-            element={
-              <ProtectedRoute>
-                <EmployeeDetailsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/attendance"
-            element={
-              <ProtectedRoute>
-                <AttendancePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/performance"
-            element={
-              <ProtectedRoute>
-                <PerformancePage />
-              </ProtectedRoute>
-            }
-          />
+
+          <Route path="/my-team" element={<ManagerRoute><MyTeamPage /></ManagerRoute>} />
+          <Route path="/manager/calendar" element={<Navigate to="/calendar" replace />} />
+          <Route path="/manager/inbox" element={<Navigate to="/inbox" replace />} />
+
+          <Route path="/inbox" element={<StaffRoute><InboxByRole /></StaffRoute>} />
+          <Route path="/calendar" element={<StaffRoute><CalendarByRole /></StaffRoute>} />
+          <Route path="/attendance" element={<StaffRoute><AttendanceByRole /></StaffRoute>} />
+          <Route path="/performance" element={<StaffRoute><PerformanceByRole /></StaffRoute>} />
+          <Route path="/leave" element={<StaffRoute><LeaveByRole /></StaffRoute>} />
           <Route
             path="/payroll"
             element={
-              <ProtectedRoute>
-                <PayrollPage />
+              <ProtectedRoute roles={["admin", "employee"]}>
+                <PayrollByRole />
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/leave"
-            element={
-              <ProtectedRoute>
-                <LeaveManagementPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/recruitment"
-            element={
-              <ProtectedRoute>
-                <RecruitmentPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings/personal-info"
-            element={
-              <ProtectedRoute>
-                <PersonalInformationPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings/personal-documents"
-            element={
-              <ProtectedRoute>
-                <PersonalDocumentsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings/security"
-            element={
-              <ProtectedRoute>
-                <SecurityPrivacyPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings/notifications"
-            element={
-              <ProtectedRoute>
-                <NotificationSettingPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notifications"
-            element={
-              <ProtectedRoute>
-                <NotificationsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings/roles"
-            element={
-              <ProtectedRoute>
-                <RolesPermissionsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings/organization"
-            element={
-              <ProtectedRoute>
-                <OrganizationProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings/billing"
-            element={
-              <ProtectedRoute>
-                <BillingPage />
-              </ProtectedRoute>
-            }
-          />
+
+          <Route path="/employees" element={<AdminRoute><EmployeeListPage /></AdminRoute>} />
+          <Route path="/employees/new" element={<AdminRoute><AddEmployeePage /></AdminRoute>} />
+          <Route path="/employees/:id" element={<AdminRoute><EmployeeDetailsPage /></AdminRoute>} />
+          <Route path="/departments" element={<AdminRoute><DepartmentsPage /></AdminRoute>} />
+          <Route path="/recruitment" element={<AdminRoute><RecruitmentPage /></AdminRoute>} />
+
+          <Route path="/settings/personal-info" element={<ProtectedRoute><PersonalInformationPage /></ProtectedRoute>} />
+          <Route path="/settings/personal-documents" element={<ProtectedRoute><PersonalDocumentsPage /></ProtectedRoute>} />
+          <Route path="/settings/security" element={<ProtectedRoute><SecurityPrivacyPage /></ProtectedRoute>} />
+          <Route path="/settings/notifications" element={<ProtectedRoute><NotificationSettingPage /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+
+          <Route path="/settings/roles" element={<AdminRoute><RolesPermissionsPage /></AdminRoute>} />
+          <Route path="/settings/organization" element={<AdminRoute><OrganizationProfilePage /></AdminRoute>} />
+          <Route path="/settings/billing" element={<AdminRoute><BillingPage /></AdminRoute>} />
+          <Route path="/settings/integrations" element={<AdminRoute><ApiIntegrationsPage /></AdminRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

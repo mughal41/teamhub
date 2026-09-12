@@ -11,6 +11,8 @@ export interface Employee {
   status: string;
   avatar: string;
   joinDate: string;
+  /** Reports-to employee id (e.g. EMP-0100). Null/undefined = no manager. */
+  managerId?: string | null;
 }
 
 export interface AttendanceRecord {
@@ -91,18 +93,106 @@ export interface PaymentMethod {
   isDefault: boolean;
 }
 
+export interface Department {
+  id: string;
+  name: string;
+  code: string;
+  headName: string;
+  description: string;
+  employeeCount: number;
+  status: "Active" | "Inactive";
+  createdAt: string;
+}
+
+export const initialDepartments: Department[] = [
+  {
+    id: "DEPT-001",
+    name: "Human Resources",
+    code: "HR",
+    headName: "Davis Levin",
+    description: "People operations, policies, and workforce planning",
+    employeeCount: 2,
+    status: "Active",
+    createdAt: "12 Jan 2032",
+  },
+  {
+    id: "DEPT-002",
+    name: "Marketing",
+    code: "MKT",
+    headName: "Marcus Brody",
+    description: "Brand, campaigns, and go-to-market programs",
+    employeeCount: 3,
+    status: "Active",
+    createdAt: "03 Mar 2032",
+  },
+  {
+    id: "DEPT-003",
+    name: "Product Design",
+    code: "PD",
+    headName: "Ethan Ray",
+    description: "Product UI/UX and design systems",
+    employeeCount: 2,
+    status: "Active",
+    createdAt: "18 May 2032",
+  },
+  {
+    id: "DEPT-004",
+    name: "Operations",
+    code: "OPS",
+    headName: "Jacob Yuen",
+    description: "Site operations and compliance",
+    employeeCount: 2,
+    status: "Active",
+    createdAt: "09 Aug 2032",
+  },
+  {
+    id: "DEPT-005",
+    name: "R&D",
+    code: "RND",
+    headName: "Lina Armand",
+    description: "Research labs and product experimentation",
+    employeeCount: 1,
+    status: "Active",
+    createdAt: "22 Sep 2032",
+  },
+  {
+    id: "DEPT-006",
+    name: "Customer Service",
+    code: "CS",
+    headName: "Farah Nabila",
+    description: "Support, CX, and customer success",
+    employeeCount: 2,
+    status: "Active",
+    createdAt: "14 Feb 2033",
+  },
+];
+
 // Initial default seed datasets
 export const initialEmployees: Employee[] = [
   {
+    id: "EMP-0100",
+    name: "Marcus Brody",
+    role: "Marketing & Sales Manager",
+    dept: "Marketing",
+    type: "Full-Time",
+    model: "Hybrid",
+    status: "Active",
+    avatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+    joinDate: "01 Feb 2031",
+    managerId: null,
+  },
+  {
     id: "EMP-0234",
     name: "Olivia Mason",
-    role: "Marketing",
-    dept: "Executive Marketing",
+    role: "Marketing Executive",
+    dept: "Marketing",
     type: "Full-Time",
     model: "Hybrid",
     status: "Active",
     avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "12 Jan 2034"
+    joinDate: "12 Jan 2034",
+    managerId: "EMP-0100",
   },
   {
     id: "EMP-0178",
@@ -113,62 +203,8 @@ export const initialEmployees: Employee[] = [
     model: "Remote",
     status: "Active",
     avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "03 Mar 2033"
-  },
-  {
-    id: "EMP-0312",
-    name: "Lina Armand",
-    role: "Lab Analyst",
-    dept: "R&D",
-    type: "Part-Time",
-    model: "On-Site",
-    status: "On Leave",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "22 Jul 2034"
-  },
-  {
-    id: "EMP-0115",
-    name: "Jacob Yuen",
-    role: "Site Supervisor",
-    dept: "Operations",
-    type: "Full-Time",
-    model: "On-Site",
-    status: "Absent",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "05 Sep 2032"
-  },
-  {
-    id: "EMP-0289",
-    name: "Mia Torres",
-    role: "HR Officer",
-    dept: "Human Resources",
-    type: "Full-Time",
-    model: "Hybrid",
-    status: "Active",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "14 Feb 2033"
-  },
-  {
-    id: "EMP-0356",
-    name: "Sara Kim",
-    role: "Customer Support",
-    dept: "Customer Service",
-    type: "Internship",
-    model: "On-Site",
-    status: "Active",
-    avatar: "https://images.unsplash.com/photo-1554151228-14d9def656e4?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "10 May 2035"
-  },
-  {
-    id: "EMP-0291",
-    name: "Daniel Cheung",
-    role: "Compliance Specialist",
-    dept: "Operations",
-    type: "Full-Time",
-    model: "Remote",
-    status: "Active",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "19 Nov 2033"
+    joinDate: "03 Mar 2033",
+    managerId: "EMP-0100",
   },
   {
     id: "EMP-0275",
@@ -179,7 +215,80 @@ export const initialEmployees: Employee[] = [
     model: "Remote",
     status: "Active",
     avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "06 Apr 2035"
+    joinDate: "06 Apr 2035",
+    managerId: "EMP-0100",
+  },
+  {
+    id: "EMP-0401",
+    name: "Nora Chen",
+    role: "Content Specialist",
+    dept: "Marketing",
+    type: "Full-Time",
+    model: "On-Site",
+    status: "Active",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    joinDate: "15 Jan 2035",
+    managerId: "EMP-0100",
+  },
+  {
+    id: "EMP-0312",
+    name: "Lina Armand",
+    role: "Lab Analyst",
+    dept: "R&D",
+    type: "Part-Time",
+    model: "On-Site",
+    status: "On Leave",
+    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    joinDate: "22 Jul 2034",
+    managerId: null,
+  },
+  {
+    id: "EMP-0115",
+    name: "Jacob Yuen",
+    role: "Site Supervisor",
+    dept: "Operations",
+    type: "Full-Time",
+    model: "On-Site",
+    status: "Absent",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    joinDate: "05 Sep 2032",
+    managerId: null,
+  },
+  {
+    id: "EMP-0289",
+    name: "Mia Torres",
+    role: "HR Officer",
+    dept: "Human Resources",
+    type: "Full-Time",
+    model: "Hybrid",
+    status: "Active",
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    joinDate: "14 Feb 2033",
+    managerId: null,
+  },
+  {
+    id: "EMP-0356",
+    name: "Sara Kim",
+    role: "Customer Support",
+    dept: "Customer Service",
+    type: "Internship",
+    model: "On-Site",
+    status: "Active",
+    avatar: "https://images.unsplash.com/photo-1554151228-14d9def656e4?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    joinDate: "10 May 2035",
+    managerId: null,
+  },
+  {
+    id: "EMP-0291",
+    name: "Daniel Cheung",
+    role: "Compliance Specialist",
+    dept: "Operations",
+    type: "Full-Time",
+    model: "Remote",
+    status: "Active",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    joinDate: "19 Nov 2033",
+    managerId: null,
   },
   {
     id: "EMP-0159",
@@ -190,7 +299,8 @@ export const initialEmployees: Employee[] = [
     model: "On-Site",
     status: "Active",
     avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "27 Jun 2032"
+    joinDate: "27 Jun 2032",
+    managerId: null,
   },
   {
     id: "EMP-0320",
@@ -201,8 +311,9 @@ export const initialEmployees: Employee[] = [
     model: "Hybrid",
     status: "Active",
     avatar: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    joinDate: "08 Aug 2034"
-  }
+    joinDate: "08 Aug 2034",
+    managerId: null,
+  },
 ];
 
 export const initialAttendance: AttendanceRecord[] = [
@@ -305,10 +416,122 @@ export const initialAttendance: AttendanceRecord[] = [
     forwardedTo: "",
     forwardedStatus: "None",
     hrApprovalStatus: "Approved"
+  },
+  {
+    id: "EMP-0275",
+    name: "Anya Rodriguez",
+    role: "Graphic Designer",
+    subRole: "Marketing",
+    dept: "Marketing",
+    date: "19 Jun 2035",
+    model: "Remote",
+    in: "09:02 AM",
+    out: "05:12 PM",
+    duration: "8h 10m",
+    overtime: "10m",
+    status: "On-Time",
+    avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    correctionRequestsThisMonth: 0,
+    comment: "",
+    forwardedTo: "",
+    forwardedStatus: "None",
+    hrApprovalStatus: "Approved"
+  },
+  {
+    id: "EMP-0401",
+    name: "Nora Chen",
+    role: "Content Specialist",
+    subRole: "Marketing",
+    dept: "Marketing",
+    date: "19 Jun 2035",
+    model: "On-Site",
+    in: "09:20 AM",
+    out: "05:30 PM",
+    duration: "8h 10m",
+    overtime: "10m",
+    status: "Late",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    correctionRequestsThisMonth: 1,
+    comment: "Transit delay",
+    forwardedTo: "Marcus Brody",
+    forwardedStatus: "Pending",
+    hrApprovalStatus: "Pending"
   }
 ];
 
 export const initialLeaves: LeaveActivityItem[] = [
+  {
+    id: "EMP-0234",
+    name: "Olivia Mason",
+    role: "Marketing Executive",
+    dept: "Marketing",
+    type: "Annual Leave",
+    submit: "18 Jun 2035",
+    period: "25-27 June 2035",
+    duration: "3 Days",
+    reason: "Family wedding out of town",
+    status: "Pending",
+    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    remainingQuota: 14,
+    totalQuota: 20,
+    sickLeavesRemaining: 5,
+    casualLeavesRemaining: 3,
+    annualLeavesRemaining: 14,
+    otherLeavesRemaining: 2,
+    startDate: "2035-06-25",
+    endDate: "2035-06-27",
+    forwardedTo: "Marcus Brody",
+    forwardedStatus: "Pending",
+    comment: "",
+  },
+  {
+    id: "EMP-0178",
+    name: "Ethan Ray",
+    role: "UI Designer",
+    dept: "Product Design",
+    type: "Sick Leave",
+    submit: "19 Jun 2035",
+    period: "20 Jun 2035",
+    duration: "1 Day",
+    reason: "Fever and recovery",
+    status: "Pending",
+    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    remainingQuota: 4,
+    totalQuota: 10,
+    sickLeavesRemaining: 4,
+    casualLeavesRemaining: 3,
+    annualLeavesRemaining: 12,
+    otherLeavesRemaining: 2,
+    startDate: "2035-06-20",
+    endDate: "2035-06-20",
+    forwardedTo: "Marcus Brody",
+    forwardedStatus: "Pending",
+    comment: "",
+  },
+  {
+    id: "EMP-0275",
+    name: "Anya Rodriguez",
+    role: "Graphic Designer",
+    dept: "Marketing",
+    type: "Other Leave",
+    submit: "17 Jun 2035",
+    period: "19 Jun 2035",
+    duration: "1 Day",
+    reason: "Personal matter",
+    status: "Pending",
+    avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
+    remainingQuota: 5,
+    totalQuota: 20,
+    sickLeavesRemaining: 4,
+    casualLeavesRemaining: 1,
+    annualLeavesRemaining: 4,
+    otherLeavesRemaining: 2,
+    startDate: "2035-06-19",
+    endDate: "2035-06-19",
+    forwardedTo: "Marcus Brody",
+    forwardedStatus: "Pending",
+    comment: "",
+  },
   {
     id: "EMP-0312",
     name: "Lina Armand",
@@ -331,7 +554,7 @@ export const initialLeaves: LeaveActivityItem[] = [
     endDate: "2035-06-22",
     forwardedTo: "",
     forwardedStatus: "None",
-    comment: "Recommended to rest secondary recovery."
+    comment: "Recommended to rest secondary recovery.",
   },
   {
     id: "EMP-0115",
@@ -355,32 +578,8 @@ export const initialLeaves: LeaveActivityItem[] = [
     endDate: "2035-06-21",
     forwardedTo: "",
     forwardedStatus: "None",
-    comment: "Have a safe holiday travel trip supervisors."
+    comment: "Have a safe holiday travel trip supervisors.",
   },
-  {
-    id: "EMP-0275",
-    name: "Anya Rodriguez",
-    role: "Graphic Designer",
-    dept: "Marketing",
-    type: "Other Leave",
-    submit: "17 Jun 2035",
-    period: "19 Jun 2035",
-    duration: "1 Day",
-    reason: "Personal matter",
-    status: "Pending",
-    avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&facepad=2&w=100&h=100&q=80",
-    remainingQuota: 5,
-    totalQuota: 20,
-    sickLeavesRemaining: 4,
-    casualLeavesRemaining: 1,
-    annualLeavesRemaining: 4,
-    otherLeavesRemaining: 2,
-    startDate: "2035-06-19",
-    endDate: "2035-06-19",
-    forwardedTo: "",
-    forwardedStatus: "None",
-    comment: ""
-  }
 ];
 
 export const initialPayroll: PayrollItem[] = [
@@ -462,11 +661,12 @@ export const initialPaymentMethods: PaymentMethod[] = [
 export function initDB(force = false) {
   if (force || !localStorage.getItem("db_initialized")) {
     localStorage.setItem("db_employees", JSON.stringify(initialEmployees));
-    localStorage.setItem("db_attendance", JSON.stringify([]));
-    localStorage.setItem("db_leaves", JSON.stringify([]));
-    localStorage.setItem("db_payroll", JSON.stringify([]));
-    localStorage.setItem("db_invoices", JSON.stringify([]));
-    localStorage.setItem("db_payment_methods", JSON.stringify([]));
+    localStorage.setItem("db_departments", JSON.stringify(initialDepartments));
+    localStorage.setItem("db_attendance", JSON.stringify(initialAttendance));
+    localStorage.setItem("db_leaves", JSON.stringify(initialLeaves));
+    localStorage.setItem("db_payroll", JSON.stringify(initialPayroll));
+    localStorage.setItem("db_invoices", JSON.stringify(initialInvoices));
+    localStorage.setItem("db_payment_methods", JSON.stringify(initialPaymentMethods));
     localStorage.setItem("db_schedules", JSON.stringify([]));
     localStorage.setItem("db_tasks", JSON.stringify([]));
     localStorage.setItem("db_activities", JSON.stringify([]));
@@ -484,7 +684,34 @@ export function initDB(force = false) {
     localStorage.setItem("db_attendance", JSON.stringify([]));
     localStorage.setItem("db_leaves", JSON.stringify([]));
     localStorage.setItem("db_clear_v6", "true");
-    // Broadcast updates immediately to any active sessions / views
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event("db_updated"));
+  }
+
+  // Admin panel seed: restore demo attendance/leave/payroll + departments for a full static Admin experience
+  if (!localStorage.getItem("db_admin_seed_v1")) {
+    localStorage.setItem("db_employees", JSON.stringify(initialEmployees));
+    localStorage.setItem("db_departments", JSON.stringify(initialDepartments));
+    localStorage.setItem("db_attendance", JSON.stringify(initialAttendance));
+    localStorage.setItem("db_leaves", JSON.stringify(initialLeaves));
+    localStorage.setItem("db_payroll", JSON.stringify(initialPayroll));
+    localStorage.setItem("db_invoices", JSON.stringify(initialInvoices));
+    localStorage.setItem("db_payment_methods", JSON.stringify(initialPaymentMethods));
+    localStorage.setItem("db_admin_seed_v1", "true");
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event("db_updated"));
+  }
+
+  if (!localStorage.getItem("db_departments")) {
+    localStorage.setItem("db_departments", JSON.stringify(initialDepartments));
+  }
+
+  // Manager panel: refresh employees with managerId hierarchy + team leave/attendance
+  if (!localStorage.getItem("db_manager_seed_v1")) {
+    localStorage.setItem("db_employees", JSON.stringify(initialEmployees));
+    localStorage.setItem("db_attendance", JSON.stringify(initialAttendance));
+    localStorage.setItem("db_leaves", JSON.stringify(initialLeaves));
+    localStorage.setItem("db_manager_seed_v1", "true");
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new Event("db_updated"));
   }

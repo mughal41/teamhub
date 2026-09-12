@@ -1,22 +1,58 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #2DD4BF;
-  --color-brand-dark: #0D9488;
-  --color-surface: #F9FAFB;
+  --color-brand: #28C2A9;
+  --color-brand-dark: #0E4D41;
+  --color-surface: #F0F0ED;
+  --color-panel: #FFFFFF;
+  --color-muted: #F3F3F0;
+  --color-line: #E4E4E1;
   --radius-xl: 0.75rem;
   --radius-2xl: 1rem;
+
+  --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  --shadow-md: 0 1px 3px 0 rgb(15 23 42 / 0.06);
+  --shadow-lg: 0 8px 20px -8px rgb(15 23 42 / 0.12);
+  --shadow-xl: 0 12px 28px -10px rgb(15 23 42 / 0.14);
+  --shadow-2xl: 0 24px 48px -12px rgb(15 23 42 / 0.18);
 }
 
 @layer base {
   body {
     @apply bg-surface text-slate-900 antialiased;
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .admin-shell {
+    background-color: var(--color-surface);
+  }
+
+  .admin-shell .bg-white {
+    background-color: #ffffff;
+  }
+
+  .admin-shell table {
+    background-color: #ffffff;
+  }
+
+  .admin-shell thead tr {
+    background-color: #fafaf8;
+  }
+
+  .admin-shell tbody {
+    background-color: #ffffff;
+  }
+
+  .admin-shell tbody tr:hover td {
+    background-color: #fbfbfa;
   }
 }
 
 .auth-bg {
-  background: linear-gradient(rgba(5, 150, 105, 0.8), rgba(5, 150, 105, 0.8)), url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80');
+  background: linear-gradient(rgba(5, 150, 105, 0.8), rgba(5, 150, 105, 0.8)),
+    url("https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80");
   background-size: cover;
   background-position: center;
 }

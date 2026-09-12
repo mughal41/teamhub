@@ -6,8 +6,8 @@ export const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttrib
     const variants = {
       primary: "bg-brand hover:bg-brand-dark text-white shadow-sm",
       secondary: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
-      outline: "border border-slate-200 bg-white hover:bg-slate-50 text-slate-700",
-      ghost: "hover:bg-slate-100 text-slate-600",
+      outline: "border border-[#E4E4E1] bg-white hover:bg-[#F3F3F0] text-slate-700",
+      ghost: "hover:bg-[#F3F3F0] text-slate-600",
     }
     return (
       <button

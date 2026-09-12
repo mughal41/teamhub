@@ -17,7 +17,7 @@ import {
   ChevronRight 
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 import { useAuth } from "@/src/context/AuthContext";
 
@@ -26,9 +26,33 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
   const [isOpenProfile, setIsOpenProfile] = useState(false);
   const [isOpenNotifications, setIsOpenNotifications] = useState(false);
   const [flyoutCategory, setFlyoutCategory] = useState<"all" | "payroll" | "system">("all");
+  const [workspaceNotice, setWorkspaceNotice] = useState(false);
 
-  const { user, logout } = useAuth();
+  const { user, logout, accessRole } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdmin = accessRole === "admin";
+
+  // Close flyouts on route change so overlays never block the sidebar/content
+  React.useEffect(() => {
+    setIsOpenSettings(false);
+    setIsOpenProfile(false);
+    setIsOpenNotifications(false);
+  }, [location.pathname]);
+
+  const goTo = (path: string) => {
+    setIsOpenSettings(false);
+    setIsOpenProfile(false);
+    setIsOpenNotifications(false);
+    navigate(path);
+  };
+
+  const displayName = user?.name || "TeamHub User";
+  const displayRole = user?.roleTitle || "User";
+  const displayEmail = user?.email || "";
+  const displayAvatar =
+    user?.avatar ||
+    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80";
 
   // Notifications expect an array of feeds stored in localStorage under 'db_notifications'
   const [flyoutNotifications, setFlyoutNotifications] = useState(() => {
@@ -45,7 +69,13 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
   });
 
   return (
-    <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-100 bg-white/80 px-8 backdrop-blur-md">
+    <>
+    {workspaceNotice ? (
+      <div className="fixed right-6 top-24 z-[90] rounded-xl border border-[#E4E4E1] bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-lg">
+        Only one workspace is available in this demo.
+      </div>
+    ) : null}
+    <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-[#E4E4E1] bg-white px-8">
       <div className="space-y-1">
         <h1 className="text-xl font-bold text-slate-900">{title}</h1>
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
@@ -70,7 +100,7 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
           <input
             type="text"
             placeholder="Search anything"
-            className="h-10 w-80 rounded-full border border-slate-200 bg-white pl-11 pr-4 text-sm outline-none transition-all focus:border-[#28C2A9] focus:ring-1 focus:ring-[#28C2A9]"
+            className="h-10 w-80 rounded-full border border-[#E4E4E1] bg-[#F3F3F0] pl-11 pr-4 text-sm outline-none transition-all placeholder:text-slate-400 focus:border-[#28C2A9] focus:bg-white focus:ring-1 focus:ring-[#28C2A9]"
           />
         </div>
 
@@ -95,39 +125,36 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
               <>
                 {/* Overlay to dim backdrop and intercept clicks */}
                 <div 
-                  className="fixed inset-0 z-40 bg-slate-900/10 backdrop-blur-[1px] cursor-default" 
+                  className="fixed inset-0 z-30 bg-slate-900/10 backdrop-blur-[1px] cursor-default" 
                   onClick={() => setIsOpenSettings(false)}
                 />
                 
                 {/* Settings Dropdown Card */}
                 <div 
                   id="settings-dropdown"
-                  className="absolute right-[-80px] sm:right-0 top-12 z-50 w-[290px] xs:w-[320px] sm:w-[520px] max-w-[calc(100vw-32px)] rounded-2xl border border-slate-100 bg-white py-5 px-4 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right scale-100"
+                  className="absolute right-[-80px] sm:right-0 top-12 z-50 w-[290px] xs:w-[320px] sm:w-[520px] max-w-[calc(100vw-32px)] rounded-2xl border border-[#E4E4E1] bg-white py-5 px-4 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right scale-100"
                 >
-                  <div className="px-3 pb-3 mb-2 border-b border-slate-100">
+                  <div className="px-3 pb-3 mb-2 border-b border-[#E4E4E1]">
                     <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Workspace Settings</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                     <button 
-                      onClick={() => {
-                        setIsOpenSettings(false);
-                        navigate("/settings/personal-info");
-                      }}
+                      type="button"
+                      onClick={() => goTo("/settings/personal-info")}
                       className="group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl hover:bg-brand/5 text-left transition-all w-full"
                     >
                       <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 group-hover:bg-brand/10 text-slate-500 group-hover:text-brand-dark transition-colors shrink-0">
                         <Settings className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-800">General Settings</p>
+                        <p className="text-sm font-semibold text-slate-800">Personal Information</p>
                       </div>
                     </button>
 
+                    {isAdmin && (
                     <button 
-                      onClick={() => {
-                        setIsOpenSettings(false);
-                        navigate("/settings/personal-info");
-                      }}
+                      type="button"
+                      onClick={() => goTo("/settings/organization")}
                       className="group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl hover:bg-brand/5 text-left transition-all w-full"
                     >
                       <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 group-hover:bg-brand/10 text-slate-500 group-hover:text-brand-dark transition-colors shrink-0">
@@ -137,12 +164,11 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                         <p className="text-sm font-semibold text-slate-800">Organization Profile</p>
                       </div>
                     </button>
+                    )}
 
                     <button 
-                      onClick={() => {
-                        setIsOpenSettings(false);
-                        navigate("/settings/personal-info");
-                      }}
+                      type="button"
+                      onClick={() => goTo("/settings/security")}
                       className="group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl hover:bg-brand/5 text-left transition-all w-full"
                     >
                       <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 group-hover:bg-brand/10 text-slate-500 group-hover:text-brand-dark transition-colors shrink-0">
@@ -154,10 +180,8 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                     </button>
 
                     <button 
-                      onClick={() => {
-                        setIsOpenSettings(false);
-                        navigate("/settings/personal-info");
-                      }}
+                      type="button"
+                      onClick={() => goTo("/settings/notifications")}
                       className="group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl hover:bg-brand/5 text-left transition-all w-full"
                     >
                       <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 group-hover:bg-brand/10 text-slate-500 group-hover:text-brand-dark transition-colors shrink-0">
@@ -168,11 +192,10 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                       </div>
                     </button>
 
+                    {isAdmin && (
                     <button 
-                      onClick={() => {
-                        setIsOpenSettings(false);
-                        navigate("/settings/personal-info");
-                      }}
+                      type="button"
+                      onClick={() => goTo("/settings/roles")}
                       className="group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl hover:bg-brand/5 text-left transition-all w-full"
                     >
                       <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 group-hover:bg-brand/10 text-slate-500 group-hover:text-brand-dark transition-colors shrink-0">
@@ -182,12 +205,12 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                         <p className="text-sm font-semibold text-slate-800">Roles & Permissions</p>
                       </div>
                     </button>
+                    )}
 
+                    {isAdmin && (
                     <button 
-                      onClick={() => {
-                        setIsOpenSettings(false);
-                        navigate("/settings/personal-info");
-                      }}
+                      type="button"
+                      onClick={() => goTo("/settings/integrations")}
                       className="group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl hover:bg-brand/5 text-left transition-all w-full"
                     >
                       <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 group-hover:bg-brand/10 text-slate-500 group-hover:text-brand-dark transition-colors shrink-0">
@@ -197,18 +220,19 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                         <p className="text-sm font-semibold text-slate-800">API & Integrations</p>
                       </div>
                     </button>
+                    )}
                   </div>
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex justify-center">
+                  {isAdmin && (
+                  <div className="mt-4 pt-3 border-t border-[#E4E4E1] flex justify-center">
                     <button 
-                      onClick={() => {
-                        setIsOpenSettings(false);
-                        navigate("/settings/personal-info");
-                      }}
+                      type="button"
+                      onClick={() => goTo("/settings/billing")}
                       className="text-xs font-bold text-brand-dark hover:underline tracking-wide"
                     >
                       Manage Billing & Subscription
                     </button>
                   </div>
+                  )}
                 </div>
               </>
             )}
@@ -237,17 +261,17 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
               <>
                 {/* Overlay backdrop layer to click and dismiss */}
                 <div 
-                  className="fixed inset-0 z-40 bg-slate-900/10 backdrop-blur-[1px] cursor-default" 
+                  className="fixed inset-0 z-30 bg-slate-900/10 backdrop-blur-[1px] cursor-default" 
                   onClick={() => setIsOpenNotifications(false)}
                 />
 
                 {/* Dropdown Container */}
                 <div 
                   id="notification-dropdown"
-                  className="absolute right-0 top-12 z-50 w-[320px] xs:w-[360px] sm:w-[400px] max-w-[calc(100vw-32px)] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right transform"
+                  className="absolute right-0 top-12 z-50 w-[320px] xs:w-[360px] sm:w-[400px] max-w-[calc(100vw-32px)] bg-white rounded-2xl shadow-2xl border border-[#E4E4E1] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right transform"
                 >
                   {/* Header */}
-                  <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100 bg-white">
+                  <div className="px-5 py-4 flex items-center justify-between border-b border-[#E4E4E1] bg-white">
                     <h2 className="font-bold text-sm text-slate-900">Notifications</h2>
                     <button 
                       type="button"
@@ -310,7 +334,7 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                               {/* Icon or Avatar */}
                               <div className="shrink-0 mt-0.5">
                                 {item.avatar ? (
-                                  <img src={item.avatar} className="w-8 h-8 rounded-full border border-slate-100 object-cover" alt="Avatar" />
+                                  <img src={item.avatar} className="w-8 h-8 rounded-full border border-[#E4E4E1] object-cover" alt="Avatar" />
                                 ) : (
                                   <div className={cn(
                                     "w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0 select-none",
@@ -338,7 +362,7 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                   </div>
 
                   {/* Popover Footer link layout */}
-                  <div className="p-3 text-center bg-slate-50/50 border-t border-slate-100">
+                  <div className="p-3 text-center bg-slate-50/50 border-t border-[#E4E4E1]">
                     <Link 
                       to="/notifications"
                       onClick={() => setIsOpenNotifications(false)}
@@ -370,18 +394,18 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
           >
             <div className="relative">
               <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXcgEFuMNH2WfVpKSkgHkLECe1-hlQ0L9nl5ENytbZVUEW86K5l0_mna02bcC9tmRPbl-07SmLI5j_1r3ZHvrMBH6CD4kB-_5E-T2OAl45cTJ1qmSS_yuJ3xk82VJF17FliOHCnrOl_Q2p-mxWY0neh_xUDCcG4Qk1iJw5FWsQ8G6lPDt2cLc6wkE08FjkhU0qVbP3iVxOoM2oFtk1KBpMk_hkLr1VsbXccQdVkOlnRpK30VI7QYYr3xzhv_6-w2MHnuh5pjbwFSw"
-                alt="Davis Levin portrait"
+                src={displayAvatar}
+                alt={`${displayName} portrait`}
                 className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-100"
               />
               <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
             </div>
             <div className="flex flex-col items-start hidden sm:flex leading-tight">
               <span className="text-sm font-bold text-slate-900">
-                {user ? `${user.first_name} ${user.last_name}` : "Davis Levin"}
+                {displayName}
               </span>
               <span className="text-[10px] font-medium text-slate-400">
-                {user?.role_name || "User"}
+                {displayRole}
               </span>
             </div>
           </button>
@@ -390,20 +414,20 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
             <>
               {/* Overlay for profile dropdown */}
               <div 
-                className="fixed inset-0 z-40 bg-slate-900/10 backdrop-blur-[1px] cursor-default" 
+                className="fixed inset-0 z-30 bg-slate-900/10 backdrop-blur-[1px] cursor-default" 
                 onClick={() => setIsOpenProfile(false)}
               />
 
               {/* Profile Dropdown menu card */}
               <div 
                 id="profile-dropdown"
-                className="absolute right-0 top-12 z-50 w-80 rounded-2xl border border-slate-100 bg-white shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+                className="absolute right-0 top-12 z-50 w-80 rounded-2xl border border-[#E4E4E1] bg-white shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
               >
                 {/* Header profile panel */}
-                <div className="p-5 bg-slate-50/50 flex flex-col items-center text-center border-b border-slate-100">
+                <div className="p-5 bg-slate-50/50 flex flex-col items-center text-center border-b border-[#E4E4E1]">
                   <div className="relative mb-3">
                     <img 
-                      src={user?.avatar_url || "https://lh3.googleusercontent.com/aida-public/AB6AXuDXcgEFuMNH2WfVpKSkgHkLECe1-hlQ0L9nl5ENytbZVUEW86K5l0_mna02bcC9tmRPbl-07SmLI5j_1r3ZHvrMBH6CD4kB-_5E-T2OAl45cTJ1qmSS_yuJ3xk82VJF17FliOHCnrOl_Q2p-mxWY0neh_xUDCcG4Qk1iJw5FWsQ8G6lPDt2cLc6wkE08FjkhU0qVbP3iVxOoM2oFtk1KBpMk_hkLr1VsbXccQdVkOlnRpK30VI7QYYr3xzhv_6-w2MHnuh5pjbwFSw"}
+                      src={displayAvatar}
                       alt="User avatar" 
                       className="w-20 h-20 rounded-full border-2 border-brand object-cover" 
                     />
@@ -412,23 +436,21 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                     </div>
                   </div>
                   <h3 className="font-bold text-slate-800 text-base">
-                    {user ? `${user.first_name} ${user.last_name}` : "Davis Levin"}
+                    {displayName}
                   </h3>
                   <p className="text-brand-dark font-semibold text-xs mt-0.5">
-                    {user?.role_name || "HR Manager"}
+                    {displayRole}
                   </p>
                   <p className="text-[11px] text-slate-400 mt-1">
-                    {user?.email || "davis.levin@teamhub.corp"}
+                    {displayEmail}
                   </p>
                 </div>
 
                 {/* List items */}
                 <div className="p-2 space-y-0.5">
                   <button 
-                    onClick={() => {
-                      setIsOpenProfile(false);
-                      navigate("/settings/personal-info");
-                    }}
+                    type="button"
+                    onClick={() => goTo("/settings/personal-info")}
                     className="flex items-center gap-3.5 w-full px-4.5 py-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors font-medium text-sm text-slate-600 hover:text-slate-900"
                   >
                     <User className="h-4.5 w-4.5 text-slate-400" />
@@ -436,10 +458,8 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                   </button>
 
                   <button 
-                    onClick={() => {
-                      setIsOpenProfile(false);
-                      navigate("/settings/personal-info");
-                    }}
+                    type="button"
+                    onClick={() => goTo("/settings/security")}
                     className="flex items-center justify-between w-full px-4.5 py-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors font-medium text-sm text-slate-600 hover:text-slate-900"
                   >
                     <div className="flex items-center gap-3.5">
@@ -450,33 +470,35 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                   </button>
 
                   <button 
-                    onClick={() => {
-                      setIsOpenProfile(false);
-                      navigate("/settings/personal-documents");
-                    }}
-                    className="flex items-center gap-3.5 w-full px-4.5 py-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors font-medium text-sm text-slate-600 hover:text-slate-900"
+                    type="button"
+                    onClick={() => goTo("/settings/personal-documents")}
+                    className="flex items-center gap-3.5 w-full px-4.5 py-2.5 rounded-xl hover:bg-[#F3F3F0] text-left transition-colors font-medium text-sm text-slate-600 hover:text-slate-900"
                   >
                     <FileText className="h-4.5 w-4.5 text-slate-400" />
                     <span>Personal Documents</span>
                   </button>
 
-                  <div className="h-px bg-slate-100 my-1" />
+                  <div className="h-px bg-[#E4E4E1] my-1" />
 
                   <button 
+                    type="button"
                     onClick={() => {
                       setIsOpenProfile(false);
+                      setWorkspaceNotice(true);
+                      window.setTimeout(() => setWorkspaceNotice(false), 2500);
                     }}
-                    className="flex items-center gap-3.5 w-full px-4.5 py-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors font-medium text-sm text-slate-600 hover:text-slate-900"
+                    className="flex items-center gap-3.5 w-full px-4.5 py-2.5 rounded-xl hover:bg-[#F3F3F0] text-left transition-colors font-medium text-sm text-slate-600 hover:text-slate-900"
                   >
                     <RefreshCw className="h-4.5 w-4.5 text-slate-400" />
                     <span>Switch Workspace</span>
                   </button>
 
                   <button 
+                    type="button"
                     onClick={async () => {
                       setIsOpenProfile(false);
                       await logout();
-                      navigate("/login");
+                      navigate("/login", { replace: true });
                     }}
                     className="flex items-center gap-3.5 w-full px-4.5 py-2.5 rounded-xl hover:bg-rose-50 text-left transition-colors font-bold text-sm text-rose-600 hover:text-rose-700"
                   >
@@ -490,5 +512,6 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
         </div>
       </div>
     </header>
+    </>
   );
 }

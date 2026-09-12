@@ -49,14 +49,14 @@ export function EmployeePerformanceProfile({ employee, onBack }: EmployeePerform
       </div>
 
       {/* Profile Header Card */}
-      <section className="bg-white border border-[#E5E6E6] rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row gap-6 items-start shadow-sm relative overflow-hidden">
+      <section className="bg-white border border-[#E4E4E1] rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row gap-6 items-start shadow-sm relative overflow-hidden">
         {/* Decorative corner accent */}
         <div className="absolute right-0 top-0 w-24 h-24 bg-[#E4F2D3]/15 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative shrink-0 mx-auto md:mx-0">
           <img 
             alt={employee.name} 
-            className="w-24 h-24 rounded-2xl object-cover border-2 border-slate-100 shadow-md bg-brand" 
+            className="w-24 h-24 rounded-2xl object-cover border-2 border-[#E4E4E1] shadow-md bg-brand" 
             src={employee.avatar} 
           />
           <div className="absolute -bottom-2 -right-2 bg-[#006b5f] text-white w-8 h-8 rounded-xl flex items-center justify-center border-4 border-white shadow-sm">
@@ -97,14 +97,14 @@ export function EmployeePerformanceProfile({ employee, onBack }: EmployeePerform
       {/* Main Grid: Snapshot on Left, Competencies on Right */}
       <div className="grid grid-cols-12 gap-6">
         {/* Left Hand: Performance Snapshot (KPIs) */}
-        <div className="col-span-12 lg:col-span-4 bg-white border border-[#E5E6E6] rounded-2xl p-6 space-y-6 flex flex-col shadow-sm">
+        <div className="col-span-12 lg:col-span-4 bg-white border border-[#E4E4E1] rounded-2xl p-6 space-y-6 flex flex-col shadow-sm">
           <h3 className="font-sans text-sm font-black text-[#203430] flex items-center gap-2 border-b border-slate-50 pb-3">
             <TrendingUp className="text-[#006b5f] h-5 w-5" />
             Performance Snapshot
           </h3>
           
           <div className="flex-grow space-y-4">
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col">
+            <div className="p-4 bg-slate-50 rounded-2xl border border-[#E4E4E1] flex flex-col">
               <p className="text-[10px] text-[#63716E] font-extrabold uppercase tracking-wide mb-1.5">Overall Rating</p>
               <div className="flex items-baseline gap-1">
                 <span className="text-4xl font-extrabold text-[#203430]">{overallRating}</span>
@@ -116,13 +116,13 @@ export function EmployeePerformanceProfile({ employee, onBack }: EmployeePerform
               </p>
             </div>
 
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col">
+            <div className="p-4 bg-slate-50 rounded-2xl border border-[#E4E4E1] flex flex-col">
               <p className="text-[10px] text-[#63716E] font-extrabold uppercase tracking-wide mb-1.5">Percentile Rank</p>
               <span className="text-3xl font-extrabold text-[#006b5f]">{percentileText}</span>
               <p className="text-[#63716E] text-xs mt-1.5 font-medium">Relative to {employee.subRole} average</p>
             </div>
 
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
+            <div className="p-4 bg-slate-50 rounded-2xl border border-[#E4E4E1] flex items-center gap-4">
               <div className="w-11 h-11 bg-[#E4F2D3] text-[#0E4D41] rounded-xl flex flex-col items-center justify-center font-bold shrink-0">
                 <span className="text-[9px] font-black leading-none uppercase">SEP</span>
                 <span className="text-sm font-extrabold leading-none mt-1">14</span>
@@ -145,7 +145,7 @@ export function EmployeePerformanceProfile({ employee, onBack }: EmployeePerform
         </div>
 
         {/* Right Hand: Competency Matrix (Expanded full row width layout) */}
-        <div className="col-span-12 lg:col-span-8 bg-white border border-[#E5E6E6] rounded-2xl p-6 shadow-sm">
+        <div className="col-span-12 lg:col-span-8 bg-white border border-[#E4E4E1] rounded-2xl p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-50 pb-4 mb-6">
             <h3 className="font-sans text-sm font-black text-[#203430] flex items-center gap-2">
               <Layers className="text-[#006b5f] h-5 w-5" />
@@ -272,7 +272,7 @@ export function EmployeePerformanceProfile({ employee, onBack }: EmployeePerform
       </div>
 
       {/* Full Rows: 360-Degree Feedback Summary */}
-      <section className="bg-white border border-[#E5E6E6] rounded-2xl p-6 shadow-sm space-y-6">
+      <section className="bg-white border border-[#E4E4E1] rounded-2xl p-6 shadow-sm space-y-6">
         <div className="flex items-center justify-between border-b border-slate-50 pb-3">
           <h3 className="font-sans text-sm font-black text-[#203430] flex items-center gap-2">
             <Users className="text-[#006b5f] h-5 w-5" />
@@ -282,19 +282,19 @@ export function EmployeePerformanceProfile({ employee, onBack }: EmployeePerform
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-slate-50/75 p-4 rounded-xl border border-slate-100 text-center">
+          <div className="bg-slate-50/75 p-4 rounded-xl border border-[#E4E4E1] text-center">
             <p className="text-[10px] text-[#63716E] font-extrabold uppercase tracking-widest mb-1">Peers Feedback</p>
             <p className="text-2xl font-black text-[#203430]">4.8 <span className="text-xs font-medium text-[#63716E]">/ 5</span></p>
             <span className="inline-flex mt-1 text-[10px] items-center gap-1 font-bold text-[#006b5f]">"Highly Reliable"</span>
           </div>
 
-          <div className="bg-slate-50/75 p-4 rounded-xl border border-slate-100 text-center">
+          <div className="bg-slate-50/75 p-4 rounded-xl border border-[#E4E4E1] text-center">
             <p className="text-[10px] text-[#63716E] font-extrabold uppercase tracking-widest mb-1">Manager Rating</p>
             <p className="text-2xl font-black text-[#203430]">4.9 <span className="text-xs font-medium text-[#63716E]">/ 5</span></p>
             <span className="inline-flex mt-1 text-[10px] items-center gap-1 font-bold text-[#006b5f]">"Strategic Asset"</span>
           </div>
 
-          <div className="bg-slate-50/75 p-4 rounded-xl border border-slate-100 text-center">
+          <div className="bg-slate-50/75 p-4 rounded-xl border border-[#E4E4E1] text-center">
             <p className="text-[10px] text-[#63716E] font-extrabold uppercase tracking-widest mb-1">Direct Reports</p>
             <p className="text-2xl font-black text-[#203430]">4.6 <span className="text-xs font-medium text-[#63716E]">/ 5</span></p>
             <span className="inline-flex mt-1 text-[10px] items-center gap-1 font-bold text-[#006b5f]">"Strong Mentor"</span>
@@ -303,7 +303,7 @@ export function EmployeePerformanceProfile({ employee, onBack }: EmployeePerform
 
         {/* Detailed peer feedbacks columns */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          <div className="bg-slate-50/40 p-4 rounded-xl border border-slate-100/70 border-l-4 border-l-[#006b5f]">
+          <div className="bg-slate-50/40 p-4 rounded-xl border border-[#E4E4E1]/70 border-l-4 border-l-[#006b5f]">
             <div className="flex items-center gap-3 mb-2.5">
               <img 
                 alt="Marcus Thorne" 
@@ -320,9 +320,9 @@ export function EmployeePerformanceProfile({ employee, onBack }: EmployeePerform
             </p>
           </div>
 
-          <div className="bg-slate-50/40 p-4 rounded-xl border border-slate-100/70 border-l-4 border-l-[#A4ACAB]">
+          <div className="bg-slate-50/40 p-4 rounded-xl border border-[#E4E4E1]/70 border-l-4 border-l-[#A4ACAB]">
             <div className="flex items-center gap-3 mb-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#E5E6E6] text-[#203430] font-black text-xs flex items-center justify-center shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-[#F3F3F0] text-[#203430] font-black text-xs flex items-center justify-center shadow-sm">
                 AL
               </div>
               <div>

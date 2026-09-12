@@ -122,7 +122,7 @@ export default function CalendarPage() {
       case "green":
         return {
           bgColor: "bg-[#E4F2D3]",
-          tagBg: "bg-[#F8FCF3]",
+          tagBg: "bg-white",
           textColor: "text-[#0E4D41]",
           borderClass: "border-l-[#35BFA3]",
           eventBg: "bg-emerald-50 text-emerald-700",
@@ -154,7 +154,7 @@ export default function CalendarPage() {
       case "slate":
       default:
         return {
-          bgColor: "bg-[#E5E6E6]/60",
+          bgColor: "bg-[#F3F3F0]/60",
           tagBg: "bg-slate-50",
           textColor: "text-slate-700",
           borderClass: "border-l-slate-300",
@@ -251,8 +251,8 @@ export default function CalendarPage() {
         {/* Dynamic Modal Dialog */}
         {isNewAgendaOpen && (
           <div className="fixed inset-0 bg-[#203430]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md p-6 relative gap-4 flex flex-col shadow-2xl border border-slate-100 animate-slide-up">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="bg-white rounded-2xl w-full max-w-md p-6 relative gap-4 flex flex-col shadow-2xl border border-[#E4E4E1] animate-slide-up">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E4E4E1]">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="h-5 w-5 text-brand" />
                   <h3 className="text-base font-bold text-[#203430]">
@@ -302,7 +302,7 @@ export default function CalendarPage() {
 
                     {isDatePickerOpen && (
                       <div className="absolute top-12 left-0 z-50 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 w-[260px] animate-fade-in border-slate-200">
-                        <div className="flex items-center justify-between mb-2 pb-1 border-b border-slate-100">
+                        <div className="flex items-center justify-between mb-2 pb-1 border-b border-[#E4E4E1]">
                           <span className="text-[11px] font-bold text-[#0E4D41]">
                             Select June 2035 Day
                           </span>
@@ -445,7 +445,7 @@ export default function CalendarPage() {
                   />
                 </div>
 
-                <div className="flex gap-3 justify-end pt-3 border-t border-slate-100">
+                <div className="flex gap-3 justify-end pt-3 border-t border-[#E4E4E1]">
                   <button
                     type="button"
                     onClick={() => setIsNewAgendaOpen(false)}
@@ -455,7 +455,7 @@ export default function CalendarPage() {
                   </button>
                   <Button
                     type="submit"
-                    className="h-9 px-4 text-xs font-bold bg-[#0E4D41] hover:bg-[#203430] text-white shadow-md select-none"
+                    className="h-9 px-4 text-xs font-bold bg-[#0E4D41] hover:bg-[#203430] text-white select-none"
                   >
                     Save Agenda
                   </Button>
@@ -468,8 +468,8 @@ export default function CalendarPage() {
         {/* Edit Agenda Modal Dialog */}
         {isEditAgendaOpen && editingEvent && (
           <div className="fixed inset-0 bg-[#203430]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-            <div className="bg-white rounded-2xl w-full max-w-md p-6 relative gap-4 flex flex-col shadow-2xl border border-slate-100 animate-slide-up">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="bg-white rounded-2xl w-full max-w-md p-6 relative gap-4 flex flex-col shadow-2xl border border-[#E4E4E1] animate-slide-up">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E4E4E1]">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="h-5 w-5 text-[#0E4D41]" />
                   <h3 className="text-base font-bold text-[#203430]">
@@ -528,7 +528,7 @@ export default function CalendarPage() {
 
                     {isEditDatePickerOpen && (
                       <div className="absolute top-12 left-0 z-50 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 w-[260px] animate-fade-in border-slate-200">
-                        <div className="flex items-center justify-between mb-2 pb-1 border-b border-slate-100">
+                        <div className="flex items-center justify-between mb-2 pb-1 border-b border-[#E4E4E1]">
                           <span className="text-[11px] font-bold text-[#0E4D41]">
                             Select June 2035 Day
                           </span>
@@ -672,7 +672,7 @@ export default function CalendarPage() {
                   />
                 </div>
 
-                <div className="flex gap-2 justify-between pt-3 border-t border-slate-100">
+                <div className="flex gap-2 justify-between pt-3 border-t border-[#E4E4E1]">
                   <button
                     type="button"
                     onClick={handleDeleteAgenda}
@@ -695,7 +695,7 @@ export default function CalendarPage() {
                     </button>
                     <Button
                       type="submit"
-                      className="h-9 px-4 text-xs font-bold bg-[#0E4D41] hover:bg-[#203430] text-white shadow-md select-none"
+                      className="h-9 px-4 text-xs font-bold bg-[#0E4D41] hover:bg-[#203430] text-white select-none"
                     >
                       Save Changes
                     </Button>
@@ -710,7 +710,7 @@ export default function CalendarPage() {
         {isCategoryModalOpen && (
           <div className="fixed inset-0 bg-[#203430]/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl w-full max-w-md p-6 relative gap-4 flex flex-col shadow-2xl border border-slate-150 animate-slide-up">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E4E4E1]">
                 <div className="flex items-center gap-2">
                   <Layers className="h-5 w-5 text-[#0E4D41]" />
                   <h3 className="text-sm font-bold text-[#203430]">
@@ -736,7 +736,7 @@ export default function CalendarPage() {
               )}
 
               {/* Form to Add New Category */}
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-3">
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-[#E4E4E1] space-y-3">
                 <p className="text-[11px] font-bold text-[#203430] uppercase tracking-wider text-left">
                   Create New Category
                 </p>
@@ -826,7 +826,7 @@ export default function CalendarPage() {
                       setNewCatName("");
                       setCategoryError("");
                     }}
-                    className="text-[10px] font-bold bg-[#0E4D41] hover:bg-[#1a5b4f] text-white px-3 py-1.5 rounded-lg shadow-sm transition-all"
+                    className="text-[10px] font-bold bg-[#0E4D41] hover:bg-[#1a5b4f] text-white px-3 py-1.5 rounded-lg transition-all"
                   >
                     + Create Category
                   </button>
@@ -843,7 +843,7 @@ export default function CalendarPage() {
                   return (
                     <div
                       key={cat.id}
-                      className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 bg-white hover:bg-slate-50/50 transition-colors"
+                      className="flex items-center justify-between p-2.5 rounded-lg border border-[#E4E4E1] bg-white hover:bg-slate-50/50 transition-colors"
                     >
                       <div className="flex items-center gap-2">
                         <span
@@ -923,14 +923,14 @@ export default function CalendarPage() {
                 })}
               </div>
 
-              <div className="flex justify-end pt-2 border-t border-slate-100">
+              <div className="flex justify-end pt-2 border-t border-[#E4E4E1]">
                 <button
                   type="button"
                   onClick={() => {
                     setIsCategoryModalOpen(false);
                     setCategoryError("");
                   }}
-                  className="px-4 py-2 bg-[#0E4D41] text-white rounded-lg text-xs font-bold hover:bg-[#1a5b4f] transition-colors shadow-md text-center"
+                  className="px-4 py-2 bg-[#0E4D41] text-white rounded-lg text-xs font-bold hover:bg-[#1a5b4f] transition-colors text-center"
                 >
                   Done
                 </button>
@@ -1000,7 +1000,7 @@ export default function CalendarPage() {
 
         <div className="flex flex-col gap-6 lg:flex-row">
           {/* Filter Sidebar */}
-          <Card className="w-full shrink-0 border-r border-slate-100 lg:w-[200px] bg-white p-4">
+          <Card className="w-full shrink-0 border-r border-[#E4E4E1] lg:w-[200px] bg-white p-4">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-sm font-bold text-[#203430]">Filter</h3>
               <button className="text-slate-400 hover:text-slate-600">
@@ -1098,8 +1098,8 @@ export default function CalendarPage() {
               </div>
             </div>
 
-            <div className="border-t border-slate-100">
-              <div className="grid grid-cols-7 border-b border-slate-100">
+            <div className="border-t border-[#E4E4E1]">
+              <div className="grid grid-cols-7 border-b border-[#E4E4E1]">
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
                   (day) => (
                     <div
@@ -1117,7 +1117,7 @@ export default function CalendarPage() {
                 {[27, 28, 29, 30, 31].map((d) => (
                   <div
                     key={d}
-                    className="h-32 border-r border-b border-slate-50 bg-[#F7F7F7] p-2 flex flex-col items-end"
+                    className="h-32 border-r border-b border-slate-50 bg-[#F3F3F0] p-2 flex flex-col items-end"
                   >
                     <span className="text-[11px] font-medium text-[#A4ACAB]">
                       {d}
@@ -1138,7 +1138,7 @@ export default function CalendarPage() {
                       className={cn(
                         "h-32 border-r border-b border-slate-50 p-1.5 flex flex-col gap-1 overflow-hidden transition-all hover:bg-slate-50/50 cursor-pointer text-left",
                         isSelected
-                          ? "bg-[#F8FCF3] ring-2 ring-[#0E4D41] z-10"
+                          ? "bg-white ring-2 ring-[#0E4D41] z-10"
                           : "",
                       )}
                     >
@@ -1158,7 +1158,7 @@ export default function CalendarPage() {
                           <div
                             key={idx}
                             className={cn(
-                              "p-1.5 rounded-sm border-l-2 text-[8px] font-bold leading-tight shadow-sm transition-all hover:scale-[1.02]",
+                              "p-1.5 rounded-sm border-l-2 text-[8px] font-bold leading-tight transition-all hover:scale-[1.02]",
                               evt.color,
                             )}
                           >
@@ -1192,7 +1192,7 @@ export default function CalendarPage() {
             <div className="space-y-4 flex-1 overflow-y-auto max-h-[500px] pr-1">
               {selectedDayEvents.length === 0 ? (
                 <div className="py-8 px-4 text-center rounded-lg border border-dashed border-slate-200 bg-slate-50/50 flex flex-col items-center justify-center space-y-2">
-                  <div className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 text-slate-300">
+                  <div className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center border border-[#E4E4E1] text-slate-300">
                     <Plus className="h-4 w-4" />
                   </div>
                   <p className="text-[10px] font-bold text-[#203430] mt-1">No Events Scheduled</p>
@@ -1214,7 +1214,7 @@ export default function CalendarPage() {
                     <div
                       key={item.id || i}
                       className={cn(
-                        "p-4 rounded-lg flex flex-col gap-4 border-l-2 shadow-sm transition-all text-left relative animate-fade-in group",
+                        "p-4 rounded-lg flex flex-col gap-4 border-l-2 transition-all text-left relative animate-fade-in group",
                         cardConfig.bgColor,
                       )}
                     >
@@ -1241,7 +1241,7 @@ export default function CalendarPage() {
                         </button>
                       </div>
 
-                      <div className="space-y-1.5 border-t border-slate-100/40 pt-2 text-left">
+                      <div className="space-y-1.5 border-t border-[#E4E4E1]/40 pt-2 text-left">
                         <div className="flex items-center justify-between text-[10px]">
                           <span className="text-[#63716E]">Time</span>
                           <span className="font-bold text-[#203430]">
@@ -1272,7 +1272,7 @@ export default function CalendarPage() {
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between pt-8 border-t border-slate-100 mb-8">
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between pt-8 border-t border-[#E4E4E1] mb-8">
           <div className="flex items-center gap-6">
             <p className="text-[11px] text-[#203430] font-bold">
               Copyright © 2025 Peterdraw

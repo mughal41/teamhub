@@ -277,7 +277,7 @@ export default function NotificationsPage() {
           <section className="flex-1 w-full space-y-6">
             
             {/* Header Area */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white border border-slate-100 p-6 rounded-2xl shadow-3xs">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white border border-[#E4E4E1] p-6 rounded-2xl shadow-3xs">
               <div>
                 <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   <Bell className="h-5.5 w-5.5 text-[#006b5f]" />
@@ -291,7 +291,7 @@ export default function NotificationsPage() {
               <button 
                 type="button"
                 onClick={handleMarkAllAsRead}
-                className="w-full sm:w-auto px-5 py-2.5 bg-[#006b5f] text-white hover:bg-[#005047] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-97"
+                className="w-full sm:w-auto px-5 py-2.5 bg-[#006b5f] text-white hover:bg-[#005047] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-97"
               >
                 <CheckCheck className="h-4.5 w-4.5" />
                 <span>Mark all as read</span>
@@ -299,10 +299,10 @@ export default function NotificationsPage() {
             </div>
 
             {/* Advanced Filters Bar */}
-            <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-3xs flex flex-col md:flex-row items-center gap-4">
+            <div className="bg-white rounded-2xl border border-[#E4E4E1] p-4 shadow-3xs flex flex-col md:flex-row items-center gap-4">
               
               {/* Category tabs */}
-              <div className="flex p-1 bg-slate-50 border border-slate-100 rounded-xl w-full md:w-auto shrink-0 space-x-1">
+              <div className="flex p-1 bg-slate-50 border border-[#E4E4E1] rounded-xl w-full md:w-auto shrink-0 space-x-1">
                 <button
                   type="button"
                   onClick={() => { setActiveCategory("all"); setSelectedIds([]); }}
@@ -363,14 +363,14 @@ export default function NotificationsPage() {
                   placeholder="Filter by title, keywords or employees..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50/50 pl-10 pr-4 py-2 border border-slate-100 rounded-xl text-xs font-medium focus:ring-2 focus:ring-[#006b5f]/40 outline-none transition-all"
+                  className="w-full bg-slate-50/50 pl-10 pr-4 py-2 border border-[#E4E4E1] rounded-xl text-xs font-medium focus:ring-2 focus:ring-[#006b5f]/40 outline-none transition-all"
                 />
               </div>
 
             </div>
 
             {/* Bulk Actions Console */}
-            <div className="flex items-center gap-4 bg-white border border-slate-100 px-5 py-3 rounded-2xl w-fit shadow-4xs text-xs font-bold">
+            <div className="flex items-center gap-4 bg-white border border-[#E4E4E1] px-5 py-3 rounded-2xl w-fit shadow-4xs text-xs font-bold">
               <div className="flex items-center gap-2">
                 <input 
                   type="checkbox"
@@ -414,8 +414,8 @@ export default function NotificationsPage() {
             {/* Notifications Feed list structure */}
             <div className="space-y-4">
               {filteredNotifications.length === 0 ? (
-                <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
-                  <div className="w-14 h-14 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-[#006b5f] shadow-3xs">
+                <div className="bg-white border border-[#E4E4E1] rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
+                  <div className="w-14 h-14 rounded-full bg-slate-50 border border-[#E4E4E1] flex items-center justify-center text-[#006b5f] shadow-3xs">
                     <Bell className="h-6 w-6" />
                   </div>
                   <div className="space-y-1 max-w-sm">
@@ -444,7 +444,7 @@ export default function NotificationsPage() {
                   <div 
                     key={item.id}
                     className={`bg-white border hover:border-[#006b5f]/30 rounded-2xl p-5 flex gap-4 transition-all shadow-4xs group relative items-start ${
-                      item.unread ? "border-[#006b5f]/20 bg-[#d4e7d8]/5" : "border-slate-100 opacity-92"
+                      item.unread ? "border-[#006b5f]/20 bg-[#d4e7d8]/5" : "border-[#E4E4E1] opacity-92"
                     }`}
                   >
                     {/* Item Checkbox */}
@@ -561,7 +561,7 @@ export default function NotificationsPage() {
           <aside className="w-full xl:w-[340px] shrink-0 space-y-6">
             
             {/* Critical Alerts Console (Important Alerts Section) */}
-            <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-3xs space-y-4">
+            <div className="bg-white border border-[#E4E4E1] rounded-2xl p-6 shadow-3xs space-y-4">
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                 <ShieldAlert className="h-5 w-5 text-[#006b5f] shrink-0" />
                 <span>Important Alerts</span>
@@ -581,14 +581,14 @@ export default function NotificationsPage() {
                   <button 
                     type="button"
                     onClick={() => showToast("Dedicated enterprise support ticket generated automatically!")}
-                    className="w-full py-2 bg-[#006b5f] hover:bg-[#005047] text-white rounded-lg font-bold text-[11px] tracking-wide uppercase transition-all shadow-sm shadow-[#006b5f]/10 cursor-pointer text-center"
+                    className="w-full py-2 bg-[#006b5f] hover:bg-[#005047] text-white rounded-lg font-bold text-[11px] tracking-wide uppercase transition-all shadow-[#006b5f]/10 cursor-pointer text-center"
                   >
                     Contact Tech Support
                   </button>
                 </div>
 
                 {/* Profile alert */}
-                <div className="p-4 bg-[#e8e2d4]/50 text-slate-800 rounded-xl border-l-[4px] border-[#cbc6b9] shadow-3xs space-y-1.5 border border-slate-100">
+                <div className="p-4 bg-[#e8e2d4]/50 text-slate-800 rounded-xl border-l-[4px] border-[#cbc6b9] shadow-3xs space-y-1.5 border border-[#E4E4E1]">
                   <div className="flex items-center gap-2 text-[#49473d]">
                     <Sliders className="h-4.5 w-4.5 shrink-0" />
                     <span className="font-bold text-xs">Profile Incomplete</span>
@@ -602,7 +602,7 @@ export default function NotificationsPage() {
             </div>
 
             {/* Notification Toggles Console */}
-            <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-3xs space-y-4">
+            <div className="bg-white rounded-2xl border border-[#E4E4E1] p-6 shadow-3xs space-y-4">
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                 <SlidersHorizontal className="h-5 w-5 text-[#006b5f] shrink-0" />
                 <span>Notification Toggles</span>
@@ -620,7 +620,7 @@ export default function NotificationsPage() {
                     onClick={() => { setEmailAlerts(!emailAlerts); showToast(`Email alerts toggled ${!emailAlerts ? "ON" : "OFF"}`); }}
                     className={`relative inline-flex h-6 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${emailAlerts ? "bg-[#006b5f]" : "bg-slate-200"}`}
                   >
-                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${emailAlerts ? "translate-x-4" : "translate-x-0"}`} />
+                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${emailAlerts ? "translate-x-4" : "translate-x-0"}`} />
                   </button>
                 </div>
 
@@ -635,7 +635,7 @@ export default function NotificationsPage() {
                     onClick={() => { setPushNotifications(!pushNotifications); showToast(`Push notifications toggled ${!pushNotifications ? "ON" : "OFF"}`); }}
                     className={`relative inline-flex h-6 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${pushNotifications ? "bg-[#006b5f]" : "bg-slate-200"}`}
                   >
-                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${pushNotifications ? "translate-x-4" : "translate-x-0"}`} />
+                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${pushNotifications ? "translate-x-4" : "translate-x-0"}`} />
                   </button>
                 </div>
 
@@ -650,7 +650,7 @@ export default function NotificationsPage() {
                     onClick={() => { setDesktopPopups(!desktopPopups); showToast(`Desktop notifications toggled ${!desktopPopups ? "ON" : "OFF"}`); }}
                     className={`relative inline-flex h-6 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${desktopPopups ? "bg-[#006b5f]" : "bg-slate-200"}`}
                   >
-                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${desktopPopups ? "translate-x-4" : "translate-x-0"}`} />
+                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${desktopPopups ? "translate-x-4" : "translate-x-0"}`} />
                   </button>
                 </div>
 
@@ -670,7 +670,7 @@ export default function NotificationsPage() {
             </div>
 
             {/* Clean Inbox? Auto-archiving Promo Card */}
-            <div className="bg-[#006b5f] text-white rounded-2xl relative overflow-hidden shadow-md p-6 space-y-4">
+            <div className="bg-[#006b5f] text-white rounded-2xl relative overflow-hidden p-6 space-y-4">
               <div className="absolute right-[-24px] bottom-[-24px] opacity-10">
                 <Sparkles className="h-36 w-36 rotate-12" />
               </div>
@@ -684,7 +684,7 @@ export default function NotificationsPage() {
                   <button 
                     type="button"
                     onClick={handleSetArchivingRules}
-                    className="px-4.5 py-2.5 bg-white text-[#006b5f] rounded-xl font-bold text-xs hover:bg-slate-50 shadow-sm transition-all cursor-pointer active:scale-97"
+                    className="px-4.5 py-2.5 bg-white text-[#006b5f] rounded-xl font-bold text-xs hover:bg-slate-50 transition-all cursor-pointer active:scale-97"
                   >
                     Set Archiving Rules
                   </button>
