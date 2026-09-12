@@ -220,14 +220,14 @@ export default function ManagerDashboardPage() {
             <div className="mb-4 grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => navigate("/calendar")}
+                onClick={() => navigate("/manager/calendar")}
                 className="rounded-xl border border-[#E4E4E1] bg-[#F3F3F0] px-3 py-2.5 text-left text-xs font-bold text-slate-800 hover:border-[#28C2A9]"
               >
                 Open calendar
               </button>
               <button
                 type="button"
-                onClick={() => navigate("/inbox")}
+                onClick={() => navigate("/manager/inbox")}
                 className="rounded-xl border border-[#E4E4E1] bg-[#F3F3F0] px-3 py-2.5 text-left text-xs font-bold text-slate-800 hover:border-[#28C2A9]"
               >
                 Open inbox

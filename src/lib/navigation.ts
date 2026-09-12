@@ -89,8 +89,8 @@ export const MANAGER_NAV: NavItem[] = [
   { type: "single", id: "attendance", label: "Attendance", path: "/attendance", icon: UserCheck },
   { type: "single", id: "leave", label: "Leave Approvals", path: "/leave", icon: ClipboardCheck },
   { type: "single", id: "performance", label: "Performance", path: "/performance", icon: LineChart },
-  { type: "single", id: "calendar", label: "Calendar", path: "/calendar", icon: Calendar },
-  { type: "single", id: "inbox", label: "Inbox", path: "/inbox", icon: Mail },
+  { type: "single", id: "calendar", label: "Calendar", path: "/manager/calendar", icon: Calendar },
+  { type: "single", id: "inbox", label: "Inbox", path: "/manager/inbox", icon: Mail },
 ];
 
 /** Employee self-service sidebar */

@@ -1,13 +1,12 @@
 import { cn } from "@/src/lib/utils";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import * as React from "react";
 import { useAuth } from "@/src/context/AuthContext";
 import { getNavItemsForRole, type NavItem } from "@/src/lib/navigation";
 
 export function Sidebar() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { accessRole } = useAuth();
   const navigationConfig = React.useMemo(
     () => getNavItemsForRole(accessRole),
@@ -40,30 +39,26 @@ export function Sidebar() {
     setOpenGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
   };
 
-  const go = (path: string) => {
-    if (location.pathname !== path) {
-      navigate(path);
-    }
-  };
-
   const isPathActive = (path: string) =>
     location.pathname === path ||
     (path !== "/" && location.pathname.startsWith(`${path}/`));
 
-  const renderSingle = (item: Extract<NavItem, { type: "single" }>) => {
-    const isActive = isPathActive(item.path);
-    return (
-      <button
-        key={item.id}
-        type="button"
-        onClick={() => go(item.path)}
-        className={cn(
-          "group flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-medium transition-all",
-          isActive
-            ? "bg-[#28C2A9] text-white shadow-sm font-bold"
-            : "text-slate-600 hover:bg-[#F3F3F0] hover:text-slate-900"
-        )}
-      >
+  const linkClass = (isActive: boolean) =>
+    cn(
+      "group flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-medium transition-all",
+      isActive
+        ? "bg-[#28C2A9] text-white shadow-sm font-bold"
+        : "text-slate-600 hover:bg-[#F3F3F0] hover:text-slate-900"
+    );
+
+  const renderSingle = (item: Extract<NavItem, { type: "single" }>) => (
+    <NavLink
+      key={item.id}
+      to={item.path}
+      end={item.path === "/"}
+      className={({ isActive }) => linkClass(isActive)}
+    >
+      {({ isActive }) => (
         <div className="flex items-center gap-3">
           <item.icon
             className={cn(
@@ -73,25 +68,21 @@ export function Sidebar() {
           />
           {item.label}
         </div>
-      </button>
-    );
-  };
+      )}
+    </NavLink>
+  );
 
   return (
     <aside className="fixed left-0 top-0 z-[60] hidden h-screen w-64 flex-col border-r border-[#E4E4E1] bg-white lg:flex">
       <div className="flex h-20 shrink-0 items-center px-8">
-        <button
-          type="button"
-          onClick={() => go("/")}
-          className="flex items-center gap-2"
-        >
+        <Link to="/" className="flex items-center gap-2">
           <svg
             width="28"
             height="28"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="text-[#28C2A9] shrink-0"
+            className="shrink-0 text-[#28C2A9]"
           >
             <path d="M12 12C12 7 8 3 4 4C3 8 7 12 12 12Z" fill="currentColor" />
             <path d="M12 12C17 12 21 8 20 4C16 3 12 7 12 12Z" fill="currentColor" />
@@ -99,7 +90,7 @@ export function Sidebar() {
             <path d="M12 12C7 12 3 16 4 20C8 21 12 17 12 12Z" fill="currentColor" />
           </svg>
           <span className="text-xl font-bold tracking-tight text-[#0E4D41]">TeamHub</span>
-        </button>
+        </Link>
       </div>
 
       <div className="min-h-0 flex-1 space-y-1 overflow-y-auto px-4 py-2">
@@ -115,9 +106,9 @@ export function Sidebar() {
                 type="button"
                 onClick={() => toggleGroup(item.id)}
                 className={cn(
-                  "w-full group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all select-none",
+                  "group flex w-full select-none items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all",
                   isAnyChildActive
-                    ? "text-[#0E4D41] bg-[#F3F3F0] font-bold"
+                    ? "bg-[#F3F3F0] font-bold text-[#0E4D41]"
                     : "text-slate-600 hover:bg-[#F3F3F0] hover:text-slate-900"
                 )}
               >
@@ -139,30 +130,32 @@ export function Sidebar() {
 
               {isGroupOpen && (
                 <div className="ml-5 space-y-1 border-l-2 border-[#E4E4E1] py-1 pl-6">
-                  {item.children.map((child) => {
-                    const isChildActive = isPathActive(child.path);
-                    return (
-                      <button
-                        key={child.id}
-                        type="button"
-                        onClick={() => go(child.path)}
-                        className={cn(
+                  {item.children.map((child) => (
+                    <NavLink
+                      key={child.id}
+                      to={child.path}
+                      className={({ isActive }) =>
+                        cn(
                           "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition-all",
-                          isChildActive
-                            ? "bg-[#28C2A9] text-white font-bold"
+                          isActive
+                            ? "bg-[#28C2A9] font-bold text-white"
                             : "text-slate-500 hover:bg-[#F3F3F0] hover:text-slate-900"
-                        )}
-                      >
-                        <child.icon
-                          className={cn(
-                            "h-4 w-4",
-                            isChildActive ? "text-white" : "text-slate-400 group-hover:text-slate-900"
-                          )}
-                        />
-                        {child.label}
-                      </button>
-                    );
-                  })}
+                        )
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <child.icon
+                            className={cn(
+                              "h-4 w-4",
+                              isActive ? "text-white" : "text-slate-400 group-hover:text-slate-900"
+                            )}
+                          />
+                          {child.label}
+                        </>
+                      )}
+                    </NavLink>
+                  ))}
                 </div>
               )}
             </div>

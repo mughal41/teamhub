@@ -1,9 +1,14 @@
 import * as React from "react"
 import { ShieldCheck } from "lucide-react"
+import { ThemeToggle } from "@/src/components/ui/ThemeToggle"
 
 export function AuthLayout({ children, title, subtitle }: { children: React.ReactNode, title: string, subtitle: string }) {
   return (
-    <div className="flex min-h-screen">
+    <div className="relative flex min-h-screen">
+      <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
+        <ThemeToggle />
+      </div>
+
       {/* Left side: branding/imagery */}
       <div className="auth-bg relative hidden w-1/2 flex-col justify-between p-16 lg:flex">
         <div className="flex items-center gap-3">

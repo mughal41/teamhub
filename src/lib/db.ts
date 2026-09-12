@@ -730,7 +730,7 @@ export function getCollection<T>(key: string, defaultVal: T): T {
 
 export function saveCollection<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value));
-  // Broadcast local storage update
-  window.dispatchEvent(new Event("storage"));
+  // Use a dedicated event only — do not fake the browser `storage` event
+  // (that caused cascading refreshes / freezes across mounted listeners).
   window.dispatchEvent(new Event("db_updated"));
 }

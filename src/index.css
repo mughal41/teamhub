@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-brand: #28C2A9;
   --color-brand-dark: #0E4D41;
@@ -55,4 +57,287 @@
     url("https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80");
   background-size: cover;
   background-position: center;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Dark theme — applies across Admin / Manager / Employee panels              */
+/* -------------------------------------------------------------------------- */
+
+html.dark {
+  color-scheme: dark;
+  --color-surface: #101413;
+  --color-panel: #1a1f1d;
+  --color-muted: #232a27;
+  --color-line: #2f3834;
+  --color-brand-dark: #7dd3c4;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.35);
+  --shadow-md: 0 1px 3px 0 rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 8px 20px -8px rgb(0 0 0 / 0.55);
+  --shadow-xl: 0 12px 28px -10px rgb(0 0 0 / 0.6);
+  --shadow-2xl: 0 24px 48px -12px rgb(0 0 0 / 0.65);
+}
+
+html.dark body {
+  background-color: var(--color-surface);
+  color: #e2e8f0;
+}
+
+html.dark .admin-shell {
+  background-color: var(--color-surface);
+}
+
+/* Surfaces */
+html.dark .bg-white,
+html.dark .bg-slate-50,
+html.dark .bg-\[\#F3F3F0\],
+html.dark .bg-\[\#F0F0ED\],
+html.dark .bg-\[\#fafaf8\],
+html.dark .bg-\[\#FAFAF8\],
+html.dark .hover\:bg-white:hover,
+html.dark .focus\:bg-white:focus {
+  background-color: var(--color-panel) !important;
+}
+
+html.dark .hover\:bg-slate-50:hover,
+html.dark .hover\:bg-\[\#F3F3F0\]:hover,
+html.dark .hover\:bg-\[\#F0F0ED\]:hover {
+  background-color: var(--color-muted) !important;
+}
+
+html.dark .bg-slate-100,
+html.dark .bg-slate-50\/50,
+html.dark .bg-slate-50\/60,
+html.dark .bg-slate-50\/40 {
+  background-color: var(--color-muted) !important;
+}
+
+html.dark .admin-shell .bg-white,
+html.dark .admin-shell table,
+html.dark .admin-shell tbody {
+  background-color: var(--color-panel) !important;
+}
+
+html.dark .admin-shell thead tr {
+  background-color: var(--color-muted) !important;
+}
+
+html.dark .admin-shell tbody tr:hover td {
+  background-color: #222926 !important;
+}
+
+/* Borders — neutralize light/white edges on cards, tables, and chrome */
+html.dark .border-\[\#E4E4E1\],
+html.dark .border-\[\#d7e6c8\],
+html.dark .border-\[\#F0F0ED\],
+html.dark .border-\[\#F3F3F0\],
+html.dark .border-white,
+html.dark .border-white\/10,
+html.dark .border-white\/20,
+html.dark .border-slate-50,
+html.dark .border-slate-100,
+html.dark .border-slate-150,
+html.dark .border-slate-200,
+html.dark .border-slate-200\/60,
+html.dark .border-slate-200\/80,
+html.dark .border-slate-250,
+html.dark .border-slate-300,
+html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-\[\#E4E4E1\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: transparent !important;
+}
+
+/* Cards / boxes: drop the visible outline in dark mode */
+html.dark .admin-shell .rounded-2xl,
+html.dark .admin-shell .rounded-xl,
+html.dark .admin-shell .rounded-\[16px\],
+html.dark .admin-shell .rounded-lg {
+  border-color: transparent !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Keep brand accent borders visible */
+html.dark .admin-shell .border-\[\#28C2A9\],
+html.dark .admin-shell .border-brand,
+html.dark .border-\[\#28C2A9\],
+html.dark .border-\[\#28C2A9\]\/40,
+html.dark .border-\[\#006b5f\] {
+  border-color: #28c2a9 !important;
+}
+
+/* Tables: subtle row separators instead of white lines */
+html.dark .admin-shell table,
+html.dark .admin-shell thead,
+html.dark .admin-shell tbody,
+html.dark .admin-shell tr,
+html.dark .admin-shell th,
+html.dark .admin-shell td {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+html.dark .admin-shell .border-b,
+html.dark .admin-shell .border-t,
+html.dark .admin-shell .border-l,
+html.dark .admin-shell .border-r,
+html.dark .admin-shell .border-y,
+html.dark .admin-shell .border-x {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Sidebar / header dividers */
+html.dark aside.fixed,
+html.dark header.sticky {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+html.dark aside .border-l-2,
+html.dark aside .border-r,
+html.dark header .border-b,
+html.dark header .border-t {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Avatar / badge rings that were white */
+html.dark .ring-white,
+html.dark .border-2.border-white,
+html.dark .border.border-white {
+  border-color: var(--color-panel) !important;
+  --tw-ring-color: var(--color-panel) !important;
+}
+
+/* Text hierarchy */
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-\[\#203430\],
+html.dark .text-\[\#0E4D41\] {
+  color: #f1f5f9 !important;
+}
+
+html.dark .text-slate-700,
+html.dark .text-slate-600,
+html.dark .text-\[\#4a5754\],
+html.dark .text-\[\#63716E\] {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-slate-400,
+html.dark .text-slate-300 {
+  color: #94a3b8 !important;
+}
+
+html.dark .placeholder\:text-slate-400::placeholder,
+html.dark .placeholder\:text-\[\#63716E\]\/70::placeholder {
+  color: #64748b !important;
+}
+
+/* Soft brand / mint surfaces used across panels */
+html.dark .bg-\[\#E4F2D3\],
+html.dark .bg-emerald-50,
+html.dark .bg-\[\#28C2A9\]\/10,
+html.dark .bg-\[\#28C2A9\]\/5 {
+  background-color: rgba(40, 194, 169, 0.12) !important;
+}
+
+html.dark .text-emerald-700,
+html.dark .text-emerald-600,
+html.dark .text-\[\#0e4d41\] {
+  color: #7dd3c4 !important;
+}
+
+html.dark .border-emerald-200,
+html.dark .border-emerald-100 {
+  border-color: rgba(40, 194, 169, 0.28) !important;
+}
+
+html.dark .bg-emerald-50 {
+  color: #a7f3d0;
+}
+
+/* Status chips that stay readable */
+html.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+html.dark .text-amber-700,
+html.dark .text-amber-400 {
+  color: #fbbf24 !important;
+}
+html.dark .bg-rose-50 {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+}
+html.dark .text-rose-700 {
+  color: #fb7185 !important;
+}
+html.dark .bg-sky-50 {
+  background-color: rgba(14, 165, 233, 0.15) !important;
+}
+html.dark .text-sky-700 {
+  color: #38bdf8 !important;
+}
+
+/* Inputs / controls */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  color-scheme: dark;
+}
+
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark textarea,
+html.dark select {
+  background-color: var(--color-muted) !important;
+  border-color: var(--color-line) !important;
+  color: #e2e8f0 !important;
+}
+
+html.dark input:focus,
+html.dark textarea:focus,
+html.dark select:focus {
+  background-color: var(--color-panel) !important;
+}
+
+/* Sidebar + header chrome */
+html.dark aside.fixed,
+html.dark header.sticky {
+  background-color: var(--color-panel) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+html.dark aside .bg-\[\#E4F2D3\] {
+  background-color: rgba(40, 194, 169, 0.12) !important;
+  border-color: transparent !important;
+}
+
+/* Soften input outlines (avoid bright white edges) */
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark textarea,
+html.dark select {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Auth right panel */
+html.dark .auth-panel,
+html.dark body > #root .bg-white {
+  background-color: var(--color-panel);
+}
+
+/* Dropdown / modal backdrops stay dim */
+html.dark .bg-slate-900\/10,
+html.dark .bg-slate-900\/40,
+html.dark .bg-slate-950\/40,
+html.dark .bg-slate-950\/50 {
+  background-color: rgb(2 6 23 / 0.55) !important;
+}
+
+/* Rings */
+html.dark .ring-slate-100,
+html.dark .ring-2.ring-slate-100 {
+  --tw-ring-color: var(--color-line) !important;
+}
+
+/* Recharts / SVG text defaults */
+html.dark .recharts-cartesian-axis-tick text,
+html.dark .recharts-legend-item-text,
+html.dark .recharts-text {
+  fill: #94a3b8 !important;
 }

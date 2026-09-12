@@ -28,11 +28,11 @@ function avg(r: TeamReview) {
 
 export default function ManagerPerformancePage() {
   const { user } = useAuth();
-  const team = getEmployeesForUser(user);
+  const team = React.useMemo(() => getEmployeesForUser(user), [user]);
   const [reviews, setReviews] = React.useState<TeamReview[]>(() =>
     getCollection<TeamReview[]>(REVIEW_KEY, [])
   );
-  const [activeId, setActiveId] = React.useState(team[0]?.id || "");
+  const [activeId, setActiveId] = React.useState(() => team[0]?.id || "");
   const [form, setForm] = React.useState({
     reliability: 4,
     punctuality: 4,
@@ -45,8 +45,8 @@ export default function ManagerPerformancePage() {
   const active = team.find((e) => e.id === activeId) || team[0];
 
   React.useEffect(() => {
-    if (!active) return;
-    const existing = reviews.find((r) => r.employeeId === active.id);
+    if (!activeId) return;
+    const existing = reviews.find((r) => r.employeeId === activeId);
     if (existing) {
       setForm({
         reliability: existing.reliability,
@@ -64,7 +64,7 @@ export default function ManagerPerformancePage() {
         feedback: "",
       });
     }
-  }, [activeId, active, reviews]);
+  }, [activeId, reviews]);
 
   const saveReview = (e: React.FormEvent) => {
     e.preventDefault();

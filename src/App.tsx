@@ -1,7 +1,9 @@
 import * as React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { GuestRoute, ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { AppShell } from "./components/layout/AppLayout";
 import DashboardPage from "./views/DashboardPage";
 import RecruitmentPage from "./views/RecruitmentPage";
 import EmployeeListPage from "./views/EmployeeListPage";
@@ -84,14 +86,14 @@ function LeaveByRole() {
 
 function CalendarByRole() {
   const { accessRole } = useAuth();
-  if (accessRole === "manager") return <ManagerCalendarPage />;
+  if (accessRole === "manager") return <Navigate to="/manager/calendar" replace />;
   if (accessRole === "employee") return <EmployeeCalendarPage />;
   return <CalendarPage />;
 }
 
 function InboxByRole() {
   const { accessRole } = useAuth();
-  if (accessRole === "manager") return <ManagerInboxPage />;
+  if (accessRole === "manager") return <Navigate to="/manager/inbox" replace />;
   if (accessRole === "employee") return <EmployeeInboxPage />;
   return <InboxPage />;
 }
@@ -108,73 +110,91 @@ export default function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route
-            path="/login"
-            element={
-              <GuestRoute>
-                <LoginPage />
-              </GuestRoute>
-            }
-          />
-          <Route
-            path="/signup"
-            element={
-              <GuestRoute>
-                <SignupPage />
-              </GuestRoute>
-            }
-          />
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route
+              path="/login"
+              element={
+                <GuestRoute>
+                  <LoginPage />
+                </GuestRoute>
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                <GuestRoute>
+                  <SignupPage />
+                </GuestRoute>
+              }
+            />
 
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Persistent chrome — sidebar/header stay mounted across navigations */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <AppShell />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<HomePage />} />
 
-          <Route path="/my-team" element={<ManagerRoute><MyTeamPage /></ManagerRoute>} />
-          <Route path="/manager/calendar" element={<Navigate to="/calendar" replace />} />
-          <Route path="/manager/inbox" element={<Navigate to="/inbox" replace />} />
+              <Route path="my-team" element={<ManagerRoute><MyTeamPage /></ManagerRoute>} />
+              <Route
+                path="manager/calendar"
+                element={
+                  <ManagerRoute>
+                    <ManagerCalendarPage />
+                  </ManagerRoute>
+                }
+              />
+              <Route
+                path="manager/inbox"
+                element={
+                  <ManagerRoute>
+                    <ManagerInboxPage />
+                  </ManagerRoute>
+                }
+              />
 
-          <Route path="/inbox" element={<StaffRoute><InboxByRole /></StaffRoute>} />
-          <Route path="/calendar" element={<StaffRoute><CalendarByRole /></StaffRoute>} />
-          <Route path="/attendance" element={<StaffRoute><AttendanceByRole /></StaffRoute>} />
-          <Route path="/performance" element={<StaffRoute><PerformanceByRole /></StaffRoute>} />
-          <Route path="/leave" element={<StaffRoute><LeaveByRole /></StaffRoute>} />
-          <Route
-            path="/payroll"
-            element={
-              <ProtectedRoute roles={["admin", "employee"]}>
-                <PayrollByRole />
-              </ProtectedRoute>
-            }
-          />
+              <Route path="inbox" element={<StaffRoute><InboxByRole /></StaffRoute>} />
+              <Route path="calendar" element={<StaffRoute><CalendarByRole /></StaffRoute>} />
+              <Route path="attendance" element={<StaffRoute><AttendanceByRole /></StaffRoute>} />
+              <Route path="performance" element={<StaffRoute><PerformanceByRole /></StaffRoute>} />
+              <Route path="leave" element={<StaffRoute><LeaveByRole /></StaffRoute>} />
+              <Route
+                path="payroll"
+                element={
+                  <ProtectedRoute roles={["admin", "employee"]}>
+                    <PayrollByRole />
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route path="/employees" element={<AdminRoute><EmployeeListPage /></AdminRoute>} />
-          <Route path="/employees/new" element={<AdminRoute><AddEmployeePage /></AdminRoute>} />
-          <Route path="/employees/:id" element={<AdminRoute><EmployeeDetailsPage /></AdminRoute>} />
-          <Route path="/departments" element={<AdminRoute><DepartmentsPage /></AdminRoute>} />
-          <Route path="/recruitment" element={<AdminRoute><RecruitmentPage /></AdminRoute>} />
+              <Route path="employees" element={<AdminRoute><EmployeeListPage /></AdminRoute>} />
+              <Route path="employees/new" element={<AdminRoute><AddEmployeePage /></AdminRoute>} />
+              <Route path="employees/:id" element={<AdminRoute><EmployeeDetailsPage /></AdminRoute>} />
+              <Route path="departments" element={<AdminRoute><DepartmentsPage /></AdminRoute>} />
+              <Route path="recruitment" element={<AdminRoute><RecruitmentPage /></AdminRoute>} />
 
-          <Route path="/settings/personal-info" element={<ProtectedRoute><PersonalInformationPage /></ProtectedRoute>} />
-          <Route path="/settings/personal-documents" element={<ProtectedRoute><PersonalDocumentsPage /></ProtectedRoute>} />
-          <Route path="/settings/security" element={<ProtectedRoute><SecurityPrivacyPage /></ProtectedRoute>} />
-          <Route path="/settings/notifications" element={<ProtectedRoute><NotificationSettingPage /></ProtectedRoute>} />
-          <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+              <Route path="settings/personal-info" element={<PersonalInformationPage />} />
+              <Route path="settings/personal-documents" element={<PersonalDocumentsPage />} />
+              <Route path="settings/security" element={<SecurityPrivacyPage />} />
+              <Route path="settings/notifications" element={<NotificationSettingPage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
 
-          <Route path="/settings/roles" element={<AdminRoute><RolesPermissionsPage /></AdminRoute>} />
-          <Route path="/settings/organization" element={<AdminRoute><OrganizationProfilePage /></AdminRoute>} />
-          <Route path="/settings/billing" element={<AdminRoute><BillingPage /></AdminRoute>} />
-          <Route path="/settings/integrations" element={<AdminRoute><ApiIntegrationsPage /></AdminRoute>} />
+              <Route path="settings/roles" element={<AdminRoute><RolesPermissionsPage /></AdminRoute>} />
+              <Route path="settings/organization" element={<AdminRoute><OrganizationProfilePage /></AdminRoute>} />
+              <Route path="settings/billing" element={<AdminRoute><BillingPage /></AdminRoute>} />
+              <Route path="settings/integrations" element={<AdminRoute><ApiIntegrationsPage /></AdminRoute>} />
+            </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

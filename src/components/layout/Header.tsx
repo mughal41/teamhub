@@ -20,6 +20,7 @@ import { cn } from "@/src/lib/utils";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
 import { useAuth } from "@/src/context/AuthContext";
+import { ThemeToggle } from "@/src/components/ui/ThemeToggle";
 
 export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { label: string; href?: string }[] }) {
   const [isOpenSettings, setIsOpenSettings] = useState(false);
@@ -105,6 +106,8 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
         </div>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
+
           {/* Settings Trigger & Dropdown */}
           <div className="relative">
             <button

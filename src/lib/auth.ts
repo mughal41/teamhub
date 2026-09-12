@@ -153,7 +153,20 @@ export function loadSession(): PublicAuthUser | null {
       roleTitle: seed?.roleTitle || parsed.roleTitle || parsed.role_name || "User",
       avatar: parsed.avatar || parsed.avatar_url || seed?.avatar || DEFAULT_AVATAR,
     };
-    saveSession(normalized);
+
+    // Avoid rewriting localStorage when session is already normalized
+    const alreadyNormalized =
+      parsed.id === normalized.id &&
+      parsed.email === normalized.email &&
+      parsed.name === normalized.name &&
+      parsed.accessRole === normalized.accessRole &&
+      parsed.employeeId === normalized.employeeId &&
+      parsed.roleTitle === normalized.roleTitle &&
+      parsed.avatar === normalized.avatar;
+
+    if (!alreadyNormalized) {
+      saveSession(normalized);
+    }
     return normalized;
   } catch {
     return null;
