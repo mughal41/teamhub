@@ -6,6 +6,7 @@ import EmployeeListPage from "./views/EmployeeListPage";
 import EmployeeDetailsPage from "./views/EmployeeDetailsPage";
 import LeaveManagementPage from "./views/LeaveManagementPage";
 import PayrollPage from "./views/PayrollPage";
+import PayStructuresPage from "./views/PayStructuresPage";
 import AttendancePage from "./views/AttendancePage";
 import PerformancePage from "./views/PerformancePage";
 import InboxPage from "./views/InboxPage";
@@ -45,7 +46,9 @@ export default function App() {
         <Route path="/attendance" element={<AttendancePage />} />
         <Route path="/performance" element={<PerformancePage />} />
         <Route path="/payroll" element={<PayrollPage />} />
+        <Route path="/payroll/pay-structures" element={<PayStructuresPage />} />
         <Route path="/leave" element={<LeaveManagementPage />} />
+        <Route path="/leave-management" element={<LeaveManagementPage />} />
         <Route path="/recruitment" element={<RecruitmentPage />} />
         <Route path="/settings/personal-info" element={<PersonalInformationPage />} />
         <Route path="/settings/personal-documents" element={<PersonalDocumentsPage />} />

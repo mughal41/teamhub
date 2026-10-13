@@ -1,63 +1,47 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "../components/layout/AppLayout";
-import { Card } from "../components/ui/LayoutAddons";
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Filter,
   Search,
-  Settings,
-  Bell,
-  ChevronDown,
-  Facebook,
-  Twitter,
-  Instagram,
-  Youtube,
-  Linkedin,
-  ArrowUpDown,
+  Check,
   X,
-  CheckCircle2,
-  XCircle,
+  Clock,
+  ChevronsUpDown,
+  Plus,
   MessageSquare,
   CornerUpRight,
-  Send,
-  AlertCircle,
-  Edit2,
-  Clock,
-  ArrowRight,
-  UserCheck,
-  Check,
-  Briefcase,
+  ShieldCheck,
+  Instagram,
+  Linkedin,
 } from "lucide-react";
-import { BarChart, Bar, XAxis, ResponsiveContainer } from "recharts";
 import { cn } from "@/src/lib/utils";
-import { getCollection, saveCollection } from "../lib/db";
+import {
+  getCollection,
+  saveCollection,
+  initialAttendance,
+  initialLeaves,
+  AttendanceRecord,
+  LeaveActivityItem,
+} from "../lib/db";
+import { AttendanceCorrectionModal } from "../components/attendance/AttendanceCorrectionModal";
+import { MarkAttendanceModal } from "../components/attendance/MarkAttendanceModal";
+import {
+  AttendanceOverviewChart,
+  ChartFilterSelection,
+} from "../components/attendance/AttendanceOverviewChart";
 
-/**
- * @typedef {Object} AttendanceRecord
- * @property {string} name - Legal Full Name of employee
- * @property {string} id - Certified Employee ID Ledger (e.g. "EMP-0234")
- * @property {string} role - General role department (e.g., "Marketing")
- * @property {string} subRole - Micro professional niche title
- * @property {string} date - Record check date (e.g., "19 Jun 2035")
- * @property {string} model - Attendance work channel ("Hybrid" | "Remote" | "On-Site")
- * @property {string} in - Clock-in raw time stamp (e.g., "08:55 AM")
- * @property {string} out - Clock-out raw time stamp (e.g., "05:05 PM")
- * @property {string} duration - Hour tracking duration metric (e.g. "8h 10m")
- * @property {string} overtime - Flagged extra-work offset duration metric
- * @property {string} status - Dynamic classification ("On-Time" | "Late" | "Absent" | "On Leave")
- * @property {string} avatar - Public photoreal image url hook
- * @property {number} correctionRequestsThisMonth - Number of self-submitted backfills/adjustments
- * @property {string} comment - Explanation notes for manual reviews
- * @property {string} forwardedTo - Destination processing officer name
- * @property {string} forwardedStatus - Forward state status ("None" | "Pending" | "Approved" | "Rejected")
- * @property {string} hrApprovalStatus - Approval state status ("None" | "Pending" | "Approved" | "Rejected")
- *
- * @api_response_format {AttendanceRecord[]}
- * @endpoint GET `/api/attendance` - Pulls a JSON array collection conforming to this schema representation.
- * @endpoint PUT `/api/attendance` - Modifies approval/forwarding indicators of specific attendance keys.
- */
+// Social media icon for X
+function XLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
 
 const managersList = [
   { name: "Marcus Brody", role: "Marketing & Sales Manager" },
@@ -68,85 +52,17 @@ const managersList = [
 ];
 
 export default function AttendancePage() {
-  const [userRole, setUserRole] = React.useState<"HR" | "Employee">(() => {
-    return (localStorage.getItem("viewing-role") as "HR" | "Employee") || "HR";
+  const navigate = useNavigate();
+
+  // Load records from db_attendance, defaulting to initialAttendance from Figma design
+  const [records, setRecordsState] = React.useState<AttendanceRecord[]>(() => {
+    const stored = getCollection<AttendanceRecord[]>("db_attendance", []);
+    return stored.length > 0 ? stored : initialAttendance;
   });
 
-  React.useEffect(() => {
-    const handleStorageChange = () => {
-      const current =
-        (localStorage.getItem("viewing-role") as "HR" | "Employee") || "HR";
-      setUserRole(current);
-    };
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("roleChanged", handleStorageChange);
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("roleChanged", handleStorageChange);
-    };
-  }, []);
-
-  const changeUserRole = (role: "HR" | "Employee") => {
-    localStorage.setItem("viewing-role", role);
-    setUserRole(role);
-    window.dispatchEvent(new Event("roleChanged"));
-  };
-
-  /*
-   * EXPECTED JSON SCHEMA / RECORD FORMAT FOR THE ATTENDANCE DATABASE STORE (db_attendance):
-   * [
-   *   {
-   *     "id": "EMP-0234",                     // String: Staff operational ID (e.g. "EMP-XXXX")
-   *     "name": "Olivia Mason",               // String: Full legal name of the employee
-   *     "role": "Marketing Executive",       // String: Department division alignment / job title
-   *     "subRole": "Marketing",              // String: Sub-title or professional niche description
-   *     "dept": "Marketing",                // String: Department category name
-   *     "date": "19 Jun 2035",               // String: Work shift/attendance date recorded
-   *     "model": "On-Site",                  // String: Working style ("On-Site" | "Remote" | "Hybrid")
-   *     "in": "08:55 AM",                    // String: Timestamps of raw clock-in
-   *     "out": "05:05 PM",                   // String: Timestamps of raw clock-out
-   *     "duration": "8h 10m",                // String: Summed working duration
-   *     "overtime": "10m",                   // String: Overtime duration
-   *     "status": "On-Time",                 // String: State indicator ("On-Time" | "Late" | "Absent" | "On Leave")
-   *     "avatar": "https://images.unsplash...",// String: HTTPS photoreal public profile profile URL
-   *     "correctionRequestsThisMonth": 0,    // Number: Manual adjustment logs submitted count
-   *     "comment": "",                       // String: Supervisor evaluation notes / reasons
-   *     "forwardedTo": "",                   // String: Designated supervisor full name
-   *     "forwardedStatus": "None",           // String: Manager review ("None" | "Pending" | "Approved" | "Rejected")
-   *     "hrApprovalStatus": "Approved"        // String: HR state ("None" | "Pending" | "Approved" | "Rejected")
-   *   }
-   * ]
-   */
-  const [records, setRecordsState] = React.useState<any[]>(() => {
-    return getCollection<any[]>("db_attendance", []);
-  });
-
-  // Dynamically group and map records for the analytics overview chart
-  const chartData = React.useMemo(() => {
-    if (records.length === 0) return [];
-    const groups: { [key: string]: { present: number; leave: number; absent: number } } = {};
-    records.slice(0, 15).forEach((r) => {
-      const d = r.date || "Today";
-      if (!groups[d]) {
-        groups[d] = { present: 0, leave: 0, absent: 0 };
-      }
-      if (r.status === "On-Time" || r.status === "Late") {
-        groups[d].present++;
-      } else if (r.status === "On Leave") {
-        groups[d].leave++;
-      } else {
-        groups[d].absent++;
-      }
-    });
-    return Object.keys(groups).map((date) => ({
-      month: date,
-      present: groups[date].present,
-      leave: groups[date].leave,
-      absent: groups[date].absent,
-    }));
-  }, [records]);
-
-  const setRecords = (update: any[] | ((prev: any[]) => any[])) => {
+  const setRecords = (
+    update: AttendanceRecord[] | ((prev: AttendanceRecord[]) => AttendanceRecord[])
+  ) => {
     if (typeof update === "function") {
       setRecordsState((prev) => {
         const next = update(prev);
@@ -161,7 +77,8 @@ export default function AttendancePage() {
 
   React.useEffect(() => {
     const handleDbUpdate = () => {
-      setRecordsState(getCollection<any[]>("db_attendance", []));
+      const stored = getCollection<AttendanceRecord[]>("db_attendance", []);
+      setRecordsState(stored.length > 0 ? stored : initialAttendance);
     };
     window.addEventListener("db_updated", handleDbUpdate);
     window.addEventListener("storage", handleDbUpdate);
@@ -171,776 +88,928 @@ export default function AttendancePage() {
     };
   }, []);
 
+  // Toast feedback
+  const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
+
+  // Controls state
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [filterStatus, setFilterStatus] = React.useState("All");
-  const [sortBy, setSortBy] = React.useState("Name");
+  const [filterStatus, setFilterStatus] = React.useState<string>("All");
+  const [filterModel, setFilterModel] = React.useState<string>("All");
+  const [isFilterOpen, setIsFilterOpen] = React.useState(false);
+  const [sortBy, setSortBy] = React.useState<string>("Name");
+  const [isSortOpen, setIsSortOpen] = React.useState(false);
+  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc");
+
+  // Chart-derived table filter state
+  const [chartFilter, setChartFilter] = React.useState<ChartFilterSelection | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(10);
+  const [isPageSizeOpen, setIsPageSizeOpen] = React.useState(false);
 
   // Modal State
-  const [selectedRequest, setSelectedRequest] = React.useState<any | null>(
-    null,
-  );
+  const [selectedRequest, setSelectedRequest] = React.useState<AttendanceRecord | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
-
-  // Apply Attendance Modal State
-  const [isApplyModalOpen, setIsApplyModalOpen] = React.useState(false);
-  const [applyName, setApplyName] = React.useState("");
-  const [applyID, setApplyID] = React.useState("");
-  const [applyRole, setApplyRole] = React.useState("");
-  const [applySubRole, setApplySubRole] = React.useState("");
-  const [applyDate, setApplyDate] = React.useState("20 Jun 2035");
-  const [applyModel, setApplyModel] = React.useState("Hybrid");
-  const [applyIn, setApplyIn] = React.useState("09:00 AM");
-  const [applyOut, setApplyOut] = React.useState("06:00 PM");
-  const [applyComment, setApplyComment] = React.useState("");
-
-  const employeesList = React.useMemo(() => {
-    const list = getCollection<any[]>("db_employees", []);
-    if (list.length > 0) return list;
-    const seen = new Set();
-    const unique: any[] = [];
-    records.forEach((r) => {
-      if (r && r.id && !seen.has(r.id)) {
-        seen.add(r.id);
-        unique.push({
-          id: r.id,
-          name: r.name,
-          role: r.role,
-          subRole: r.subRole,
-          avatar: r.avatar,
-        });
-      }
-    });
-    return unique;
-  }, [records]);
-
-  const handleApplyAttendanceSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!applyName || !applyID) return;
-
-    let duration = "9h 0m";
-    let status = "On-Time";
-    let overtime = "1h 0m";
-
-    if (applyIn && applyOut) {
-      const matchIn = applyIn.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
-      const matchOut = applyOut.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
-      if (matchIn && matchOut) {
-        const hour = parseInt(matchIn[1]);
-        const isPm = matchIn[3].toUpperCase() === "PM";
-        const totalInMin =
-          (hour === 12 ? (isPm ? 12 : 0) : hour + (isPm ? 12 : 0)) * 60 +
-          parseInt(matchIn[2]);
-
-        const outHour = parseInt(matchOut[1]);
-        const isOutPm = matchOut[3].toUpperCase() === "PM";
-        const totalOutMin =
-          (outHour === 12
-            ? isOutPm
-              ? 12
-              : 0
-            : outHour + (isOutPm ? 12 : 0)) *
-            60 +
-          parseInt(matchOut[2]);
-
-        if (totalInMin > 9 * 60) {
-          status = "Late";
-        }
-
-        const diffMin = totalOutMin - totalInMin;
-        if (diffMin > 0) {
-          const h = Math.floor(diffMin / 60);
-          const m = diffMin % 60;
-          duration = `${h}h ${m}m`;
-
-          if (diffMin > 480) {
-            const overMin = diffMin - 480;
-            const oh = Math.floor(overMin / 60);
-            const om = overMin % 60;
-            overtime = oh > 0 ? `${oh}h ${om}m` : `${om}m`;
-          } else {
-            overtime = "—";
-          }
-        }
-      }
-    }
-
-    const matchedEmp = employeesList.find((emp) => emp.id === applyID);
-    const avatar = matchedEmp?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${applyID}`;
-
-    const newRecord = {
-      id: applyID,
-      name: applyName,
-      role: applyRole || "Executive",
-      subRole: applySubRole || "Staff",
-      dept: applyRole || "Operations",
-      date: applyDate,
-      model: applyModel,
-      in: applyIn,
-      out: applyOut,
-      duration,
-      overtime,
-      status,
-      avatar,
-      correctionRequestsThisMonth: 0,
-      comment: applyComment,
-      forwardedTo: "",
-      forwardedStatus: "None",
-      hrApprovalStatus: "Approved",
-    };
-
-    setRecords((prev) => [newRecord, ...prev]);
-    setIsApplyModalOpen(false);
-  };
-
-  // Modal Editing Draft States
   const [commentText, setCommentText] = React.useState("");
   const [forwardTo, setForwardTo] = React.useState("");
   const [editIn, setEditIn] = React.useState("");
   const [editOut, setEditOut] = React.useState("");
-  const [isForwardDropdownOpen, setIsForwardDropdownOpen] =
-    React.useState(false);
 
-  const handleOpenDetailsModal = (record: any) => {
-    setSelectedRequest(record);
-    setCommentText(record.comment || "");
-    setForwardTo(record.forwardedTo || "");
-    setEditIn(record.in || "— — —");
-    setEditOut(record.out || "");
-    setIsForwardDropdownOpen(false);
-    setIsDetailModalOpen(true);
-  };
+  // Apply Attendance / Mark Attendance Modal
+  const [isApplyModalOpen, setIsApplyModalOpen] = React.useState(false);
 
-  const handleCloseModal = () => {
-    setIsDetailModalOpen(false);
-    setSelectedRequest(null);
-  };
+  // Active daily date scope for KPI cards (defaults to canonical operational date June 19, 2035)
+  const activeDailyDate = React.useMemo(() => {
+    return records[0]?.date || "19 Jun 2035";
+  }, [records]);
 
-  const handleUpdateStatus = (newStatus: "Approved" | "Rejected") => {
-    if (!selectedRequest) return;
-    setRecords((prev) =>
-      prev.map((rec) =>
-        rec.id === selectedRequest.id
-          ? { ...rec, hrApprovalStatus: newStatus }
-          : rec,
-      ),
-    );
-    setSelectedRequest((prev) =>
-      prev ? { ...prev, hrApprovalStatus: newStatus } : null,
-    );
-  };
+  // Yesterday date calculation (e.g. "19 Jun 2035" -> "18 Jun 2035")
+  const yesterdayDateStr = React.useMemo(() => {
+    const match = activeDailyDate.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+    if (match) {
+      const d = parseInt(match[1], 10);
+      const mStr = match[2];
+      const y = parseInt(match[3], 10);
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const mIdx = monthNames.findIndex((m) => mStr.toLowerCase().startsWith(m.toLowerCase()));
+      if (mIdx >= 0) {
+        const dateObj = new Date(y, mIdx, d);
+        dateObj.setDate(dateObj.getDate() - 1);
+        return dateObj.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+      }
+    }
+    return "18 Jun 2035";
+  }, [activeDailyDate]);
 
-  const handleSaveDrafts = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedRequest) return;
+  // Read leaves collection from db_leaves / initialLeaves
+  const leaves = React.useMemo(() => {
+    const stored = getCollection<LeaveActivityItem[]>("db_leaves", []);
+    return stored.length > 0 ? stored : initialLeaves;
+  }, []);
 
-    // Calculate new status and durations based on edited times
-    let newStatus = selectedRequest.status;
-    let duration = selectedRequest.duration;
-    let overtime = selectedRequest.overtime;
+  // Filter records for active date & yesterday
+  const recordsToday = React.useMemo(() => {
+    return records.filter((r) => r.date === activeDailyDate);
+  }, [records, activeDailyDate]);
 
-    if (editIn && editIn !== "— — —" && editIn !== "—") {
-      // Check if late (e.g. after 09:00 AM)
-      const matchIn = editIn.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
-      if (matchIn) {
-        const hour = parseInt(matchIn[1]);
-        const isPm = matchIn[3].toUpperCase() === "PM";
-        const totalInMin =
-          (hour === 12 ? (isPm ? 12 : 0) : hour + (isPm ? 12 : 0)) * 60 +
-          parseInt(matchIn[2]);
+  const recordsYesterday = React.useMemo(() => {
+    return records.filter((r) => r.date === yesterdayDateStr);
+  }, [records, yesterdayDateStr]);
 
-        if (totalInMin > 9 * 60) {
-          newStatus = "Late";
+  // 1. DATA-DRIVEN PRESENT CARD METRICS
+  const presentMetrics = React.useMemo(() => {
+    const onTimeSet = new Set<string>();
+    const lateSet = new Set<string>();
+
+    recordsToday.forEach((r) => {
+      if (r.status === "On-Time") {
+        onTimeSet.add(r.id);
+      } else if (r.status === "Late" && !onTimeSet.has(r.id)) {
+        lateSet.add(r.id);
+      }
+    });
+
+    const onTimeCount = onTimeSet.size;
+    const lateCount = lateSet.size;
+    const presentCount = onTimeCount + lateCount;
+
+    // Yesterday comparison from actual historical records
+    let vsYesterday: { diff: number; label: string; isPositive: boolean; isNeutral: boolean } | null = null;
+    if (recordsYesterday.length > 0) {
+      const yOnTimeSet = new Set<string>();
+      const yLateSet = new Set<string>();
+      recordsYesterday.forEach((r) => {
+        if (r.status === "On-Time") yOnTimeSet.add(r.id);
+        else if (r.status === "Late" && !yOnTimeSet.has(r.id)) yLateSet.add(r.id);
+      });
+      const yPresentCount = yOnTimeSet.size + yLateSet.size;
+      const diff = presentCount - yPresentCount;
+      vsYesterday = {
+        diff,
+        label: diff > 0 ? `+${diff}` : `${diff}`,
+        isPositive: diff > 0,
+        isNeutral: diff === 0,
+      };
+    }
+
+    return { onTimeCount, lateCount, presentCount, vsYesterday };
+  }, [recordsToday, recordsYesterday]);
+
+  // 2. DATA-DRIVEN ON LEAVE CARD METRICS
+  const onLeaveMetrics = React.useMemo(() => {
+    const annualSet = new Set<string>();
+    const sickSet = new Set<string>();
+    const othersSet = new Set<string>();
+
+    // Check attendance records with status === "On Leave"
+    recordsToday.forEach((r) => {
+      if (r.status === "On Leave") {
+        const comment = (r.comment || "").toLowerCase();
+        if (comment.includes("sick")) {
+          sickSet.add(r.id);
+        } else if (comment.includes("annual")) {
+          annualSet.add(r.id);
         } else {
-          newStatus = "On-Time";
+          othersSet.add(r.id);
         }
+      }
+    });
 
-        // Calculate simple mock duration if Check-Out is set
-        if (editOut && editOut !== "" && editOut !== "—") {
-          const matchOut = editOut.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
-          if (matchOut) {
-            const outHour = parseInt(matchOut[1]);
-            const isOutPm = matchOut[3].toUpperCase() === "PM";
-            const totalOutMin =
-              (outHour === 12
-                ? isOutPm
-                  ? 12
-                  : 0
-                : outHour + (isOutPm ? 12 : 0)) *
-                60 +
-              parseInt(matchOut[2]);
+    // Check leaves collection with approved status covering active date
+    leaves.forEach((l) => {
+      if (l.status === "Approved") {
+        const matchesDate =
+          (l.startDate && l.endDate && "2035-06-19" >= l.startDate && "2035-06-19" <= l.endDate) ||
+          (l.period && l.period.includes("19 Jun")) ||
+          (l.period && l.period.includes("17-21 June 2035"));
 
-            const diffMin = totalOutMin - totalInMin;
-            if (diffMin > 0) {
-              const h = Math.floor(diffMin / 60);
-              const m = diffMin % 60;
-              duration = `${h}h ${m}m`;
+        if (matchesDate) {
+          const lType = (l.type || "").toLowerCase();
+          if (lType.includes("annual")) {
+            annualSet.add(l.id);
+          } else if (lType.includes("sick")) {
+            sickSet.add(l.id);
+          } else {
+            othersSet.add(l.id);
+          }
+        }
+      }
+    });
 
-              // Standard 8 hour workday
-              if (diffMin > 480) {
-                const overMin = diffMin - 480;
-                overtime = `${overMin}m`;
-              } else {
-                overtime = "—";
-              }
+    const annualCount = annualSet.size;
+    const sickCount = sickSet.size;
+    const othersCount = othersSet.size;
+    const onLeaveCount = annualCount + sickCount + othersCount;
+
+    // Yesterday comparison from actual historical records
+    let vsYesterday: { diff: number; label: string; isPositive: boolean; isNeutral: boolean } | null = null;
+    if (recordsYesterday.length > 0) {
+      const yLeaveSet = new Set<string>();
+      recordsYesterday.forEach((r) => {
+        if (r.status === "On Leave") yLeaveSet.add(r.id);
+      });
+      const diff = onLeaveCount - yLeaveSet.size;
+      vsYesterday = {
+        diff,
+        label: diff > 0 ? `+${diff}` : `${diff}`,
+        isPositive: diff > 0,
+        isNeutral: diff === 0,
+      };
+    }
+
+    return { annualCount, sickCount, othersCount, onLeaveCount, vsYesterday };
+  }, [recordsToday, recordsYesterday, leaves]);
+
+  // 3. DATA-DRIVEN ABSENT CARD METRICS
+  const absentMetrics = React.useMemo(() => {
+    const absentSet = new Set<string>();
+    recordsToday.forEach((r) => {
+      if (r.status === "Absent") {
+        absentSet.add(r.id);
+      }
+    });
+
+    const absentCount = absentSet.size;
+
+    // Yesterday comparison from actual historical records
+    let vsYesterday: { diff: number; label: string; isPositive: boolean; isNeutral: boolean } | null = null;
+    if (recordsYesterday.length > 0) {
+      const yAbsentSet = new Set<string>();
+      recordsYesterday.forEach((r) => {
+        if (r.status === "Absent") yAbsentSet.add(r.id);
+      });
+      const diff = absentCount - yAbsentSet.size;
+      vsYesterday = {
+        diff,
+        label: diff > 0 ? `+${diff}` : `${diff}`,
+        isPositive: diff < 0, // Fewer absences is positive
+        isNeutral: diff === 0,
+      };
+    }
+
+    return { absentCount, vsYesterday };
+  }, [recordsToday, recordsYesterday]);
+
+  // Close popovers on click outside
+  React.useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-dropdown-container]")) {
+        setIsFilterOpen(false);
+        setIsSortOpen(false);
+        setIsPageSizeOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Filter & Sort Logic with Chart-to-Table synchronization
+  const filteredRecords = React.useMemo(() => {
+    return records.filter((rec) => {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        String(rec.name || "").toLowerCase().includes(q) ||
+        String(rec.id || "").toLowerCase().includes(q) ||
+        String(rec.role || "").toLowerCase().includes(q) ||
+        String(rec.dept || "").toLowerCase().includes(q);
+
+      const matchesStatus =
+        filterStatus === "All" || rec.status?.toLowerCase() === filterStatus.toLowerCase();
+
+      const matchesModel =
+        filterModel === "All" || rec.model?.toLowerCase() === filterModel.toLowerCase();
+
+      // Chart-derived synchronization filter
+      let matchesChart = true;
+      if (chartFilter) {
+        if (chartFilter.status && chartFilter.status !== "All") {
+          if (chartFilter.status === "Present") {
+            matchesChart = rec.status === "On-Time" || rec.status === "Late";
+          } else {
+            matchesChart = rec.status?.toLowerCase() === chartFilter.status.toLowerCase();
+          }
+        }
+        if (matchesChart && chartFilter.startDate && chartFilter.endDate) {
+          const matchDate = rec.date?.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+          if (matchDate) {
+            const day = parseInt(matchDate[1], 10);
+            const mStr = matchDate[2].toLowerCase();
+            const year = parseInt(matchDate[3], 10);
+            const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+            const mIdx = monthNames.findIndex((m) => mStr.startsWith(m));
+            if (mIdx >= 0) {
+              const recD = new Date(year, mIdx, day);
+              const sD = new Date(chartFilter.startDate);
+              const eD = new Date(chartFilter.endDate);
+              matchesChart = recD >= sD && recD <= eD;
             }
           }
         }
       }
+
+      return matchesSearch && matchesStatus && matchesModel && matchesChart;
+    });
+  }, [records, searchQuery, filterStatus, filterModel, chartFilter]);
+
+  const sortedRecords = React.useMemo(() => {
+    return [...filteredRecords].sort((a, b) => {
+      let result = 0;
+      if (sortBy === "Name") {
+        result = String(a.name || "").localeCompare(String(b.name || ""));
+      } else if (sortBy === "Job Title") {
+        result = String(a.role || "").localeCompare(String(b.role || ""));
+      } else if (sortBy === "Date") {
+        result = String(a.date || "").localeCompare(String(b.date || ""));
+      } else if (sortBy === "Work Model") {
+        result = String(a.model || "").localeCompare(String(b.model || ""));
+      } else if (sortBy === "Check In - Out") {
+        result = String(a.in || "").localeCompare(String(b.in || ""));
+      } else if (sortBy === "Duration") {
+        result = String(a.duration || "").localeCompare(String(b.duration || ""));
+      } else if (sortBy === "Overtime") {
+        result = String(a.overtime || "").localeCompare(String(b.overtime || ""));
+      } else if (sortBy === "Status") {
+        result = String(a.status || "").localeCompare(String(b.status || ""));
+      }
+      return sortOrder === "asc" ? result : -result;
+    });
+  }, [filteredRecords, sortBy, sortOrder]);
+
+  // Paginated records
+  const totalPages = Math.max(1, Math.ceil(sortedRecords.length / pageSize));
+  const paginatedRecords = React.useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return sortedRecords.slice(start, start + pageSize);
+  }, [sortedRecords, currentPage, pageSize]);
+
+  // Handle column header sort click
+  const handleSortClick = (columnName: string) => {
+    if (sortBy === columnName) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
-      newStatus =
-        selectedRequest.status === "On-Time" ||
-        selectedRequest.status === "Late"
-          ? "Absent"
-          : selectedRequest.status;
-      duration = "—";
-      overtime = "—";
+      setSortBy(columnName);
+      setSortOrder("asc");
     }
+  };
 
-    setRecords((prev) =>
-      prev.map((rec) => {
-        if (rec.id === selectedRequest.id) {
-          return {
-            ...rec,
-            in: editIn,
-            out: editOut,
-            comment: commentText,
-            forwardedTo: forwardTo,
-            forwardedStatus:
-              forwardTo && forwardTo !== rec.forwardedTo
-                ? "Pending"
-                : rec.forwardedStatus,
-            status: newStatus,
-            duration,
-            overtime,
-          };
-        }
-        return rec;
-      }),
-    );
+  // Modal open
+  const handleOpenDetails = (record: AttendanceRecord) => {
+    setSelectedRequest(record);
+    setCommentText(record.comment || "");
+    setForwardTo(record.forwardedTo || "");
+    setEditIn(record.in || "09:00 AM");
+    setEditOut(record.out || "05:00 PM");
+    setIsDetailModalOpen(true);
+  };
 
-    // Update active modal display
-    setSelectedRequest((prev) =>
-      prev
+  // Handle save edited record in modal
+  const handleSaveModal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRequest) return;
+    const updated = records.map((r) =>
+      r.id === selectedRequest.id
         ? {
-            ...prev,
+            ...r,
             in: editIn,
             out: editOut,
             comment: commentText,
             forwardedTo: forwardTo,
-            forwardedStatus:
-              forwardTo && forwardTo !== prev.forwardedTo
-                ? "Pending"
-                : prev.forwardedStatus,
-            status: newStatus,
-            duration,
-            overtime,
           }
-        : null,
+        : r
     );
+    setRecords(updated);
+    setIsDetailModalOpen(false);
+    setToastMessage("Attendance record updated successfully!");
   };
 
-  const handleForwardRequest = (managerName: string) => {
+  const handleUpdateStatus = (newStatus: "Approved" | "Rejected") => {
     if (!selectedRequest) return;
-    setRecords((prev) =>
-      prev.map((rec) =>
-        rec.id === selectedRequest.id
-          ? { ...rec, forwardedTo: managerName, forwardedStatus: "Pending" }
-          : rec,
-      ),
+    const updated = records.map((r) =>
+      r.id === selectedRequest.id
+        ? { ...r, hrApprovalStatus: newStatus }
+        : r
     );
-    setSelectedRequest((prev) =>
-      prev
-        ? { ...prev, forwardedTo: managerName, forwardedStatus: "Pending" }
-        : null,
-    );
-    setForwardTo(managerName);
-    setIsForwardDropdownOpen(false);
+    setRecords(updated);
+    setSelectedRequest((prev) => (prev ? { ...prev, hrApprovalStatus: newStatus } : null));
+    setToastMessage(`Attendance correction marked as ${newStatus}!`);
   };
-
-  const handleSimulateManagerApproval = () => {
-    if (!selectedRequest) return;
-    setRecords((prev) =>
-      prev.map((rec) =>
-        rec.id === selectedRequest.id
-          ? { ...rec, forwardedStatus: "Approved" }
-          : rec,
-      ),
-    );
-    setSelectedRequest((prev) =>
-      prev ? { ...prev, forwardedStatus: "Approved" } : null,
-    );
-  };
-
-  // Filter & Sort Logic
-  const filteredRecords = records.filter((rec) => {
-    const matchesSearch =
-      rec.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      rec.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      rec.role.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus = filterStatus === "All" || rec.status === filterStatus;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  // Sort logic sorting records
-  const sortedRecords = [...filteredRecords].sort((a, b) => {
-    if (sortBy === "Name") {
-      return a.name.localeCompare(b.name);
-    } else if (sortBy === "Status") {
-      return a.status.localeCompare(b.status);
-    } else if (sortBy === "Date") {
-      return a.date.localeCompare(b.date);
-    }
-    return 0;
-  });
-
-  // Dynamic statistics calculations based directly on live DB records
-  const onTimeCount = records.filter((r) => r.status === "On-Time").length;
-  const lateCount = records.filter((r) => r.status === "Late").length;
-  const presentCount = onTimeCount + lateCount;
-  const leaveCount = records.filter((r) => r.status === "On Leave").length;
-  const absentCount = records.filter((r) => r.status === "Absent").length;
 
   return (
     <AppLayout
       title="Attendance"
       breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Attendance" }]}
     >
-      <div className="space-y-6">
-        {/* Stats Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Present Card */}
-          <Card className="lg:col-span-3 h-[195px] flex flex-col p-0 border-none rounded-[16px] bg-white overflow-hidden shadow-sm">
-            <div className="bg-[#E4F2D3] p-4">
-              <h3 className="text-[16px] font-bold text-[#203430]">Present</h3>
+      <div className="space-y-5">
+        {/* Toast Notification */}
+        {toastMessage && (
+          <div className="fixed bottom-6 right-6 z-50 bg-[#0E4D41] text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+            <Check className="h-4 w-4 text-[#35BFA3]" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+
+        {/* =========================================================================
+            TOP SECTION: SUMMARY & CHARTS (Height: 195px matching Figma Specs)
+            ========================================================================= */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-5 items-stretch">
+          {/* Card 1: Present (width: 175px in Figma, responsive lg:col-span-3 xl:col-span-2) */}
+          <div className="lg:col-span-3 xl:col-span-2 bg-white rounded-[16px] h-[195px] overflow-hidden shadow-2xs flex flex-col justify-between border border-[#EBECEB]">
+            {/* Detail Header: bg-[#E4F2D3], height: 51px */}
+            <div className="bg-[#E4F2D3] px-4 py-3.5 h-[51px] flex items-center shrink-0">
+              <h3 className="text-[16px] font-semibold text-[#203430] leading-none">
+                Present
+              </h3>
             </div>
-            <div className="flex-1 p-4 flex flex-col justify-end">
+
+            {/* Main Body: height: 128px */}
+            <div className="p-4 flex flex-col justify-between flex-1">
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-[40px] font-bold text-[#0E4D41] leading-none">
-                    {presentCount}
+                  <p className="text-[40px] font-bold text-[#0E4D41] leading-none tracking-tight">
+                    {presentMetrics.presentCount}
                   </p>
-                  <p className="text-[10px] text-[#63716E] mt-2">Employees</p>
+                  <p className="text-[10px] text-[#63716E] mt-1.5 font-normal">
+                    Employees
+                  </p>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="bg-[#F7F7F7] px-2 py-1 rounded-[6px] flex items-center gap-1">
-                    <span className="text-[16px] font-bold text-brand">+4</span>
+
+                {presentMetrics.vsYesterday && (
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="bg-[#F7F7F7] px-1.5 py-0.5 rounded-[6px] flex items-center justify-center">
+                      <span
+                        className={cn(
+                          "text-[16px] font-semibold leading-none",
+                          presentMetrics.vsYesterday.isPositive
+                            ? "text-[#35BFA3]"
+                            : presentMetrics.vsYesterday.isNeutral
+                            ? "text-[#63716E]"
+                            : "text-[#E63D4B]"
+                        )}
+                      >
+                        {presentMetrics.vsYesterday.label}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-[#63716E] leading-none">
+                      vs yesterday
+                    </p>
                   </div>
-                  <p className="text-[10px] text-[#63716E]">vs yesterday</p>
-                </div>
+                )}
               </div>
-              <div className="mt-4 flex gap-4 bg-[#F7F7F7] rounded-[8px] p-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[16px] font-bold text-[#0E4D41]">
-                    {onTimeCount}
+
+              {/* Bottom Additional Numbers Bar */}
+              <div className="bg-[#F7F7F7] rounded-[8px] px-2.5 py-1 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1">
+                  <span className="text-[16px] font-semibold text-[#0E4D41]">
+                    {presentMetrics.onTimeCount}
                   </span>
                   <span className="text-[10px] text-[#63716E]">On-Time</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[16px] font-bold text-[#0E4D41]">
-                    {lateCount}
+                <div className="flex items-center gap-1">
+                  <span className="text-[16px] font-semibold text-[#0E4D41]">
+                    {presentMetrics.lateCount}
                   </span>
                   <span className="text-[10px] text-[#63716E]">Late</span>
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* On Leave Card */}
-          <Card className="lg:col-span-4 h-[195px] flex flex-col p-0 border-none rounded-[16px] bg-white overflow-hidden shadow-sm">
-            <div className="bg-brand p-4">
-              <h3 className="text-[16px] font-bold text-white">On Leave</h3>
+          {/* Card 2: On Leave (width: 271px in Figma, responsive lg:col-span-3 xl:col-span-3) */}
+          <div className="lg:col-span-3 xl:col-span-3 bg-white rounded-[16px] h-[195px] overflow-hidden shadow-2xs flex flex-col justify-between border border-[#EBECEB]">
+            {/* Detail Header: bg-[#35BFA3], height: 51px */}
+            <div className="bg-[#35BFA3] px-4 py-3.5 h-[51px] flex items-center shrink-0">
+              <h3 className="text-[16px] font-semibold text-white leading-none">
+                On Leave
+              </h3>
             </div>
-            <div className="flex-1 p-4 flex flex-col justify-end">
+
+            {/* Main Body */}
+            <div className="p-4 flex flex-col justify-between flex-1">
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-[40px] font-bold text-[#0E4D41] leading-none">
-                    {leaveCount}
+                  <p className="text-[40px] font-bold text-[#0E4D41] leading-none tracking-tight">
+                    {onLeaveMetrics.onLeaveCount}
                   </p>
-                  <p className="text-[10px] text-[#63716E] mt-2">Employees</p>
+                  <p className="text-[10px] text-[#63716E] mt-1.5 font-normal">
+                    Employees
+                  </p>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="bg-[#F7F7F7] px-2 py-1 rounded-[6px] flex items-center gap-1">
-                    <span className="text-[16px] font-bold text-brand">+1</span>
+
+                {onLeaveMetrics.vsYesterday && (
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="bg-[#F7F7F7] px-1.5 py-0.5 rounded-[6px] flex items-center justify-center">
+                      <span
+                        className={cn(
+                          "text-[16px] font-semibold leading-none",
+                          onLeaveMetrics.vsYesterday.isPositive
+                            ? "text-[#35BFA3]"
+                            : onLeaveMetrics.vsYesterday.isNeutral
+                            ? "text-[#63716E]"
+                            : "text-[#E63D4B]"
+                        )}
+                      >
+                        {onLeaveMetrics.vsYesterday.label}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-[#63716E] leading-none">
+                      vs yesterday
+                    </p>
                   </div>
-                  <p className="text-[10px] text-[#63716E]">vs yesterday</p>
-                </div>
+                )}
               </div>
-              <div className="mt-4 flex justify-between bg-[#F7F7F7] rounded-[8px] p-2">
-                <div className="flex items-center gap-1.5 shrink-0 px-1 border-r border-[#E5E6E6]">
-                  <span className="text-[16px] font-bold text-[#0E4D41]">
-                    {getCollection<any[]>("db_leaves", []).filter(l => l.type === "Annual Leave" && l.status === "Approved").length}
+
+              {/* Bottom Additional Numbers Bar: 3 items */}
+              <div className="bg-[#F7F7F7] rounded-[8px] px-2.5 py-1 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1">
+                  <span className="text-[16px] font-semibold text-[#0E4D41]">
+                    {onLeaveMetrics.annualCount}
                   </span>
-                  <span className="text-[10px] text-[#63716E]">
-                    Annual Leave
-                  </span>
+                  <span className="text-[10px] text-[#63716E]">Annual Leave</span>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0 px-1 border-r border-[#E5E6E6]">
-                  <span className="text-[16px] font-bold text-[#0E4D41]">
-                    {getCollection<any[]>("db_leaves", []).filter(l => l.type === "Sick Leave" && l.status === "Approved").length}
+                <div className="flex items-center gap-1">
+                  <span className="text-[16px] font-semibold text-[#0E4D41]">
+                    {onLeaveMetrics.sickCount}
                   </span>
                   <span className="text-[10px] text-[#63716E]">Sick Leave</span>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0 px-1">
-                  <span className="text-[16px] font-bold text-[#0E4D41]">
-                    {getCollection<any[]>("db_leaves", []).filter(l => l.type !== "Annual Leave" && l.type !== "Sick Leave" && l.status === "Approved").length}
+                <div className="flex items-center gap-1">
+                  <span className="text-[16px] font-semibold text-[#0E4D41]">
+                    {onLeaveMetrics.othersCount}
                   </span>
                   <span className="text-[10px] text-[#63716E]">Others</span>
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Absent Card */}
-          <Card className="lg:col-span-2 h-[195px] flex flex-col p-0 border-none rounded-[16px] bg-white overflow-hidden shadow-sm">
-            <div className="bg-[#0E4D41] p-4">
-              <h3 className="text-[16px] font-bold text-white">Absent</h3>
+          {/* Card 3: Absent (width: 135px in Figma, responsive lg:col-span-2 xl:col-span-2) */}
+          <div className="lg:col-span-2 xl:col-span-2 bg-white rounded-[16px] h-[195px] overflow-hidden shadow-2xs flex flex-col justify-between border border-[#EBECEB]">
+            {/* Detail Header: bg-[#0E4D41], height: 51px */}
+            <div className="bg-[#0E4D41] px-4 py-3.5 h-[51px] flex items-center shrink-0">
+              <h3 className="text-[16px] font-semibold text-white leading-none">
+                Absent
+              </h3>
             </div>
-            <div className="flex-1 p-4 flex flex-col justify-between">
-              <div className="flex flex-col items-center pt-2">
-                <p className="text-[40px] font-bold text-[#0E4D41] leading-none">
-                  {absentCount}
+
+            {/* Main Body */}
+            <div className="p-4 flex flex-col justify-between flex-1">
+              <div>
+                <p className="text-[40px] font-bold text-[#0E4D41] leading-none tracking-tight">
+                  {absentMetrics.absentCount}
                 </p>
-                <p className="text-[10px] text-[#63716E] mt-2">Employees</p>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <div className="bg-[#F7F7F7] px-2 py-1 rounded-[6px]">
-                  <span className="text-[16px] font-bold text-[#E63D4B]">
-                    +2
-                  </span>
-                </div>
-                <p className="text-[10px] text-[#63716E] text-center leading-tight">
-                  vs
-                  <br />
-                  yesterday
+                <p className="text-[10px] text-[#63716E] mt-1.5 font-normal">
+                  Employees
                 </p>
               </div>
-            </div>
-          </Card>
 
-          {/* Chart Overview */}
-          <Card className="lg:col-span-3 h-[195px] p-4 border-none rounded-[16px] bg-white shadow-sm flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex flex-col">
-                <h3 className="text-[16px] font-bold text-[#203430]">
-                  Attendance Overview
-                </h3>
-                <div className="mt-2 flex flex-col gap-1.5">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2.5 w-2.5 rounded-full bg-[#E4F2D3]" />
-                    <span className="text-[12px] text-[#63716E]">Present</span>
+              {absentMetrics.vsYesterday && (
+                <div className="flex items-center gap-1.5">
+                  <div className="bg-[#F7F7F7] px-1.5 py-0.5 rounded-[6px] flex items-center justify-center">
+                    <span
+                      className={cn(
+                        "text-[16px] font-semibold leading-none",
+                        absentMetrics.vsYesterday.isPositive
+                          ? "text-[#35BFA3]"
+                          : absentMetrics.vsYesterday.isNeutral
+                          ? "text-[#63716E]"
+                          : "text-[#E63D4B]"
+                      )}
+                    >
+                      {absentMetrics.vsYesterday.label}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-2.5 w-2.5 rounded-full bg-brand" />
-                    <span className="text-[12px] text-[#63716E]">On Leave</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-2.5 w-2.5 rounded-full bg-[#0E4D41]" />
-                    <span className="text-[12px] text-[#63716E]">Absent</span>
-                  </div>
+                  <p className="text-[10px] text-[#63716E] leading-tight">
+                    vs yesterday
+                  </p>
                 </div>
-              </div>
-              <div className="self-start">
-                <button className="flex items-center gap-2 bg-[#F7F7F7] px-3 py-1.5 rounded-[8px] text-[12px] font-medium text-[#203430]">
-                  Last 6 Months <ChevronDown className="h-3 w-3" />
-                </button>
-              </div>
+              )}
             </div>
-            {records.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-3 border border-dashed border-[#E5E6E6] rounded-[12px] min-h-[100px] gap-1">
-                <Clock className="h-5 w-5 text-[#63716E]/40" />
-                <p className="text-[10px] font-bold text-[#203430]">No Attendance Stats</p>
-                <p className="text-[9px] text-[#63716E]">Charts will populate once employees check in.</p>
-              </div>
-            ) : (
-              <div className="flex-1 min-h-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} stackOffset="expand">
-                    <XAxis
-                      dataKey="month"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10, fill: "#63716E" }}
-                      dy={5}
-                    />
-                    <Bar
-                      dataKey="present"
-                      stackId="a"
-                      fill="#E4F2D3"
-                      radius={[0, 0, 0, 0]}
-                    />
-                    <Bar
-                      dataKey="leave"
-                      stackId="a"
-                      fill="#35BFA3"
-                      radius={[0, 0, 0, 0]}
-                    />
-                    <Bar
-                      dataKey="absent"
-                      stackId="a"
-                      fill="#0E4D41"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </Card>
+          </div>
+
+          {/* Card 4: Fully Interactive Data-Driven Attendance Overview Chart */}
+          <AttendanceOverviewChart
+            records={records}
+            activeFilter={chartFilter}
+            onSelectFilter={(f) => {
+              setChartFilter(f);
+              setCurrentPage(1);
+            }}
+          />
         </div>
 
-        {/* Employee Attendance Table */}
-        <Card className="border-none rounded-[16px] bg-white shadow-sm overflow-hidden p-0 flex flex-col min-h-[700px]">
-          <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-50">
-            <div>
-              <h2 className="text-[16px] font-bold text-[#203430]">
+        {/* =========================================================================
+            EMPLOYEE ATTENDANCE TABLE SECTION
+            ========================================================================= */}
+        <div className="bg-white rounded-[16px] p-4 shadow-2xs border border-[#EBECEB]">
+          {/* Table Header Controls */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4" data-dropdown-container>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-[16px] font-semibold text-[#203430]">
                 Employee Attendance
               </h2>
-              <p className="text-[11px] text-[#63716E] mt-1">
-                Click on any row to open the details modal (Approve, Reject,
-                Comment, Forward, or Edit Check-In/Out times)
-              </p>
+
+              {chartFilter && (
+                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#E4F2D3] border border-[#35BFA3]/40 text-[#0E4D41] text-[11px] font-medium animate-in fade-in">
+                  <span>
+                    Filtered by Chart: {chartFilter.periodLabel}
+                    {chartFilter.status && chartFilter.status !== "All" && ` • ${chartFilter.status}`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChartFilter(null);
+                      setCurrentPage(1);
+                    }}
+                    className="p-0.5 rounded hover:bg-black/10 cursor-pointer ml-0.5 text-[#0E4D41]"
+                    title="Clear chart filter"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="flex flex-wrap items-center gap-3">
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Search input */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#63716E]" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#203430]" />
                 <input
                   type="text"
-                  placeholder="Search employee, ID, role..."
+                  placeholder="Search employee"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-3 py-1.5 w-[210px] h-[34px] bg-[#F7F7F7] hover:bg-[#E5E6E6]/40 text-[#203430] placeholder:text-[#63716E]/70 rounded-[8px] text-[12px] font-medium outline-none transition-colors border border-transparent focus:border-[#0E4D41]/30"
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="pl-8 pr-3 h-[34px] w-[200px] sm:w-[223px] bg-[#F7F7F7] text-[#203430] placeholder:text-[#63716E] rounded-[8px] text-[12px] outline-none border border-transparent focus:border-[#35BFA3]"
                 />
               </div>
 
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-[#63716E]">
-                  Status:
-                </span>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="bg-[#E4F2D3] text-[#203430] h-[34px] px-2.5 rounded-[8px] text-[12px] font-bold outline-none border-none cursor-pointer hover:bg-[#d4eab6] transition-colors"
+              {/* Filter Button (#E4F2D3 with Funnel Icon) */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className="h-[34px] px-3 rounded-[8px] bg-[#E4F2D3] text-[#203430] text-[12px] font-medium flex items-center gap-1.5 hover:bg-[#d9edc3] transition-colors cursor-pointer"
                 >
-                  <option value="All">All Statuses</option>
-                  <option value="On-Time">On-Time</option>
-                  <option value="Late">Late</option>
-                  <option value="On Leave">On Leave</option>
-                  <option value="Absent">Absent</option>
-                </select>
+                  <Filter className="h-3.5 w-3.5 text-[#203430]" />
+                  <span>Filter</span>
+                  <ChevronDown className="h-3.5 w-3.5 text-[#203430]" />
+                </button>
+
+                {isFilterOpen && (
+                  <div className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl shadow-xl border border-slate-100 p-3 z-50 animate-in fade-in space-y-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#63716E] block mb-1">
+                        Filter by Status
+                      </label>
+                      <select
+                        value={filterStatus}
+                        onChange={(e) => {
+                          setFilterStatus(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                        className="w-full h-8 px-2 rounded-lg bg-[#F7F7F7] text-xs text-[#203430] outline-none border-none cursor-pointer"
+                      >
+                        <option value="All">All Statuses</option>
+                        <option value="On-Time">On-Time</option>
+                        <option value="Late">Late</option>
+                        <option value="On Leave">On Leave</option>
+                        <option value="Absent">Absent</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#63716E] block mb-1">
+                        Filter by Work Model
+                      </label>
+                      <select
+                        value={filterModel}
+                        onChange={(e) => {
+                          setFilterModel(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                        className="w-full h-8 px-2 rounded-lg bg-[#F7F7F7] text-xs text-[#203430] outline-none border-none cursor-pointer"
+                      >
+                        <option value="All">All Models</option>
+                        <option value="Hybrid">Hybrid</option>
+                        <option value="Remote">Remote</option>
+                        <option value="On-Site">On-Site</option>
+                      </select>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 flex justify-between">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFilterStatus("All");
+                          setFilterModel("All");
+                          setIsFilterOpen(false);
+                          setToastMessage("Filters cleared.");
+                        }}
+                        className="text-[11px] font-medium text-rose-600 hover:underline cursor-pointer"
+                      >
+                        Reset All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsFilterOpen(false)}
+                        className="text-[11px] font-bold text-[#0E4D41] hover:underline cursor-pointer"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-[#63716E]">
-                  Sort:
-                </span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-[#E4F2D3] text-[#203430] h-[34px] px-2.5 rounded-[8px] text-[12px] font-bold outline-none border-none cursor-pointer hover:bg-[#d4eab6] transition-colors"
+              {/* Sort By Section */}
+              <div className="flex items-center gap-1.5 relative">
+                <span className="text-[11px] text-[#6E6F78]">Sort by:</span>
+                <button
+                  type="button"
+                  onClick={() => setIsSortOpen(!isSortOpen)}
+                  className="h-[34px] px-3 rounded-[8px] bg-[#E4F2D3] text-[#203430] text-[12px] font-medium flex items-center gap-1 hover:bg-[#d9edc3] transition-colors cursor-pointer"
                 >
-                  <option value="Name">Name</option>
-                  <option value="Status">Status</option>
-                  <option value="Date">Date</option>
-                </select>
+                  <span>{sortBy}</span>
+                  <ChevronDown className="h-3.5 w-3.5 text-[#203430]" />
+                </button>
+
+                {isSortOpen && (
+                  <div className="absolute right-0 top-full mt-1.5 w-40 bg-white rounded-xl shadow-xl border border-slate-100 p-1 z-50 animate-in fade-in">
+                    {[
+                      "Name",
+                      "Job Title",
+                      "Date",
+                      "Work Model",
+                      "Check In - Out",
+                      "Duration",
+                      "Overtime",
+                      "Status",
+                    ].map((col) => (
+                      <button
+                        key={col}
+                        type="button"
+                        onClick={() => {
+                          setSortBy(col);
+                          setIsSortOpen(false);
+                        }}
+                        className={cn(
+                          "w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer",
+                          sortBy === col
+                            ? "bg-[#E4F2D3] text-[#0E4D41] font-bold"
+                            : "text-[#203430] hover:bg-slate-50"
+                        )}
+                      >
+                        {col}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
+              {/* Mark Attendance Button (formerly Apply Attendance) */}
               <button
-                onClick={() => {
-                  if (employeesList.length > 0) {
-                    const first = employeesList[0];
-                    setApplyName(first.name);
-                    setApplyID(first.id);
-                    setApplyRole(first.role || "");
-                    setApplySubRole(first.subRole || "");
-                  } else {
-                    setApplyName("");
-                    setApplyID("");
-                    setApplyRole("");
-                    setApplySubRole("");
-                  }
-                  setApplyDate("20 Jun 2035");
-                  setApplyModel("Hybrid");
-                  setApplyIn("09:00 AM");
-                  setApplyOut("06:00 PM");
-                  setApplyComment("");
-                  setIsApplyModalOpen(true);
-                }}
-                className="bg-[#0E4D41] text-white text-[12px] font-bold h-[34px] px-4 rounded-[8px] hover:bg-[#0E4D41]/90 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm shrink-0 whitespace-nowrap"
+                type="button"
+                onClick={() => setIsApplyModalOpen(true)}
+                className="h-[34px] px-3.5 rounded-[8px] bg-[#35BFA3] text-white text-[12px] font-semibold hover:bg-[#28C2A9] flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                title="Directly mark employee attendance punches"
               >
-                <Clock className="h-4 w-4" /> Apply Attendance
+                <Plus className="h-3.5 w-3.5" />
+                <span>Mark Attendance</span>
               </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-[#F7F7F7]">
-                <tr>
-                  <th className="px-6 py-3">
-                    <div className="flex items-center gap-1 text-[10px] font-black text-[#63716E] uppercase whitespace-nowrap">
-                      Name <ArrowUpDown className="h-3 w-3" />
+          {/* Table Container with Bounded Horizontal Scrolling */}
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left border-collapse min-w-[900px]">
+              {/* Header row: height 42px, bg-[#F7F7F7], rounded 8px */}
+              <thead>
+                <tr className="bg-[#F7F7F7] h-[42px] rounded-[8px] text-[10px] text-[#63716E] font-normal">
+                  <th
+                    onClick={() => handleSortClick("Name")}
+                    className="px-3.5 py-2.5 font-normal cursor-pointer select-none rounded-l-[8px]"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Name</span>
+                      <ChevronsUpDown className="h-3 w-3 text-[#63716E]" />
                     </div>
                   </th>
-                  <th className="px-6 py-3">
-                    <div className="flex items-center gap-1 text-[10px] font-black text-[#63716E] uppercase whitespace-nowrap">
-                      Job Title <ArrowUpDown className="h-3 w-3" />
+                  <th
+                    onClick={() => handleSortClick("Job Title")}
+                    className="px-3 py-2.5 font-normal cursor-pointer select-none"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Job Title</span>
+                      <ChevronsUpDown className="h-3 w-3 text-[#63716E]" />
                     </div>
                   </th>
-                  <th className="px-6 py-3">
-                    <div className="flex items-center gap-1 text-[10px] font-black text-[#63716E] uppercase whitespace-nowrap">
-                      Date <ArrowUpDown className="h-3 w-3" />
+                  <th
+                    onClick={() => handleSortClick("Date")}
+                    className="px-3 py-2.5 font-normal cursor-pointer select-none"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Date</span>
+                      <ChevronsUpDown className="h-3 w-3 text-[#63716E]" />
                     </div>
                   </th>
-                  <th className="px-6 py-3">
-                    <div className="flex items-center gap-1 text-[10px] font-black text-[#63716E] uppercase whitespace-nowrap">
-                      Work Model <ArrowUpDown className="h-3 w-3" />
+                  <th
+                    onClick={() => handleSortClick("Work Model")}
+                    className="px-3 py-2.5 font-normal cursor-pointer select-none"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Work Model</span>
+                      <ChevronsUpDown className="h-3 w-3 text-[#63716E]" />
                     </div>
                   </th>
-                  <th className="px-6 py-3">
-                    <div className="flex items-center gap-1 text-[10px] font-black text-[#63716E] uppercase whitespace-nowrap">
-                      Check In - Out <ArrowUpDown className="h-3 w-3" />
+                  <th
+                    onClick={() => handleSortClick("Check In - Out")}
+                    className="px-3 py-2.5 font-normal cursor-pointer select-none"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Check In - Out</span>
+                      <ChevronsUpDown className="h-3 w-3 text-[#63716E]" />
                     </div>
                   </th>
-                  <th className="px-6 py-3">
-                    <div className="flex items-center gap-1 text-[10px] font-black text-[#63716E] uppercase whitespace-nowrap">
-                      Duration <ArrowUpDown className="h-3 w-3" />
+                  <th
+                    onClick={() => handleSortClick("Duration")}
+                    className="px-3 py-2.5 font-normal cursor-pointer select-none"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Duration</span>
+                      <ChevronsUpDown className="h-3 w-3 text-[#63716E]" />
                     </div>
                   </th>
-                  <th className="px-6 py-3">
-                    <div className="flex items-center gap-1 text-[10px] font-black text-[#63716E] uppercase whitespace-nowrap">
-                      Overtime <ArrowUpDown className="h-3 w-3" />
+                  <th
+                    onClick={() => handleSortClick("Overtime")}
+                    className="px-3 py-2.5 font-normal cursor-pointer select-none"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Overtime</span>
+                      <ChevronsUpDown className="h-3 w-3 text-[#63716E]" />
                     </div>
                   </th>
-                  <th className="px-6 py-3">
-                    <div className="flex items-center gap-1 text-[10px] font-black text-[#63716E] uppercase whitespace-nowrap">
-                      Status <ArrowUpDown className="h-3 w-3" />
+                  <th
+                    onClick={() => handleSortClick("Status")}
+                    className="px-3 py-2.5 font-normal cursor-pointer select-none rounded-r-[8px]"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Status</span>
+                      <ChevronsUpDown className="h-3 w-3 text-[#63716E]" />
                     </div>
                   </th>
                 </tr>
               </thead>
+
+              {/* Table Body: 54px rows matching Screenshot 1 */}
               <tbody className="divide-y divide-[#E5E6E6]">
-                {sortedRecords.length === 0 ? (
+                {paginatedRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-16 text-center">
-                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <div className="h-10 w-10 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center shadow-sm text-slate-400 mx-auto">
-                          <Check className="h-4 w-4" />
-                        </div>
-                        <p className="text-[12px] font-bold text-[#203430] mt-1">
-                          No Attendance Logs Found
-                        </p>
-                        <p className="text-[10px] text-[#63716E] max-w-sm mx-auto leading-relaxed">
-                          Your staff check-in register is currently empty. Connect an API endpoint or synchronize with active biometric logs to populate rosters.
-                        </p>
-                      </div>
+                    <td colSpan={8} className="py-12 text-center text-xs text-[#63716E]">
+                      No employee attendance records match your active filter.
                     </td>
                   </tr>
                 ) : (
-                  sortedRecords.map((e, i) => (
+                  paginatedRecords.map((r, i) => (
                     <tr
-                      key={e.id || i}
-                      onClick={() => handleOpenDetailsModal(e)}
-                      className="hover:bg-[#F7F7F7]/70 cursor-pointer transition-colors group"
+                      key={r.id || i}
+                      onClick={() => handleOpenDetails(r)}
+                      className="h-[54px] hover:bg-[#F7F7F7]/70 cursor-pointer transition-colors group"
+                      title="Click to view and edit attendance record"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
+                      {/* Name & ID */}
+                      <td className="px-3.5 py-2.5">
+                        <div className="flex items-center gap-2.5">
                           <img
-                            src={e.avatar}
-                            className="h-8 w-8 rounded-full object-cover shadow-sm bg-brand"
+                            src={r.avatar}
+                            alt={r.name}
+                            className="h-7 w-7 rounded-full object-cover shrink-0"
+                            referrerPolicy="no-referrer"
                           />
-                          <div className="flex flex-col">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-[11px] font-bold text-[#203430] leading-none group-hover:text-brand transition-colors">
-                                {e.name}
-                              </span>
-                              {e.hrApprovalStatus !== "Pending" && (
-                                <span
-                                  className={cn(
-                                    "text-[8px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider scale-95",
-                                    e.hrApprovalStatus === "Approved"
-                                      ? "bg-[#E4F2D3] text-[#0E4D41]"
-                                      : "bg-rose-100 text-rose-700",
-                                  )}
-                                >
-                                  {e.hrApprovalStatus}
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[10px] text-[#63716E] mt-1 uppercase font-bold">
-                              {e.id}
-                            </span>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-bold text-[#203430] group-hover:text-[#35BFA3] transition-colors leading-tight">
+                              {r.name}
+                            </p>
+                            <p className="text-[10px] text-[#63716E] leading-tight">
+                              {r.id}
+                            </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col">
-                          <span className="text-[11px] font-bold text-[#203430] leading-none">
-                            {e.role}
-                          </span>
-                          <span className="text-[10px] text-[#63716E] mt-1 font-bold">
-                            {e.subRole}
-                          </span>
+
+                      {/* Job Title & Dept */}
+                      <td className="px-3 py-2.5">
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-medium text-[#203430] leading-tight">
+                            {r.role}
+                          </p>
+                          <p className="text-[10px] text-[#63716E] leading-tight">
+                            {r.subRole || r.dept}
+                          </p>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-[#203430]">
-                        {e.date}
+
+                      {/* Date */}
+                      <td className="px-3 py-2.5 text-[11px] text-[#203430]">
+                        {r.date}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+
+                      {/* Work Model with colored dot */}
+                      <td className="px-3 py-2.5">
                         <div className="flex items-center gap-1.5">
                           <div
                             className={cn(
-                              "h-1.5 w-1.5 rounded-full",
-                              e.model === "Hybrid"
-                                ? "bg-[#E4F2D3]"
-                                : e.model === "Remote"
-                                  ? "bg-brand"
-                                  : "bg-brand",
+                              "h-1.5 w-1.5 rounded-full shrink-0",
+                              r.model === "Hybrid"
+                                ? "bg-[#35BFA3]"
+                                : r.model === "Remote"
+                                ? "bg-[#0E4D41]"
+                                : "bg-[#35BFA3]"
                             )}
                           />
-                          <span className="text-[11px] font-bold text-[#203430]">
-                            {e.model}
+                          <span className="text-[11px] text-[#203430]">
+                            {r.model}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-[#203430]">
-                        {e.in} {e.out ? `— ${e.out}` : ""}
+
+                      {/* Check In - Out */}
+                      <td className="px-3 py-2.5 text-[11px] text-[#203430]">
+                        {r.in && r.out ? `${r.in} – ${r.out}` : r.in || "– – –"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-[#203430]">
-                        {e.duration}
+
+                      {/* Duration */}
+                      <td className="px-3 py-2.5 text-[11px] text-[#203430]">
+                        {r.duration || "–"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-[#203430]">
-                        {e.overtime}
+
+                      {/* Overtime */}
+                      <td className="px-3 py-2.5 text-[11px] text-[#203430]">
+                        {r.overtime || "–"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div
+
+                      {/* Status Badges strictly matching Screenshot 1 */}
+                      <td className="px-3 py-2.5">
+                        <span
                           className={cn(
-                            "px-2 py-1 rounded-full text-[11px] font-bold text-center w-fit min-w-[50px]",
-                            e.status === "On-Time"
-                              ? "bg-brand text-white"
-                              : e.status === "Late"
-                                ? "bg-[#E4F2D3] text-[#203430]"
-                                : e.status === "On Leave"
-                                  ? "bg-[#E5E6E6] text-[#203430]"
-                                  : "bg-[#0E4D41] text-white",
+                            "inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[11px] font-medium leading-none",
+                            r.status === "On-Time" && "bg-[#35BFA3] text-white",
+                            r.status === "Late" && "bg-[#E4F2D3] text-[#203430]",
+                            r.status === "On Leave" && "bg-[#E5E6E6] text-[#203430]",
+                            r.status === "Absent" && "bg-[#0E4D41] text-white"
                           )}
                         >
-                          <div className="flex items-center gap-1.5 justify-center">
-                            <span>{e.status}</span>
-                            {e.forwardedStatus === "Pending" && (
-                              <span
-                                className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse shrink-0"
-                                title={`Pending manager approval: ${e.forwardedTo}`}
-                              />
-                            )}
-                            {e.forwardedStatus === "Approved" && (
-                              <span
-                                className="h-1.5 w-1.5 rounded bg-emerald-400 shrink-0"
-                                title={`Approved by manager: ${e.forwardedTo}`}
-                              />
-                            )}
-                          </div>
-                        </div>
+                          {r.status}
+                        </span>
                       </td>
                     </tr>
                   ))
@@ -949,466 +1018,328 @@ export default function AttendancePage() {
             </table>
           </div>
 
-          <div className="p-6 border-t border-[#E5E6E6] flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <span className="text-[14px] text-[#63716E]">Show</span>
-              <button className="flex items-center gap-2 bg-[#F7F7F7] h-[28px] px-3 rounded-[8px] text-[12px] font-bold text-[#203430] cursor-not-allowed" disabled>
-                10 <ChevronDown className="h-3 w-3" />
-              </button>
-              <span className="text-[14px] text-[#63716E]">of {sortedRecords.length} results</span>
+          {/* Table Footer: Show Results & Pagination */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 mt-2 border-t border-[#E5E6E6] text-xs">
+            {/* Left: Show 10 of results */}
+            <div className="flex items-center gap-2 text-[#757575] text-[14px]" data-dropdown-container>
+              <span>Show</span>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsPageSizeOpen(!isPageSizeOpen)}
+                  className="h-7 px-2.5 bg-[#F7F7F7] text-[#203430] font-medium text-[12px] rounded-[8px] flex items-center gap-1.5 hover:bg-[#EFEFEF] transition-colors cursor-pointer"
+                >
+                  <span>{pageSize}</span>
+                  <ChevronDown className="h-3 w-3 text-[#203430]" />
+                </button>
+
+                {isPageSizeOpen && (
+                  <div className="absolute left-0 bottom-full mb-1 w-20 bg-white rounded-xl shadow-xl border border-slate-100 p-1 z-50 animate-in fade-in">
+                    {[10, 20, 50].map((sz) => (
+                      <button
+                        key={sz}
+                        type="button"
+                        onClick={() => {
+                          setPageSize(sz);
+                          setCurrentPage(1);
+                          setIsPageSizeOpen(false);
+                        }}
+                        className={cn(
+                          "w-full text-center px-2 py-1 rounded-lg text-xs font-medium cursor-pointer",
+                          pageSize === sz
+                            ? "bg-[#E4F2D3] text-[#0E4D41] font-bold"
+                            : "text-[#203430] hover:bg-slate-50"
+                        )}
+                      >
+                        {sz}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <span>of {sortedRecords.length} results</span>
             </div>
+
+            {/* Right: Pagination buttons matching Figma CSS */}
             <div className="flex items-center gap-2">
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-[#F5F5F5] text-[#203430] disabled:opacity-50" disabled>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="h-7 w-7 rounded-[8px] bg-[#F5F5F5] hover:bg-[#EAEAEA] text-[#203430] flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                title="Previous page"
+              >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-brand text-white text-[12px] font-bold">
-                1
-              </button>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-[#F7F7F7] text-[#203430] text-[12px] font-bold cursor-not-allowed" disabled>
-                2
-              </button>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-[#F7F7F7] text-[#203430] text-[12px] font-bold cursor-not-allowed" disabled>
-                3
-              </button>
-              <button className="h-7 w-7 flex items-center justify-center rounded-[8px] bg-[#F7F7F7] text-[#203430] cursor-not-allowed" disabled>
+
+              {/* Dynamic Page Buttons */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                <button
+                  key={pg}
+                  type="button"
+                  onClick={() => setCurrentPage(pg)}
+                  className={cn(
+                    "h-7 w-7 rounded-[8px] text-[12px] font-medium flex items-center justify-center transition-colors cursor-pointer",
+                    currentPage === pg
+                      ? "bg-[#35BFA3] text-white font-bold shadow-2xs"
+                      : "bg-[#F7F7F7] text-[#203430] hover:bg-[#EAEAEA]"
+                  )}
+                >
+                  {pg}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                className="h-7 w-7 rounded-[8px] bg-[#F7F7F7] hover:bg-[#EAEAEA] text-[#203430] flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                title="Next page"
+              >
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           </div>
-        </Card>
+        </div>
+
+        {/* =========================================================================
+            BOTTOM PAGE FOOTER (Matching Figma Specs)
+            ========================================================================= */}
+        <div className="pt-6 border-t border-[#EBECEB] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#63716E]">
+          <div className="flex items-center gap-4">
+            <span className="font-bold text-[#203430]">
+              Copyright © 2025 Peterdraw
+            </span>
+            <span
+              onClick={() => setToastMessage("Privacy Policy opened.")}
+              className="hover:text-[#203430] cursor-pointer"
+            >
+              Privacy Policy
+            </span>
+            <span
+              onClick={() => setToastMessage("Terms & Conditions opened.")}
+              className="hover:text-[#203430] cursor-pointer"
+            >
+              Term and conditions
+            </span>
+            <span
+              onClick={() => setToastMessage("Contact support: support@teamhub.io")}
+              className="hover:text-[#203430] cursor-pointer"
+            >
+              Contact
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3 text-[#63716E]">
+            <span
+              onClick={() => setToastMessage("Facebook link copied.")}
+              className="h-6 w-6 rounded-full hover:text-[#203430] flex items-center justify-center cursor-pointer font-bold"
+            >
+              f
+            </span>
+            <span
+              onClick={() => setToastMessage("X handle copied.")}
+              className="hover:text-[#203430] cursor-pointer"
+            >
+              <XLogo className="h-3 w-3" />
+            </span>
+            <span
+              onClick={() => setToastMessage("Instagram link copied.")}
+              className="hover:text-[#203430] cursor-pointer"
+            >
+              <Instagram className="h-3.5 w-3.5" />
+            </span>
+            <span
+              onClick={() => setToastMessage("YouTube channel copied.")}
+              className="hover:text-[#203430] cursor-pointer font-bold text-[10px]"
+            >
+              yt
+            </span>
+            <span
+              onClick={() => setToastMessage("LinkedIn page copied.")}
+              className="hover:text-[#203430] cursor-pointer"
+            >
+              <Linkedin className="h-3.5 w-3.5" />
+            </span>
+          </div>
+        </div>
+
+        {/* =========================================================================
+            ATTENDANCE RECORD & VERIFICATION MODAL (2-STAGE APPROVAL & PUNCH COMPARE)
+            ========================================================================= */}
+        <AttendanceCorrectionModal
+          isOpen={isDetailModalOpen}
+          onClose={() => setIsDetailModalOpen(false)}
+          record={selectedRequest}
+          onApproveBySupervisor={(recordId, remark) => {
+            const timestamp =
+              new Date().toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              }) +
+              ", " +
+              new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+            const updated = records.map((r) =>
+              r.id === recordId
+                ? {
+                    ...r,
+                    forwardedStatus: "Approved",
+                    supervisorRemark: remark,
+                    supervisorReviewedAt: timestamp,
+                  }
+                : r
+            );
+            setRecords(updated);
+            setSelectedRequest((prev) =>
+              prev && prev.id === recordId
+                ? {
+                    ...prev,
+                    forwardedStatus: "Approved",
+                    supervisorRemark: remark,
+                    supervisorReviewedAt: timestamp,
+                  }
+                : prev
+            );
+            setToastMessage("Supervisor approval recorded with remarks.");
+          }}
+          onRejectBySupervisor={(recordId, remark) => {
+            const timestamp =
+              new Date().toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              }) +
+              ", " +
+              new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+            const updated = records.map((r) =>
+              r.id === recordId
+                ? {
+                    ...r,
+                    forwardedStatus: "Rejected",
+                    supervisorRemark: remark,
+                    supervisorReviewedAt: timestamp,
+                  }
+                : r
+            );
+            setRecords(updated);
+            setSelectedRequest((prev) =>
+              prev && prev.id === recordId
+                ? {
+                    ...prev,
+                    forwardedStatus: "Rejected",
+                    supervisorRemark: remark,
+                    supervisorReviewedAt: timestamp,
+                  }
+                : prev
+            );
+            setToastMessage("Supervisor rejection recorded with remarks.");
+          }}
+          onFinalApproveByAdmin={(recordId, adminRemark) => {
+            const timestamp =
+              new Date().toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              }) +
+              ", " +
+              new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+            const updated = records.map((r) =>
+              r.id === recordId
+                ? {
+                    ...r,
+                    hrApprovalStatus: "Approved",
+                    status: "On-Time",
+                    in: r.requestedIn || (r.status === "Late" ? "09:00 AM" : r.in),
+                    out: r.requestedOut || r.out,
+                    adminRemark: adminRemark || r.adminRemark,
+                    hrReviewedAt: timestamp,
+                  }
+                : r
+            );
+            setRecords(updated);
+            setSelectedRequest((prev) =>
+              prev && prev.id === recordId
+                ? {
+                    ...prev,
+                    hrApprovalStatus: "Approved",
+                    status: "On-Time",
+                    in: prev.requestedIn || (prev.status === "Late" ? "09:00 AM" : prev.in),
+                    out: prev.requestedOut || prev.out,
+                    adminRemark: adminRemark || prev.adminRemark,
+                    hrReviewedAt: timestamp,
+                  }
+                : prev
+            );
+            setToastMessage("Final HR/Admin approval granted! Timesheet reconciled.");
+          }}
+          onFinalRejectByAdmin={(recordId, adminRemark) => {
+            const timestamp =
+              new Date().toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              }) +
+              ", " +
+              new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+            const updated = records.map((r) =>
+              r.id === recordId
+                ? {
+                    ...r,
+                    hrApprovalStatus: "Rejected",
+                    adminRemark: adminRemark || r.adminRemark,
+                    hrReviewedAt: timestamp,
+                  }
+                : r
+            );
+            setRecords(updated);
+            setSelectedRequest((prev) =>
+              prev && prev.id === recordId
+                ? {
+                    ...prev,
+                    hrApprovalStatus: "Rejected",
+                    adminRemark: adminRemark || prev.adminRemark,
+                    hrReviewedAt: timestamp,
+                  }
+                : prev
+            );
+            setToastMessage("Attendance correction final rejected by HR/Admin.");
+          }}
+          onUpdateRecord={(updatedRecord) => {
+            const updated = records.map((r) =>
+              r.id === updatedRecord.id ? updatedRecord : r
+            );
+            setRecords(updated);
+            setSelectedRequest(updatedRecord);
+            setToastMessage("Attendance verification state updated.");
+          }}
+        />
+
+        {/* =========================================================================
+            MARK ATTENDANCE MODAL (ADMIN DIRECT PUNCH ENTRY)
+            ========================================================================= */}
+        <MarkAttendanceModal
+          isOpen={isApplyModalOpen}
+          onClose={() => setIsApplyModalOpen(false)}
+          onMarkAttendance={(newRecord) => {
+            // Prepend new attendance record to state & collection
+            setRecords([newRecord, ...records]);
+            setToastMessage(`Attendance marked for ${newRecord.name}!`);
+          }}
+        />
       </div>
-
-      <footer className="mt-20 py-8 border-t border-[#E5E6E6] flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
-        <div className="flex flex-col sm:flex-row items-center gap-6 lg:gap-16">
-          <p className="text-[12px] font-bold text-[#203430]">
-            Copyright © 2025 Peterdraw
-          </p>
-          <div className="flex gap-6">
-            {["Privacy Policy", "Term and conditions", "Contact"].map((l) => (
-              <a
-                key={l}
-                href="#"
-                className="text-[12px] text-[#63716E] hover:text-brand transition-colors"
-              >
-                {l}
-              </a>
-            ))}
-          </div>
-        </div>
-        <div className="flex gap-4">
-          {[Facebook, Twitter, Instagram, Youtube, Linkedin].map((Icon, i) => (
-            <Icon
-              key={i}
-              className="h-4 w-4 text-[#63716E] cursor-pointer hover:text-brand"
-            />
-          ))}
-        </div>
-      </footer>
-
-      {/* Attendance correction & detail approval modal */}
-      {isDetailModalOpen && selectedRequest && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm"
-          id="attendanceDetailModal"
-        >
-          <div className="bg-white w-full max-w-[500px] rounded-2xl shadow-xl border border-slate-100 flex flex-col max-h-[90vh] overflow-hidden">
-            {/* Modal Header */}
-            <div className="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-semibold text-slate-900">
-                  Attendance Timesheet Correction
-                </h3>
-                <p className="text-xs text-slate-500 font-medium">
-                  Verify employee logs and approve timesheet correction request
-                </p>
-              </div>
-              <button
-                onClick={handleCloseModal}
-                className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                title="Close modal"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-5">
-              {/* Employee Quick Info Badge */}
-              <div className="flex items-center gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-200/60">
-                <img
-                  src={selectedRequest.avatar}
-                  alt={selectedRequest.name}
-                  className="h-12 w-12 rounded-lg object-cover border border-slate-200/80 shrink-0"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-semibold text-slate-900 truncate">
-                      {selectedRequest.name}
-                    </h4>
-                    <span className="text-[10px] font-mono tracking-wider text-slate-500 bg-slate-200/60 px-1.5 py-0.5 rounded font-bold uppercase">
-                      {selectedRequest.id}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    {selectedRequest.role} — {selectedRequest.subRole}
-                  </p>
-                </div>
-              </div>
-
-              {/* Attendance Info Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50/20 p-3 rounded-xl border border-slate-100">
-                  <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider mb-1">
-                    Target Work Date
-                  </span>
-                  <span className="text-xs font-semibold text-slate-800">
-                    {selectedRequest.date || "Today"}
-                  </span>
-                </div>
-                <div className="bg-slate-50/20 p-3 rounded-xl border border-slate-100">
-                  <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider mb-1">
-                    Working Model
-                  </span>
-                  <span className="text-xs font-semibold text-slate-800 capitalize">
-                    {selectedRequest.model || "Hybrid"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Editable Times Section */}
-              <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 space-y-3.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-800 uppercase tracking-wider">
-                    Adjustment Parameters
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-medium font-mono">
-                    Input corrected times
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-slate-500 block">
-                      Check-In
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full bg-white border border-slate-250 focus:border-slate-350 focus:ring-1 focus:ring-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none transition-all"
-                      placeholder="e.g. 08:30"
-                      value={editIn}
-                      onChange={(e) => setEditIn(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-slate-500 block">
-                      Check-Out
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full bg-white border border-slate-250 focus:border-slate-350 focus:ring-1 focus:ring-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none transition-all"
-                      placeholder="e.g. 17:30"
-                      value={editOut}
-                      onChange={(e) => setEditOut(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Delegate / Forward Manager Select Option */}
-              <div className="space-y-3 bg-slate-50/50 p-4 rounded-xl border border-slate-200/40">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                    Forward for Preliminary Review
-                  </span>
-                  {selectedRequest.forwardedTo && (
-                    <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100/50">
-                      Currently:{" "}
-                      {selectedRequest.forwardedStatus === "Approved"
-                        ? "Approved"
-                        : "Pending"}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex gap-2.5">
-                  <select
-                    className="flex-1 bg-white border border-slate-200 focus:border-slate-350 rounded-xl py-1.5 px-3 text-xs font-semibold text-slate-800 outline-none cursor-pointer"
-                    value={forwardTo}
-                    onChange={(e) => setForwardTo(e.target.value)}
-                  >
-                    <option value="">Choose manager or supervisor...</option>
-                    {managersList.map((m) => (
-                      <option key={m.name} value={m.name}>
-                        {m.name} ({m.role})
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => handleForwardRequest(forwardTo)}
-                    disabled={!forwardTo}
-                    className="bg-brand text-white text-xs font-semibold px-4 py-1.5 rounded-xl hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap transition-all"
-                  >
-                    Forward
-                  </button>
-                </div>
-
-                {selectedRequest.forwardedTo ? (
-                  <div className="text-xs text-slate-600 flex items-center justify-between bg-white border border-slate-150 p-2.5 rounded-xl">
-                    <span>
-                      Forwarded to{" "}
-                      <strong>{selectedRequest.forwardedTo}</strong> (
-                      {selectedRequest.forwardedStatus || "Pending"})
-                    </span>
-                    {selectedRequest.forwardedStatus === "Pending" && (
-                      <button
-                        onClick={handleSimulateManagerApproval}
-                        className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-1 rounded border border-emerald-100 font-extrabold hover:bg-emerald-100 transition-all cursor-pointer"
-                        title="Simulate manager approval action"
-                      >
-                        Simulate Approval
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-[10px] text-slate-400">
-                    Optionally delegate this request to the respective head of
-                    department for review before final human resources action.
-                  </p>
-                )}
-              </div>
-
-              {/* Comment field block */}
-              <div className="space-y-1.5">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Decision Remarks / Notes
-                </span>
-                <textarea
-                  className="w-full bg-white border border-slate-200 focus:border-slate-350 focus:ring-1 focus:ring-slate-300 rounded-xl p-3 text-xs font-medium outline-none min-h-[60px] resize-none transition-all"
-                  placeholder="e.g. Approved check-in correction as confirmed by department logs..."
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                />
-                {selectedRequest.comment && (
-                  <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-lg flex items-start gap-2">
-                    <MessageSquare className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
-                    <p className="text-xs text-slate-650 leading-relaxed">
-                      <strong className="font-semibold">Original Note:</strong>{" "}
-                      "{selectedRequest.comment}"
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Bottom Actions Footer */}
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0">
-              <button
-                onClick={handleSaveDrafts}
-                className="bg-white border border-slate-200 hover:bg-slate-150 text-slate-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer transition-colors"
-                title="Saves adjusted check in - out draft times"
-              >
-                Save Draft
-              </button>
-
-              <div className="flex gap-2.5">
-                <button
-                  onClick={() => handleUpdateStatus("Rejected")}
-                  className="bg-white border border-rose-250 text-rose-600 text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-rose-50 cursor-pointer transition-colors"
-                  title="Reject this attendance log request"
-                >
-                  Reject Correction
-                </button>
-                <button
-                  onClick={() => handleUpdateStatus("Approved")}
-                  className="bg-brand text-white text-xs font-semibold px-4 py-2.5 rounded-xl hover:opacity-95 flex items-center gap-1 shadow-sm cursor-pointer transition-all"
-                  title="Approve times and apply changes to log"
-                >
-                  Approve Correction
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isApplyModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm"
-          id="applyAttendanceModal"
-        >
-          <div className="bg-white w-full max-w-[500px] rounded-2xl shadow-xl border border-slate-100 flex flex-col max-h-[90vh] overflow-hidden">
-            {/* Modal Header */}
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-[#FDFDFD] shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-full bg-[#E4F2D3] flex items-center justify-center">
-                  <Clock className="h-4 w-4 text-brand" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-800 leading-none">
-                    Apply Attendance
-                  </h3>
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    Log manual attendance or check-in backfill
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsApplyModalOpen(false)}
-                className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer text-slate-400 hover:text-slate-600"
-                title="Close modal"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Modal Body / Form */}
-            <form onSubmit={handleApplyAttendanceSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
-              {/* Employee Selection */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-semibold text-slate-500 block uppercase tracking-wider">
-                  Employee
-                </label>
-                <select
-                  required
-                  className="w-full bg-slate-50 border border-slate-200 focus:border-slate-350 rounded-xl py-2 px-3 text-xs font-semibold text-slate-800 outline-none cursor-pointer"
-                  value={applyID}
-                  onChange={(e) => {
-                    const empId = e.target.value;
-                    setApplyID(empId);
-                    const matched = employeesList.find((emp) => emp.id === empId);
-                    if (matched) {
-                      setApplyName(matched.name);
-                      setApplyRole(matched.role || "");
-                      setApplySubRole(matched.subRole || "");
-                    }
-                  }}
-                >
-                  <option value="">Select Employee...</option>
-                  {employeesList.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.id}) — {emp.role || "Staff"}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Readonly/derived ID & Role */}
-              {applyID && (
-                <div className="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200/40 text-xs text-slate-600">
-                  <div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase block">Role</span>
-                    <span className="font-semibold text-slate-700">{applyRole} {applySubRole && `— ${applySubRole}`}</span>
-                  </div>
-                  <div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase block">Employee ID</span>
-                    <span className="font-semibold font-mono text-slate-700">{applyID}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Date Input */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-semibold text-slate-500 block uppercase tracking-wider">
-                  Work Date
-                </label>
-                <input
-                  type="text"
-                  required
-                  className="w-full bg-slate-50 border border-slate-200 focus:border-slate-350 focus:ring-1 focus:ring-brand rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none transition-all"
-                  placeholder="e.g. 20 Jun 2035"
-                  value={applyDate}
-                  onChange={(e) => setApplyDate(e.target.value)}
-                />
-              </div>
-
-              {/* Work Model Selection */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-semibold text-slate-500 block uppercase tracking-wider">
-                  Work Model
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {["Hybrid", "Remote", "On-Site"].map((model) => (
-                    <button
-                      type="button"
-                      key={model}
-                      onClick={() => setApplyModel(model)}
-                      className={cn(
-                        "py-2 px-3 text-xs font-semibold rounded-xl border transition-all cursor-pointer",
-                        applyModel === model
-                          ? "bg-brand text-white border-brand shadow-sm"
-                          : "bg-slate-50 text-slate-700 border-slate-250 hover:bg-slate-100"
-                      )}
-                    >
-                      {model}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Times */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-semibold text-slate-500 block uppercase tracking-wider">
-                    Check-In Time
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full bg-slate-50 border border-slate-200 focus:border-slate-350 focus:ring-1 focus:ring-brand rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none transition-all"
-                    placeholder="e.g. 09:00 AM"
-                    value={applyIn}
-                    onChange={(e) => setApplyIn(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-semibold text-slate-500 block uppercase tracking-wider">
-                    Check-Out Time
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full bg-slate-50 border border-slate-200 focus:border-slate-350 focus:ring-1 focus:ring-brand rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none transition-all"
-                    placeholder="e.g. 06:00 PM"
-                    value={applyOut}
-                    onChange={(e) => setApplyOut(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Description / Comment */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-semibold text-slate-500 block uppercase tracking-wider">
-                  Reason / Remarks
-                </label>
-                <textarea
-                  className="w-full bg-slate-50 border border-slate-200 focus:border-slate-350 focus:ring-1 focus:ring-brand rounded-xl p-3 text-xs font-medium outline-none min-h-[80px] resize-none transition-all"
-                  placeholder="Reason for backfill or manual entry..."
-                  value={applyComment}
-                  onChange={(e) => setApplyComment(e.target.value)}
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setIsApplyModalOpen(false)}
-                  className="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-[#0E4D41] text-white text-xs font-semibold px-5 py-2.5 rounded-xl hover:bg-[#0E4D41]/90 shadow-sm cursor-pointer transition-all flex items-center gap-1.5"
-                >
-                  <Check className="h-4 w-4" /> Save Record
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </AppLayout>
   );
 }

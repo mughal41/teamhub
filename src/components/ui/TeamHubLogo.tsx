@@ -1,0 +1,98 @@
+import * as React from "react";
+import { Link } from "react-router-dom";
+
+export interface TeamHubIconProps extends React.SVGProps<SVGSVGElement> {
+  size?: number | string;
+  color?: string;
+  className?: string;
+}
+
+/**
+ * Official TeamHub HRMS Symbol
+ * Exact SVG geometry per approved design specification
+ */
+export function TeamHubIcon({
+  size = 60,
+  color = "#35BFA3",
+  className = "",
+  style,
+  ...props
+}: TeamHubIconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 60 60"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      style={style}
+      aria-hidden="true"
+      {...props}
+    >
+      <path
+        d="M27.178 21.5154C24.0538 24.6396 18.9885 24.6396 15.8643 21.5154L7.3747 13.0258L11.6173 8.78319L21.5211 18.687L39.9059 0.302222L44.1486 4.54486L27.178 21.5154Z"
+        fill={color}
+      />
+      <path
+        d="M21.5246 32.8005C24.6519 35.9219 24.6565 40.9876 21.5348 44.1147L13.0341 52.6298L8.78747 48.3912L18.702 38.4605L0.299837 20.0932L4.53845 15.8466L21.5246 32.8005Z"
+        fill={color}
+      />
+      <path
+        d="M32.8347 38.4858C35.9589 35.3616 41.0242 35.3616 44.1484 38.4858L52.6295 46.967L48.3869 51.2096L38.4915 41.3142L20.1068 59.699L15.8641 55.4564L32.8347 38.4858Z"
+        fill={color}
+      />
+      <path
+        d="M38.4917 27.1723C35.3675 24.0481 35.3675 18.9828 38.4917 15.8586L46.9753 7.37502L51.2179 11.6177L41.3201 21.5154L59.7049 39.9002L55.4623 44.1428L38.4917 27.1723Z"
+        fill={color}
+      />
+    </svg>
+  );
+}
+
+export interface TeamHubLogoProps {
+  size?: number | string;
+  iconColor?: string;
+  textColor?: string;
+  className?: string;
+  href?: string;
+  textClassName?: string;
+}
+
+/**
+ * Official TeamHub HRMS Complete Brandmark (Icon + Typography)
+ */
+export function TeamHubLogo({
+  size = 32,
+  iconColor = "#35BFA3",
+  textColor = "#0E4D41",
+  className = "",
+  textClassName = "",
+  href = "/",
+}: TeamHubLogoProps) {
+  const content = (
+    <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
+      <TeamHubIcon size={size} color={iconColor} className="shrink-0 transition-transform group-hover:scale-105" />
+      <span
+        className={`font-['DM_Sans',sans-serif] font-bold text-xl tracking-tight ${textClassName}`}
+        style={{ color: textColor }}
+      >
+        TeamHub
+      </span>
+    </div>
+  );
+
+  if (href) {
+    return (
+      <Link
+        to={href}
+        className="group inline-flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#35BFA3] rounded-lg"
+        aria-label="TeamHub Home"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
+}

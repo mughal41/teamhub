@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
+import { TeamHubIcon } from "../ui/TeamHubLogo";
 
 export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { label: string; href?: string }[] }) {
   const [isOpenSettings, setIsOpenSettings] = useState(false);
@@ -43,9 +44,14 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-100 bg-white/80 px-8 backdrop-blur-md">
+    <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-100 bg-white/80 px-4 sm:px-8 backdrop-blur-md">
       <div className="space-y-1">
-        <h1 className="text-xl font-bold text-slate-900">{title}</h1>
+        <div className="flex items-center gap-2.5">
+          <Link to="/" className="lg:hidden flex items-center shrink-0 hover:opacity-85 transition-opacity" aria-label="TeamHub Home">
+            <TeamHubIcon size={26} color="#35BFA3" />
+          </Link>
+          <h1 className="text-xl font-bold text-slate-900">{title}</h1>
+        </div>
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
           {breadcrumbs.map((crumb, i) => (
             <div key={crumb.label} className="flex items-center gap-2">
@@ -91,9 +97,9 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
 
             {isOpenSettings && (
               <>
-                {/* Overlay to dim backdrop and intercept clicks */}
+                {/* Transparent overlay to intercept clicks without dimming header */}
                 <div 
-                  className="fixed inset-0 z-40 bg-slate-900/10 backdrop-blur-[1px] cursor-default" 
+                  className="fixed inset-0 z-40 cursor-default bg-transparent" 
                   onClick={() => setIsOpenSettings(false)}
                 />
                 
@@ -233,9 +239,9 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
 
             {isOpenNotifications && (
               <>
-                {/* Overlay backdrop layer to click and dismiss */}
+                {/* Transparent backdrop overlay */}
                 <div 
-                  className="fixed inset-0 z-40 bg-slate-900/10 backdrop-blur-[1px] cursor-default" 
+                  className="fixed inset-0 z-40 cursor-default bg-transparent" 
                   onClick={() => setIsOpenNotifications(false)}
                 />
 
@@ -382,9 +388,9 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
 
           {isOpenProfile && (
             <>
-              {/* Overlay for profile dropdown */}
+              {/* Transparent overlay for profile dropdown */}
               <div 
-                className="fixed inset-0 z-40 bg-slate-900/10 backdrop-blur-[1px] cursor-default" 
+                className="fixed inset-0 z-40 cursor-default bg-transparent" 
                 onClick={() => setIsOpenProfile(false)}
               />
 

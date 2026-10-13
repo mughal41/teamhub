@@ -13,6 +13,8 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import * as React from "react";
 
+import { TeamHubIcon } from "../ui/TeamHubLogo";
+
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", id: "dashboard", path: "/" },
   { icon: Mail, label: "Inbox", id: "inbox", path: "/inbox" },
@@ -32,23 +34,10 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 hidden h-screen w-64 flex-col border-r border-slate-100 bg-white lg:flex justify-between">
       <div>
         <div className="flex h-20 items-center px-8">
-          <div className="flex items-center gap-2">
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="text-[#28C2A9] shrink-0"
-            >
-              {/* 4 leaves/petals meeting in center */}
-              <path d="M12 12C12 7 8 3 4 4C3 8 7 12 12 12Z" fill="currentColor" />
-              <path d="M12 12C17 12 21 8 20 4C16 3 12 7 12 12Z" fill="currentColor" />
-              <path d="M12 12C12 17 16 21 20 20C21 16 17 12 12 12Z" fill="currentColor" />
-              <path d="M12 12C7 12 3 16 4 20C8 21 12 17 12 12Z" fill="currentColor" />
-            </svg>
-            <span className="text-xl font-bold tracking-tight text-[#0E4D41]">TeamHub</span>
-          </div>
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <TeamHubIcon size={30} color="#35BFA3" className="shrink-0 transition-transform group-hover:scale-105" />
+            <span className="text-xl font-bold tracking-tight text-[#0E4D41] font-['DM_Sans',sans-serif]">TeamHub</span>
+          </Link>
         </div>
 
         <div className="space-y-1 px-4 py-2">
