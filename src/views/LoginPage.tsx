@@ -2,13 +2,17 @@ import * as React from "react";
 import { AuthLayout } from "../components/layout/AuthLayout";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, AlertCircle, X, Loader2, CheckCircle2 } from "lucide-react";
+import { useAuth, DEMO_USERS } from "../context/AuthContext";
+import type { RoleId } from "../lib/rbac";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login, loginAsRole } = useAuth();
 
   // Form input states (clean authentic initial values per policy — zero hardcoded credentials)
   const [email, setEmail] = React.useState<string>("");
   const [password, setPassword] = React.useState<string>("");
+  const [selectedRole, setSelectedRole] = React.useState<RoleId>("hr_manager");
   const [showPassword, setShowPassword] = React.useState<boolean>(false);
   const [rememberMe, setRememberMe] = React.useState<boolean>(false);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
@@ -19,6 +23,12 @@ export default function LoginPage() {
   const [forgotEmail, setForgotEmail] = React.useState<string>("");
   const [forgotSent, setForgotSent] = React.useState<boolean>(false);
   const [forgotLoading, setForgotLoading] = React.useState<boolean>(false);
+
+  // Prefill demo email when role chip changes
+  React.useEffect(() => {
+    const demo = DEMO_USERS.find((u) => u.roleId === selectedRole);
+    if (demo) setEmail(demo.email);
+  }, [selectedRole]);
 
   // Handle Login submission
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,22 +46,30 @@ export default function LoginPage() {
 
     setIsLoading(true);
 
-    // Simulate authentic authentication verification
+    // Static auth: match demo email → role, else use selected role
     setTimeout(() => {
       setIsLoading(false);
-      // Persist active session in localStorage
-      localStorage.setItem(
-        "teamhub_auth_session",
-        JSON.stringify({
-          email: email.trim(),
-          role: email.includes("admin") ? "HR Administrator" : "Staff Member",
-          loggedInAt: new Date().toISOString(),
-          rememberMe,
-        })
+      const matched = DEMO_USERS.find(
+        (u) => u.email.toLowerCase() === email.trim().toLowerCase()
       );
-      // Navigate to main application dashboard
+      if (matched) {
+        login(matched, rememberMe);
+      } else {
+        loginAsRole(selectedRole, rememberMe);
+      }
       navigate("/");
     }, 600);
+  };
+
+  const quickLogin = (roleId: RoleId) => {
+    setSelectedRole(roleId);
+    setPassword("demo");
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      loginAsRole(roleId, rememberMe);
+      navigate("/");
+    }, 350);
   };
 
   return (
@@ -70,6 +88,33 @@ export default function LoginPage() {
             <div className="flex-1 font-medium">{errorMessage}</div>
           </div>
         )}
+
+        {/* Static role picker (demo RBAC) */}
+        <div className="space-y-2 text-left">
+          <label className="block text-sm font-semibold text-[#111827]">
+            Sign in as role
+          </label>
+          <p className="text-[11px] text-[#64748B]">
+            Static demo — any password works. Pick a role to test access.
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {DEMO_USERS.map((demo) => (
+              <button
+                key={demo.id}
+                type="button"
+                onClick={() => quickLogin(demo.roleId)}
+                disabled={isLoading}
+                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                  selectedRole === demo.roleId
+                    ? "bg-[#35BFA3] border-[#35BFA3] text-white"
+                    : "bg-white border-[#E2E8F0] text-[#475569] hover:border-[#35BFA3] hover:text-[#0E4D41]"
+                }`}
+              >
+                {demo.roleLabel}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Email Address */}
         <div className="space-y-1.5 text-left">

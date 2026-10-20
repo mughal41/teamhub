@@ -31,6 +31,9 @@ import {
 import { cn } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
 import { TeamHubDatePicker } from "../components/ui/DatePicker";
+import { useAuth } from "../context/AuthContext";
+import { filterByRoleScope } from "../lib/roleScope";
+import { RoleScopeBanner } from "../components/auth/RoleScopeBanner";
 
 // Days of week for Heatmap
 const heatmapDays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
@@ -106,6 +109,7 @@ const getTeamPerfData = (timeframe: string) => {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { user, canAccessNav, canView, canManage, canApprove } = useAuth();
 
   const [toastText, setToastText] = React.useState<string | null>(null);
 
@@ -152,15 +156,43 @@ export default function DashboardPage() {
     }
   };
 
-  // DB State collections
+  // DB State collections (raw) — then role-scoped below
   const [schedulesList, setSchedulesList] = React.useState<any[]>([]);
-  const [employeesList, setEmployeesList] = React.useState<any[]>([]);
-  const [attendance, setAttendance] = React.useState<any[]>([]);
-  const [leavesList, setLeavesList] = React.useState<any[]>([]);
+  const [employeesRaw, setEmployeesList] = React.useState<any[]>([]);
+  const [attendanceRaw, setAttendance] = React.useState<any[]>([]);
+  const [leavesRaw, setLeavesList] = React.useState<any[]>([]);
   const [applicantsList, setApplicantsList] = React.useState<any[]>([]);
   const [tasks, setTasks] = React.useState<any[]>([]);
   const [activities, setActivities] = React.useState<any[]>([]);
   const [satisfactionData, setSatisfactionData] = React.useState<any[]>([]);
+
+  const employeesList = React.useMemo(
+    () =>
+      user && canView("employees")
+        ? filterByRoleScope(employeesRaw, user.roleId, "employees")
+        : user
+          ? []
+          : employeesRaw,
+    [employeesRaw, user, canView]
+  );
+  const attendance = React.useMemo(
+    () =>
+      user && canView("attendance")
+        ? filterByRoleScope(attendanceRaw, user.roleId, "attendance")
+        : user
+          ? []
+          : attendanceRaw,
+    [attendanceRaw, user, canView]
+  );
+  const leavesList = React.useMemo(
+    () =>
+      user && canView("leave")
+        ? filterByRoleScope(leavesRaw, user.roleId, "leave")
+        : user
+          ? []
+          : leavesRaw,
+    [leavesRaw, user, canView]
+  );
 
   // Add event form modal inside card
   const [showAddEvent, setShowAddEvent] = React.useState(false);
@@ -341,42 +373,53 @@ export default function DashboardPage() {
         {/* Greeting Header & Global DB Admin Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <p className="text-[14px] text-[#63716E]">Hello Davis!</p>
+            <p className="text-[14px] text-[#63716E]">
+              Hello {user?.name?.split(" ")[0] ?? "there"}!
+            </p>
             <h1 className="text-[20px] font-bold text-[#203430] tracking-tight">
               Good Morning
             </h1>
+            <p className="text-[12px] text-slate-500 font-medium mt-0.5">
+              Viewing as <span className="text-[#0E4D41] font-bold">{user?.roleLabel}</span>
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleSeedData}
-              className="text-[11px] font-semibold bg-[#E4F2D3] text-[#0E4D41] hover:bg-[#d8ebc3] px-3 py-1.5 rounded-lg border-none cursor-pointer transition-colors"
-            >
-              Seed Sample Data
-            </button>
-            <button
-              onClick={handleClearData}
-              className="text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 px-3 py-1.5 rounded-lg border-none cursor-pointer transition-colors"
-            >
-              Clear DB
-            </button>
-          </div>
+          {canManage("roles") && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSeedData}
+                className="text-[11px] font-semibold bg-[#E4F2D3] text-[#0E4D41] hover:bg-[#d8ebc3] px-3 py-1.5 rounded-lg border-none cursor-pointer transition-colors"
+              >
+                Seed Sample Data
+              </button>
+              <button
+                onClick={handleClearData}
+                className="text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 px-3 py-1.5 rounded-lg border-none cursor-pointer transition-colors"
+              >
+                Clear DB
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Top Summary Row - 4 KPI Cards */}
+        <RoleScopeBanner module={canView("employees") ? "employees" : canView("attendance") ? "attendance" : "profile"} />
+
+        {/* Top Summary Row - KPI Cards filtered by role */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            {
+            canView("employees") && {
               id: "employees",
               label: "Total Employees",
               val: employeesCount.toString(),
               unit: employeesCount === 1 ? "Employee" : "Employees",
               sub: employeesCount > 0 ? "You're part of a growing team!" : "No active employees registered.",
               actions: [
-                { label: "Register New Hire", act: () => navigate("/employees/new") },
+                ...(canManage("employees")
+                  ? [{ label: "Register New Hire", act: () => navigate("/employees/new") }]
+                  : []),
                 { label: "View Personnel Directory", act: () => navigate("/employees") },
               ],
             },
-            {
+            canView("attendance") && {
               id: "attendance",
               label: "Attendance",
               val: attendance.length > 0 ? `${overallAttendanceVal}%` : "0%",
@@ -386,17 +429,28 @@ export default function DashboardPage() {
                 { label: "Launch Attendance Workspace", act: () => navigate("/attendance") },
               ],
             },
-            {
+            canView("leave") && {
               id: "leaves",
               label: "Leave Requests",
               val: pendingLeavesCount.toString(),
-              unit: pendingLeavesCount === 1 ? "Pending Review" : "Pending Requests",
-              sub: pendingLeavesCount > 0 ? `${pendingLeavesCount} request(s) awaiting approval` : "No pending leave requests.",
+              unit: canApprove("leave")
+                ? pendingLeavesCount === 1
+                  ? "Pending Review"
+                  : "Pending Requests"
+                : "Your leave status",
+              sub: canApprove("leave")
+                ? pendingLeavesCount > 0
+                  ? `${pendingLeavesCount} request(s) awaiting approval`
+                  : "No pending leave requests."
+                : "Showing your leave records only.",
               actions: [
-                { label: "Manage Leave Approvals", act: () => navigate("/leave") },
+                {
+                  label: canApprove("leave") ? "Manage Leave Approvals" : "My Leave",
+                  act: () => navigate("/leave"),
+                },
               ],
             },
-            {
+            canAccessNav("recruitment") && {
               id: "applicants",
               label: "Job Applicants",
               val: applicantsCount > 0 ? `+${applicantsCount}` : "0",
@@ -406,7 +460,9 @@ export default function DashboardPage() {
                 { label: "Launch Recruiting Pipeline", act: () => navigate("/recruitment") },
               ],
             },
-          ].map((stat) => (
+          ]
+            .filter(Boolean)
+            .map((stat: any) => (
             <Card
               key={stat.label}
               className="p-4 border-none rounded-[16px] bg-white shadow-sm flex flex-col justify-between h-[144px]"

@@ -30,6 +30,9 @@ import {
   Layers,
   Sliders,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { filterByRoleScope } from "../lib/roleScope";
+import { RoleScopeBanner } from "../components/auth/RoleScopeBanner";
 import {
   LineChart,
   Line,
@@ -86,11 +89,27 @@ function SegmentedProgressBar({
 
 export default function PayrollPage() {
   const navigate = useNavigate();
-  const [payrolls, setPayrolls] = React.useState<any[]>(() =>
+  const { canManage, isOwnOnly, user } = useAuth();
+  const canRunPayroll = canManage("payroll");
+  const payrollOwnOnly = isOwnOnly("payroll");
+  const [payrollsRaw, setPayrolls] = React.useState<any[]>(() =>
     getCollection<any[]>("db_payroll", [])
   );
-  const [employees] = React.useState<Employee[]>(() =>
+  const [employeesRaw] = React.useState<Employee[]>(() =>
     getCollection<Employee[]>("db_employees", [])
+  );
+
+  const payrolls = React.useMemo(
+    () =>
+      user ? filterByRoleScope(payrollsRaw, user.roleId, "payroll") : payrollsRaw,
+    [payrollsRaw, user]
+  );
+  const employees = React.useMemo(
+    () =>
+      user
+        ? filterByRoleScope(employeesRaw, user.roleId, "payroll")
+        : employeesRaw,
+    [employeesRaw, user]
   );
   const [payStructures, setPayStructures] = React.useState<PayStructure[]>(() =>
     getCollection<PayStructure[]>("db_pay_structures", [])
@@ -472,6 +491,7 @@ export default function PayrollPage() {
       breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Payroll" }]}
     >
       <div className="space-y-5 relative">
+        <RoleScopeBanner module="payroll" />
         {/* Real-time Interactive Toast Indicator */}
         {toast && (
           <div className="fixed bottom-5 right-5 z-50 bg-[#203430] text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-[#35BFA3] animate-in fade-in slide-in-from-bottom-2">
@@ -1160,16 +1180,23 @@ export default function PayrollPage() {
                 </div>
               </div>
 
-              {/* Pay Structures Navigation Button */}
-              <button
-                type="button"
-                onClick={() => navigate("/payroll/pay-structures")}
-                className="flex items-center gap-1.5 bg-white border border-[#EBECEB] hover:bg-[#F7F7F7] hover:border-[#35BFA3] text-[#203430] h-[34px] px-3 rounded-[8px] text-[12px] font-semibold transition-all cursor-pointer shadow-2xs"
-                title="Manage reusable salary and benefit structures"
-              >
-                <Layers className="h-3.5 w-3.5 text-[#35BFA3]" />
-                <span>Pay Structures</span>
-              </button>
+              {/* Pay Structures — finance full manage only */}
+              {canRunPayroll && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/payroll/pay-structures")}
+                  className="flex items-center gap-1.5 bg-white border border-[#EBECEB] hover:bg-[#F7F7F7] hover:border-[#35BFA3] text-[#203430] h-[34px] px-3 rounded-[8px] text-[12px] font-semibold transition-all cursor-pointer shadow-2xs"
+                  title="Manage reusable salary and benefit structures"
+                >
+                  <Layers className="h-3.5 w-3.5 text-[#35BFA3]" />
+                  <span>Pay Structures</span>
+                </button>
+              )}
+              {payrollOwnOnly && (
+                <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1.5 rounded-lg">
+                  Own payslip only
+                </span>
+              )}
             </div>
           </div>
 

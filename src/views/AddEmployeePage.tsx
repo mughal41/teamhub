@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
+import { useAuth } from "../context/AuthContext";
+import { Navigate } from "react-router-dom";
 
 // List of Supported Countries for Phone Number Inputs
 const COUNTRIES = [
@@ -40,6 +42,8 @@ const COUNTRIES = [
 
 export default function AddEmployeePage() {
   const navigate = useNavigate();
+  const { canManage } = useAuth();
+  const canCreateEmployee = canManage("employees");
   const [searchParams] = useSearchParams();
   const draftId = searchParams.get("id");
   const [step, setStep] = React.useState(1);
@@ -400,6 +404,11 @@ export default function AddEmployeePage() {
       }, 1500);
     }
   };
+
+  // Only HR (full employee records) can create employees
+  if (!canCreateEmployee) {
+    return <Navigate to="/employees" replace />;
+  }
 
   return (
     <AppLayout 

@@ -33,6 +33,9 @@ import {
   AttendanceOverviewChart,
   ChartFilterSelection,
 } from "../components/attendance/AttendanceOverviewChart";
+import { useAuth } from "../context/AuthContext";
+import { filterByRoleScope } from "../lib/roleScope";
+import { RoleScopeBanner } from "../components/auth/RoleScopeBanner";
 
 // Social media icon for X
 function XLogo({ className }: { className?: string }) {
@@ -53,12 +56,24 @@ const managersList = [
 
 export default function AttendancePage() {
   const navigate = useNavigate();
+  const { canView, isOwnOnly, user } = useAuth();
+  const canMarkAttendance = canView("attendance");
+  const attendanceOwnOnly = isOwnOnly("attendance");
 
   // Load records from db_attendance, defaulting to initialAttendance from Figma design
-  const [records, setRecordsState] = React.useState<AttendanceRecord[]>(() => {
+  const [recordsRaw, setRecordsState] = React.useState<AttendanceRecord[]>(() => {
     const stored = getCollection<AttendanceRecord[]>("db_attendance", []);
     return stored.length > 0 ? stored : initialAttendance;
   });
+
+  // Role-scoped attendance rows (own / team / company)
+  const records = React.useMemo(
+    () =>
+      user
+        ? filterByRoleScope(recordsRaw, user.roleId, "attendance")
+        : recordsRaw,
+    [recordsRaw, user]
+  );
 
   const setRecords = (
     update: AttendanceRecord[] | ((prev: AttendanceRecord[]) => AttendanceRecord[])
@@ -448,6 +463,7 @@ export default function AttendancePage() {
       breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Attendance" }]}
     >
       <div className="space-y-5">
+        <RoleScopeBanner module="attendance" />
         {/* Toast Notification */}
         {toastMessage && (
           <div className="fixed bottom-6 right-6 z-50 bg-[#0E4D41] text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
@@ -817,15 +833,17 @@ export default function AttendancePage() {
               </div>
 
               {/* Mark Attendance Button (formerly Apply Attendance) */}
-              <button
-                type="button"
-                onClick={() => setIsApplyModalOpen(true)}
-                className="h-[34px] px-3.5 rounded-[8px] bg-[#35BFA3] text-white text-[12px] font-semibold hover:bg-[#28C2A9] flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-                title="Directly mark employee attendance punches"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Mark Attendance</span>
-              </button>
+              {canMarkAttendance && (
+                <button
+                  type="button"
+                  onClick={() => setIsApplyModalOpen(true)}
+                  className="h-[34px] px-3.5 rounded-[8px] bg-[#35BFA3] text-white text-[12px] font-semibold hover:bg-[#28C2A9] flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                  title={attendanceOwnOnly ? "Mark your own attendance" : "Directly mark employee attendance punches"}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>{attendanceOwnOnly ? "Punch / Mark Own" : "Mark Attendance"}</span>
+                </button>
+              )}
             </div>
           </div>
 

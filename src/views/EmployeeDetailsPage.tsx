@@ -39,7 +39,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { cn } from "@/src/lib/utils";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Navigate } from "react-router-dom";
 import {
   getCollection,
   saveCollection,
@@ -48,6 +48,8 @@ import {
   AttendanceRecord,
   LeaveActivityItem,
 } from "../lib/db";
+import { useAuth } from "../context/AuthContext";
+import { getVisibleNames, matchesVisibleName } from "../lib/roleScope";
 
 // Social media icon for X
 function XLogo({ className }: { className?: string }) {
@@ -94,6 +96,7 @@ interface PayrollConfig {
 export default function EmployeeDetailsPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { user, canView, canManage } = useAuth();
 
   // Load employee dynamically from localStorage database
   const [employeeStore, setEmployeeStore] = React.useState<Employee[]>(() => {
@@ -109,6 +112,13 @@ export default function EmployeeDetailsPage() {
       initialEmployees[0]
     );
   }, [employeeStore, id]);
+
+  // Block opening profiles outside role scope (team / company)
+  const canOpenThisProfile = React.useMemo(() => {
+    if (!user || !canView("employees")) return false;
+    const visible = getVisibleNames(user.roleId, "employees");
+    return matchesVisibleName(employee?.name, visible);
+  }, [user, employee?.name, canView]);
 
   // Toast message
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
@@ -665,6 +675,13 @@ export default function EmployeeDetailsPage() {
     return base + totalAllowances + totalBenefits;
   }, [payrollConfig.salary, totalAllowances, totalBenefits]);
 
+  const canSeeSalary = canView("payroll");
+  const canEditEmployee = canManage("employees");
+
+  if (!canOpenThisProfile) {
+    return <Navigate to="/employees" replace />;
+  }
+
   return (
     <AppLayout
       title="Employees"
@@ -848,6 +865,7 @@ export default function EmployeeDetailsPage() {
                   {/* Dropdown menu */}
                   {activeMenu === "personal" && (
                     <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-slate-100 p-1.5 z-50 animate-in fade-in zoom-in-95">
+                      {canEditEmployee && (
                       <button
                         type="button"
                         onClick={() => {
@@ -859,6 +877,7 @@ export default function EmployeeDetailsPage() {
                         <Edit className="h-3.5 w-3.5 text-slate-400" />
                         <span>Edit Personal Info</span>
                       </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => {
@@ -1628,7 +1647,8 @@ export default function EmployeeDetailsPage() {
               </div>
             </div>
 
-            {/* Payroll Summary Card (FLEX-1: fills vertical height down to footer, perfectly aligning with center and left columns) */}
+            {/* Payroll Summary — only if role can view payroll/salary */}
+            {canSeeSalary ? (
             <div className="bg-white rounded-2xl p-5 border border-[#EBECEB] shadow-2xs flex-1 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-3.5 relative" data-menu-container>
@@ -1648,17 +1668,19 @@ export default function EmployeeDetailsPage() {
                   {/* Popover menu */}
                   {activeMenu === "payroll" && (
                     <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-slate-100 p-1.5 z-50 animate-in fade-in">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setModalType("edit-payroll");
-                          setActiveMenu(null);
-                        }}
-                        className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-[#203430] hover:bg-[#F7F7F7] flex items-center gap-2 cursor-pointer"
-                      >
-                        <Edit className="h-3.5 w-3.5 text-slate-400" />
-                        <span>Adjust Base Salary</span>
-                      </button>
+                      {canManage("payroll") && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModalType("edit-payroll");
+                            setActiveMenu(null);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-[#203430] hover:bg-[#F7F7F7] flex items-center gap-2 cursor-pointer"
+                        >
+                          <Edit className="h-3.5 w-3.5 text-slate-400" />
+                          <span>Adjust Base Salary</span>
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => {
@@ -1734,6 +1756,15 @@ export default function EmployeeDetailsPage() {
                 <span className="font-semibold text-[#0E4D41]">Disbursement Ready</span>
               </div>
             </div>
+            ) : (
+            <div className="bg-white rounded-2xl p-5 border border-[#EBECEB] shadow-2xs flex-1 flex flex-col items-center justify-center text-center gap-2">
+              <ShieldCheck className="h-8 w-8 text-slate-300" />
+              <p className="text-sm font-bold text-slate-700">Salary hidden</p>
+              <p className="text-xs text-slate-500 max-w-[220px]">
+                Your role does not include payroll / salary access for this profile.
+              </p>
+            </div>
+            )}
           </div>
         </div>
 

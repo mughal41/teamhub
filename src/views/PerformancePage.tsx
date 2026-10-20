@@ -2,6 +2,9 @@ import * as React from "react";
 import { AppLayout } from "../components/layout/AppLayout";
 import { Card } from "../components/ui/LayoutAddons";
 import { getCollection, saveCollection } from "../lib/db";
+import { useAuth } from "../context/AuthContext";
+import { filterByRoleScope } from "../lib/roleScope";
+import { RoleScopeBanner } from "../components/auth/RoleScopeBanner";
 import {
   ChevronLeft,
   ChevronRight,
@@ -508,10 +511,14 @@ function AveragePerformanceGauge({
 }
 
 export default function PerformancePage() {
-  const [employees, setEmployees] = React.useState<any[]>(() => {
-    const raw = getCollection<any[]>("db_employees", []);
+  const { user } = useAuth();
+
+  const mapPerf = React.useCallback((raw: any[]) => {
     const nonDraft = raw.filter((e) => e.status !== "Draft");
-    return nonDraft.map((e) => {
+    const scoped = user
+      ? filterByRoleScope(nonDraft, user.roleId, "employees")
+      : nonDraft;
+    return scoped.map((e) => {
       const isSeeded = ["EMP-0234", "EMP-0178", "EMP-0289", "EMP-0312"].includes(e.id);
       return {
         ...e,
@@ -526,7 +533,15 @@ export default function PerformancePage() {
         lastAnnual: e.lastAnnual || (isSeeded ? "2025-12-01" : undefined)
       };
     });
+  }, [user]);
+
+  const [employees, setEmployees] = React.useState<any[]>(() => {
+    return mapPerf(getCollection<any[]>("db_employees", []));
   });
+
+  React.useEffect(() => {
+    setEmployees(mapPerf(getCollection<any[]>("db_employees", [])));
+  }, [mapPerf]);
 
   const topPerformers = React.useMemo(() => {
     return [...employees]
@@ -998,6 +1013,12 @@ export default function PerformancePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {currentView === "dashboard" && (
+        <div className="mb-5">
+          <RoleScopeBanner module="employees" />
+        </div>
+      )}
 
       {currentView === "previous-reports" && selectedEmployee ? (
         <EmployeePerformanceProfile

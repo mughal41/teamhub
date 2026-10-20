@@ -1,21 +1,27 @@
 import { cn } from "@/src/lib/utils";
-import { 
-  LayoutDashboard, 
-  Mail, 
-  Calendar, 
-  Users, 
-  UserCheck, 
-  LineChart, 
-  CircleDollarSign, 
-  CalendarX, 
-  UserPlus2
+import {
+  LayoutDashboard,
+  Mail,
+  Calendar,
+  Users,
+  UserCheck,
+  LineChart,
+  CircleDollarSign,
+  CalendarX,
+  UserPlus2,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import * as React from "react";
-
 import { TeamHubIcon } from "../ui/TeamHubLogo";
+import { useAuth } from "../../context/AuthContext";
+import type { NavModule } from "../../lib/rbac";
 
-const navItems = [
+const navItems: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  id: NavModule;
+  path: string;
+}[] = [
   { icon: LayoutDashboard, label: "Dashboard", id: "dashboard", path: "/" },
   { icon: Mail, label: "Inbox", id: "inbox", path: "/inbox" },
   { icon: Calendar, label: "Calendar", id: "calendar", path: "/calendar" },
@@ -29,33 +35,58 @@ const navItems = [
 
 export function Sidebar() {
   const location = useLocation();
+  const { canAccessNav, user } = useAuth();
+
+  const visibleItems = navItems.filter((item) => canAccessNav(item.id));
 
   return (
     <aside className="fixed left-0 top-0 hidden h-screen w-64 flex-col border-r border-slate-100 bg-white lg:flex justify-between">
       <div>
         <div className="flex h-20 items-center px-8">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <TeamHubIcon size={30} color="#35BFA3" className="shrink-0 transition-transform group-hover:scale-105" />
-            <span className="text-xl font-bold tracking-tight text-[#0E4D41] font-['DM_Sans',sans-serif]">TeamHub</span>
+            <TeamHubIcon
+              size={30}
+              color="#35BFA3"
+              className="shrink-0 transition-transform group-hover:scale-105"
+            />
+            <span className="text-xl font-bold tracking-tight text-[#0E4D41] font-['DM_Sans',sans-serif]">
+              TeamHub
+            </span>
           </Link>
         </div>
 
+        {user && (
+          <div className="mx-4 mb-3 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Active role
+            </p>
+            <p className="text-xs font-bold text-[#0E4D41] truncate">{user.roleLabel}</p>
+          </div>
+        )}
+
         <div className="space-y-1 px-4 py-2">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+          {visibleItems.map((item) => {
+            const isActive =
+              location.pathname === item.path ||
+              (item.path !== "/" && location.pathname.startsWith(item.path));
             return (
               <Link
                 key={item.id}
                 to={item.path}
                 className={cn(
                   "group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all",
-                  isActive 
-                    ? "bg-[#28C2A9] text-white shadow-sm" 
+                  isActive
+                    ? "bg-[#28C2A9] text-white shadow-sm"
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <item.icon className={cn("h-5 w-5", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-900")} />
+                  <item.icon
+                    className={cn(
+                      "h-5 w-5",
+                      isActive ? "text-white" : "text-slate-400 group-hover:text-slate-900"
+                    )}
+                  />
                   {item.label}
                 </div>
               </Link>

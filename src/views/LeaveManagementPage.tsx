@@ -48,12 +48,29 @@ import {
 import { LeaveReviewModal } from "../components/leave/LeaveReviewModal";
 import { AddLeaveModal } from "../components/leave/AddLeaveModal";
 import { CustomDateRangeModal } from "../components/leave/CustomDateRangeModal";
+import { useAuth } from "../context/AuthContext";
+import { filterByRoleScope } from "../lib/roleScope";
+import { RoleScopeBanner } from "../components/auth/RoleScopeBanner";
 
 export default function LeaveManagementPage() {
+  const { canApprove, canView, isOwnOnly, user } = useAuth();
+  const canApproveLeave = canApprove("leave");
+  const canAddLeave = canView("leave"); // apply / add for own or higher
+  const leaveOwnOnly = isOwnOnly("leave");
+
   // Database leaves collection
-  const [activities, setActivities] = React.useState<LeaveActivityItem[]>(() => {
+  const [activitiesRaw, setActivities] = React.useState<LeaveActivityItem[]>(() => {
     return getCollection<LeaveActivityItem[]>("db_leaves", []);
   });
+
+  // Role-scoped leave rows (own / team / company)
+  const activities = React.useMemo(
+    () =>
+      user
+        ? filterByRoleScope(activitiesRaw, user.roleId, "leave")
+        : activitiesRaw,
+    [activitiesRaw, user]
+  );
 
   // Sync with storage & db_updated events
   React.useEffect(() => {
@@ -404,6 +421,7 @@ export default function LeaveManagementPage() {
       ]}
     >
       <div className="space-y-5 text-left relative">
+        <RoleScopeBanner module="leave" />
         {/* Toast Alert */}
         {toast && (
           <div className="fixed bottom-5 right-5 z-50 bg-[#203430] text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-[#35BFA3] animate-in fade-in slide-in-from-bottom-2">
@@ -1109,15 +1127,17 @@ export default function LeaveManagementPage() {
                 )}
               </div>
 
-              {/* + Add Leave Action Button */}
-              <button
-                type="button"
-                onClick={() => setIsAddLeaveModalOpen(true)}
-                className="h-[34px] px-3.5 bg-[#35BFA3] hover:bg-[#2ea88f] text-white rounded-[8px] text-[12px] font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
-              >
-                <Plus className="h-3.5 w-3.5 stroke-[3]" />
-                <span>Add Leave</span>
-              </button>
+              {/* + Add Leave Action Button — own / full leave access */}
+              {canAddLeave && (
+                <button
+                  type="button"
+                  onClick={() => setIsAddLeaveModalOpen(true)}
+                  className="h-[34px] px-3.5 bg-[#35BFA3] hover:bg-[#2ea88f] text-white rounded-[8px] text-[12px] font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5 stroke-[3]" />
+                  <span>{leaveOwnOnly ? "Apply Leave" : "Add Leave"}</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -1315,7 +1335,7 @@ export default function LeaveManagementPage() {
                             </span>
                           )}
 
-                          {row.status === "Pending" && (
+                          {row.status === "Pending" && canApproveLeave && (
                             <div className="flex items-center justify-center gap-1.5">
                               {/* Approve Button */}
                               <button
@@ -1338,6 +1358,11 @@ export default function LeaveManagementPage() {
                                 <X className="h-3.5 w-3.5" />
                               </button>
                             </div>
+                          )}
+                          {row.status === "Pending" && !canApproveLeave && (
+                            <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-[11px] font-medium inline-block">
+                              Pending
+                            </span>
                           )}
                         </td>
                       </tr>

@@ -19,14 +19,28 @@ import {
 import { cn } from "@/src/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { EmployeeTopStats } from "../components/employees/EmployeeTopStats";
+import { useAuth } from "../context/AuthContext";
+import { filterByRoleScope } from "../lib/roleScope";
+import { RoleScopeBanner } from "../components/auth/RoleScopeBanner";
 
 export default function EmployeeListPage() {
   const [view, setView] = React.useState<"table" | "grid">("table");
   const navigate = useNavigate();
+  const { canManage, user } = useAuth();
+  const canCreateEmployee = canManage("employees");
 
-  const [employeeStore, setEmployeeStoreState] = React.useState<Employee[]>(() => {
+  const [employeeStoreRaw, setEmployeeStoreState] = React.useState<Employee[]>(() => {
     return getCollection<Employee[]>("db_employees", []);
   });
+
+  // Senior/Lead see self+team; HR/Finance/Admin see company; Employee has no page access
+  const employeeStore = React.useMemo(
+    () =>
+      user
+        ? filterByRoleScope(employeeStoreRaw, user.roleId, "employees")
+        : employeeStoreRaw,
+    [employeeStoreRaw, user]
+  );
 
   React.useEffect(() => {
     const handleDbUpdate = () => {
@@ -224,6 +238,7 @@ export default function EmployeeListPage() {
       breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Employees" }]}
     >
       <div className="space-y-5">
+        <RoleScopeBanner module="employees" />
         {/* =========================================================================
             TOP SECTION: FOUR KPI CARDS (2x2) & DEPARTMENTS DONUT CHART
             Exact Figma Screenshot 1 Auto-Layout Reproduction (Height: 238px)
@@ -505,7 +520,14 @@ export default function EmployeeListPage() {
             <button
               type="button"
               onClick={() => navigate("/employees/new")}
-              className="h-10 px-4 rounded-xl text-xs font-bold text-white bg-[#28C2A9] hover:bg-[#20aa94] active:bg-[#1b9380] shadow-xs flex items-center transition-colors cursor-pointer whitespace-nowrap"
+              className={cn(
+                "h-10 px-4 rounded-xl text-xs font-bold text-white shadow-xs flex items-center transition-colors whitespace-nowrap",
+                canCreateEmployee
+                  ? "bg-[#28C2A9] hover:bg-[#20aa94] active:bg-[#1b9380] cursor-pointer"
+                  : "bg-slate-300 cursor-not-allowed opacity-60 pointer-events-none"
+              )}
+              disabled={!canCreateEmployee}
+              title={canCreateEmployee ? "Add employee" : "HR manager only — full employee access required"}
             >
               New Employee
             </button>

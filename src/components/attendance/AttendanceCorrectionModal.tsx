@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { AttendanceRecord, Employee, getCollection } from "../../lib/db";
+import { useAuth } from "../../context/AuthContext";
 
 export interface AttendanceCorrectionModalProps {
   isOpen: boolean;
@@ -32,11 +33,13 @@ export function AttendanceCorrectionModal({
   onFinalRejectByAdmin,
   onUpdateRecord,
 }: AttendanceCorrectionModalProps) {
-  // Current role: defaults to admin, can be supervisor based on permissions or role
-  // Reads simulated role or context
-  const currentUserRole = React.useMemo(() => {
-    return (localStorage.getItem("hrms_user_role") as "supervisor" | "admin") || "admin";
-  }, []);
+  const { canApprove, canManage, user } = useAuth();
+  // Map static RBAC → legacy modal roles (team lead = supervisor, HR = admin)
+  const currentUserRole = React.useMemo<"supervisor" | "admin" | "employee">(() => {
+    if (canManage("attendance")) return "admin";
+    if (canApprove("attendance")) return "supervisor";
+    return "employee";
+  }, [canApprove, canManage, user?.roleId]);
 
   // System punch mode (2-punch vs 4-punch system configuration)
   const punchMode = React.useMemo<"2-punch" | "4-punch">(() => {

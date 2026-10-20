@@ -23,44 +23,207 @@ import RolesPermissionsPage from "./views/RolesPermissionsPage";
 import OrganizationProfilePage from "./views/OrganizationProfilePage";
 import BillingPage from "./views/BillingPage";
 import { initDB } from "./lib/db";
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute, GuestOnly } from "./components/auth/ProtectedRoute";
 
 export default function App() {
   React.useEffect(() => {
-    // Standard simulation database tables initialization
     initDB();
   }, []);
 
   return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              <GuestOnly>
+                <LoginPage />
+              </GuestOnly>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <GuestOnly>
+                <SignupPage />
+              </GuestOnly>
+            }
+          />
 
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        
-        <Route path="/" element={<DashboardPage />} />
-        <Route path="/inbox" element={<InboxPage />} />
-        <Route path="/calendar" element={<CalendarPage />} />
-        <Route path="/employees" element={<EmployeeListPage />} />
-        <Route path="/employees/new" element={<AddEmployeePage />} />
-        <Route path="/employees/:id" element={<EmployeeDetailsPage />} />
-        <Route path="/attendance" element={<AttendancePage />} />
-        <Route path="/performance" element={<PerformancePage />} />
-        <Route path="/payroll" element={<PayrollPage />} />
-        <Route path="/payroll/pay-structures" element={<PayStructuresPage />} />
-        <Route path="/leave" element={<LeaveManagementPage />} />
-        <Route path="/leave-management" element={<LeaveManagementPage />} />
-        <Route path="/recruitment" element={<RecruitmentPage />} />
-        <Route path="/settings/personal-info" element={<PersonalInformationPage />} />
-        <Route path="/settings/personal-documents" element={<PersonalDocumentsPage />} />
-        <Route path="/settings/security" element={<SecurityPrivacyPage />} />
-        <Route path="/settings/notifications" element={<NotificationSettingPage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
-        <Route path="/settings/roles" element={<RolesPermissionsPage />} />
-        <Route path="/settings/organization" element={<OrganizationProfilePage />} />
-        <Route path="/settings/billing" element={<BillingPage />} />
-        
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/inbox"
+            element={
+              <ProtectedRoute>
+                <InboxPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <CalendarPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employees"
+            element={
+              <ProtectedRoute>
+                <EmployeeListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employees/new"
+            element={
+              <ProtectedRoute>
+                <AddEmployeePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employees/:id"
+            element={
+              <ProtectedRoute>
+                <EmployeeDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/attendance"
+            element={
+              <ProtectedRoute>
+                <AttendancePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/performance"
+            element={
+              <ProtectedRoute>
+                <PerformancePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payroll"
+            element={
+              <ProtectedRoute>
+                <PayrollPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payroll/pay-structures"
+            element={
+              <ProtectedRoute>
+                <PayStructuresPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leave"
+            element={
+              <ProtectedRoute>
+                <LeaveManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leave-management"
+            element={
+              <ProtectedRoute>
+                <LeaveManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/recruitment"
+            element={
+              <ProtectedRoute>
+                <RecruitmentPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/personal-info"
+            element={
+              <ProtectedRoute>
+                <PersonalInformationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/personal-documents"
+            element={
+              <ProtectedRoute>
+                <PersonalDocumentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/security"
+            element={
+              <ProtectedRoute>
+                <SecurityPrivacyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationSettingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/roles"
+            element={
+              <ProtectedRoute>
+                <RolesPermissionsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/organization"
+            element={
+              <ProtectedRoute>
+                <OrganizationProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/billing"
+            element={
+              <ProtectedRoute>
+                <BillingPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

@@ -4,7 +4,6 @@ import {
   Search, 
   Bell, 
   Settings, 
-  ChevronDown, 
   Building2, 
   Shield, 
   BellRing, 
@@ -14,16 +13,19 @@ import {
   FileText, 
   RefreshCw, 
   LogOut, 
-  ChevronRight 
+  ChevronRight,
+  UsersRound
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { TeamHubIcon } from "../ui/TeamHubLogo";
+import { useAuth, DEMO_USERS } from "../../context/AuthContext";
 
 export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { label: string; href?: string }[] }) {
   const [isOpenSettings, setIsOpenSettings] = useState(false);
   const [isOpenProfile, setIsOpenProfile] = useState(false);
   const [isOpenNotifications, setIsOpenNotifications] = useState(false);
+  const [isOpenRoleSwitch, setIsOpenRoleSwitch] = useState(false);
   const [flyoutCategory, setFlyoutCategory] = useState<"all" | "payroll" | "system">("all");
 
   // Notifications expect an array of feeds stored in localStorage under 'db_notifications'
@@ -42,6 +44,9 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
   });
 
   const navigate = useNavigate();
+  const { user, logout, switchRole, canView, canManage } = useAuth();
+  const canOpenRoles = canManage("roles") || canView("roles");
+  const canOpenOrgSettings = canManage("roles");
 
   return (
     <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-100 bg-white/80 px-4 sm:px-8 backdrop-blur-md">
@@ -127,25 +132,27 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                       </div>
                     </button>
 
-                    <button 
-                      onClick={() => {
-                        setIsOpenSettings(false);
-                        navigate("/settings/personal-info");
-                      }}
-                      className="group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl hover:bg-brand/5 text-left transition-all w-full"
-                    >
-                      <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 group-hover:bg-brand/10 text-slate-500 group-hover:text-brand-dark transition-colors shrink-0">
-                        <Building2 className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-800">Organization Profile</p>
-                      </div>
-                    </button>
+                    {canOpenOrgSettings && (
+                      <button 
+                        onClick={() => {
+                          setIsOpenSettings(false);
+                          navigate("/settings/organization");
+                        }}
+                        className="group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl hover:bg-brand/5 text-left transition-all w-full"
+                      >
+                        <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 group-hover:bg-brand/10 text-slate-500 group-hover:text-brand-dark transition-colors shrink-0">
+                          <Building2 className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">Organization Profile</p>
+                        </div>
+                      </button>
+                    )}
 
                     <button 
                       onClick={() => {
                         setIsOpenSettings(false);
-                        navigate("/settings/personal-info");
+                        navigate("/settings/security");
                       }}
                       className="group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl hover:bg-brand/5 text-left transition-all w-full"
                     >
@@ -160,7 +167,7 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                     <button 
                       onClick={() => {
                         setIsOpenSettings(false);
-                        navigate("/settings/personal-info");
+                        navigate("/settings/notifications");
                       }}
                       className="group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl hover:bg-brand/5 text-left transition-all w-full"
                     >
@@ -172,47 +179,53 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                       </div>
                     </button>
 
-                    <button 
-                      onClick={() => {
-                        setIsOpenSettings(false);
-                        navigate("/settings/personal-info");
-                      }}
-                      className="group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl hover:bg-brand/5 text-left transition-all w-full"
-                    >
-                      <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 group-hover:bg-brand/10 text-slate-500 group-hover:text-brand-dark transition-colors shrink-0">
-                        <Lock className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-800">Roles & Permissions</p>
-                      </div>
-                    </button>
+                    {canOpenRoles && (
+                      <button 
+                        onClick={() => {
+                          setIsOpenSettings(false);
+                          navigate("/settings/roles");
+                        }}
+                        className="group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl hover:bg-brand/5 text-left transition-all w-full"
+                      >
+                        <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 group-hover:bg-brand/10 text-slate-500 group-hover:text-brand-dark transition-colors shrink-0">
+                          <Lock className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">Roles & Permissions</p>
+                        </div>
+                      </button>
+                    )}
 
-                    <button 
-                      onClick={() => {
-                        setIsOpenSettings(false);
-                        navigate("/settings/personal-info");
-                      }}
-                      className="group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl hover:bg-brand/5 text-left transition-all w-full"
-                    >
-                      <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 group-hover:bg-brand/10 text-slate-500 group-hover:text-brand-dark transition-colors shrink-0">
-                        <Cpu className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-800">API & Integrations</p>
-                      </div>
-                    </button>
+                    {canOpenOrgSettings && (
+                      <button 
+                        onClick={() => {
+                          setIsOpenSettings(false);
+                          navigate("/settings/organization");
+                        }}
+                        className="group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl hover:bg-brand/5 text-left transition-all w-full"
+                      >
+                        <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 group-hover:bg-brand/10 text-slate-500 group-hover:text-brand-dark transition-colors shrink-0">
+                          <Cpu className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">API & Integrations</p>
+                        </div>
+                      </button>
+                    )}
                   </div>
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex justify-center">
-                    <button 
-                      onClick={() => {
-                        setIsOpenSettings(false);
-                        navigate("/settings/personal-info");
-                      }}
-                      className="text-xs font-bold text-brand-dark hover:underline tracking-wide"
-                    >
-                      Manage Billing & Subscription
-                    </button>
-                  </div>
+                  {canOpenOrgSettings && (
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex justify-center">
+                      <button 
+                        onClick={() => {
+                          setIsOpenSettings(false);
+                          navigate("/settings/billing");
+                        }}
+                        className="text-xs font-bold text-brand-dark hover:underline tracking-wide"
+                      >
+                        Manage Billing & Subscription
+                      </button>
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -374,15 +387,15 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
           >
             <div className="relative">
               <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXcgEFuMNH2WfVpKSkgHkLECe1-hlQ0L9nl5ENytbZVUEW86K5l0_mna02bcC9tmRPbl-07SmLI5j_1r3ZHvrMBH6CD4kB-_5E-T2OAl45cTJ1qmSS_yuJ3xk82VJF17FliOHCnrOl_Q2p-mxWY0neh_xUDCcG4Qk1iJw5FWsQ8G6lPDt2cLc6wkE08FjkhU0qVbP3iVxOoM2oFtk1KBpMk_hkLr1VsbXccQdVkOlnRpK30VI7QYYr3xzhv_6-w2MHnuh5pjbwFSw"
-                alt="Davis Levin portrait"
+                src={user?.avatar}
+                alt={user?.name ?? "User"}
                 className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-100"
               />
               <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
             </div>
             <div className="flex flex-col items-start hidden sm:flex leading-tight">
-              <span className="text-sm font-bold text-slate-900">Davis Levin</span>
-              <span className="text-[10px] font-medium text-slate-400">User</span>
+              <span className="text-sm font-bold text-slate-900">{user?.name ?? "User"}</span>
+              <span className="text-[10px] font-medium text-slate-400">{user?.roleLabel ?? "Guest"}</span>
             </div>
           </button>
 
@@ -403,17 +416,17 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                 <div className="p-5 bg-slate-50/50 flex flex-col items-center text-center border-b border-slate-100">
                   <div className="relative mb-3">
                     <img 
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXcgEFuMNH2WfVpKSkgHkLECe1-hlQ0L9nl5ENytbZVUEW86K5l0_mna02bcC9tmRPbl-07SmLI5j_1r3ZHvrMBH6CD4kB-_5E-T2OAl45cTJ1qmSS_yuJ3xk82VJF17FliOHCnrOl_Q2p-mxWY0neh_xUDCcG4Qk1iJw5FWsQ8G6lPDt2cLc6wkE08FjkhU0qVbP3iVxOoM2oFtk1KBpMk_hkLr1VsbXccQdVkOlnRpK30VI7QYYr3xzhv_6-w2MHnuh5pjbwFSw"
-                      alt="Davis Levin" 
+                      src={user?.avatar}
+                      alt={user?.name ?? "User"} 
                       className="w-20 h-20 rounded-full border-2 border-brand object-cover" 
                     />
                     <div className="absolute bottom-0 right-0 w-6 h-6 bg-brand-dark border-2 border-white rounded-full flex items-center justify-center">
                       <span className="text-[10px] text-white font-bold">✓</span>
                     </div>
                   </div>
-                  <h3 className="font-bold text-slate-800 text-base">Davis Levin</h3>
-                  <p className="text-brand-dark font-semibold text-xs mt-0.5">HR Manager</p>
-                  <p className="text-[11px] text-slate-400 mt-1">davis.levin@teamhub.corp</p>
+                  <h3 className="font-bold text-slate-800 text-base">{user?.name}</h3>
+                  <p className="text-brand-dark font-semibold text-xs mt-0.5">{user?.roleLabel}</p>
+                  <p className="text-[11px] text-slate-400 mt-1">{user?.email}</p>
                 </div>
 
                 {/* List items */}
@@ -432,7 +445,7 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                   <button 
                     onClick={() => {
                       setIsOpenProfile(false);
-                      navigate("/settings/personal-info");
+                      navigate("/settings/security");
                     }}
                     className="flex items-center justify-between w-full px-4.5 py-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors font-medium text-sm text-slate-600 hover:text-slate-900"
                   >
@@ -456,6 +469,45 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
 
                   <div className="h-px bg-slate-100 my-1" />
 
+                  {/* Demo: switch role without re-login */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsOpenRoleSwitch(!isOpenRoleSwitch)}
+                      className="flex items-center justify-between w-full px-4.5 py-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors font-medium text-sm text-slate-600 hover:text-slate-900"
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <UsersRound className="h-4.5 w-4.5 text-slate-400" />
+                        <span>Switch Role (demo)</span>
+                      </div>
+                      <ChevronRight className={cn("h-4 w-4 text-slate-400 transition-transform", isOpenRoleSwitch && "rotate-90")} />
+                    </button>
+                    {isOpenRoleSwitch && (
+                      <div className="mx-2 mb-2 rounded-xl border border-slate-100 bg-slate-50 p-1.5 space-y-0.5 max-h-48 overflow-y-auto">
+                        {DEMO_USERS.map((demo) => (
+                          <button
+                            key={demo.id}
+                            type="button"
+                            onClick={() => {
+                              switchRole(demo.roleId);
+                              setIsOpenRoleSwitch(false);
+                              setIsOpenProfile(false);
+                              navigate("/");
+                            }}
+                            className={cn(
+                              "w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors",
+                              user?.roleId === demo.roleId
+                                ? "bg-[#35BFA3] text-white"
+                                : "text-slate-600 hover:bg-white"
+                            )}
+                          >
+                            {demo.roleLabel}
+                            <span className="block text-[10px] font-medium opacity-70">{demo.email}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <button 
                     onClick={() => {
                       setIsOpenProfile(false);
@@ -469,6 +521,7 @@ export function Header({ title, breadcrumbs }: { title: string; breadcrumbs: { l
                   <button 
                     onClick={() => {
                       setIsOpenProfile(false);
+                      logout();
                       navigate("/login");
                     }}
                     className="flex items-center gap-3.5 w-full px-4.5 py-2.5 rounded-xl hover:bg-rose-50 text-left transition-colors font-bold text-sm text-rose-600 hover:text-rose-700"
